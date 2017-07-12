@@ -1,15 +1,15 @@
 [submodule "sonic-swss-common"]
 	path = src/sonic-swss-common
-	url = http://gitli.corp.linkedin.com/sonic/sonic-swss-common.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-swss-common.git
 [submodule "sonic-linux-kernel"]
 	path = src/sonic-linux-kernel
-	url = http://gitli.corp.linkedin.com/sonic/sonic-linux-kernel.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-linux-kernel.git
 [submodule "sonic-sairedis"]
 	path = src/sonic-sairedis
-	url = http://gitli.corp.linkedin.com/sonic/sonic-sairedis.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-sairedis.git
 [submodule "sonic-swss"]
 	path = src/sonic-swss
-	url = http://gitli.corp.linkedin.com/sonic/sonic-swss.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-swss.git
 [submodule "src/p4-switch/switch"]
 	path = platform/p4/p4-switch/switch
 	url = https://github.com/krambn/switch
@@ -24,46 +24,45 @@
 	url = https://github.com/p4lang/p4-hlir
 [submodule "quagga"]
 	path = src/sonic-quagga
-	url = http://gitli.corp.linkedin.com/sonic/sonic-quagga.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-quagga.git
 	branch = debian/0.99.24.1
 [submodule "sonic-dbsyncd"]
 	path = src/sonic-dbsyncd
-	url = http://gitli.corp.linkedin.com/sonic/sonic-dbsyncd.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-dbsyncd.git
 [submodule "src/sonic-py-swsssdk"]
 	path = src/sonic-py-swsssdk
-	url = http://gitli.corp.linkedin.com/sonic/sonic-py-swsssdk.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-py-swsssdk.git
 [submodule "src/lldpd"]
 	path = src/lldpd
 	url = https://github.com/vincentbernat/lldpd.git
 [submodule "src/sonic-snmpagent"]
 	path = src/sonic-snmpagent
-	url = http://gitli.corp.linkedin.com/sonic/sonic-snmpagent.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-snmpagent.git
 [submodule "src/ptf"]
 	path = src/ptf
 	url = https://github.com/p4lang/ptf.git
 [submodule "src/sonic-utilities"]
 	path = src/sonic-utilities
-	url = http://gitli.corp.linkedin.com/sonic/sonic-utilities.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-utilities.git
 [submodule "platform/broadcom/sonic-platform-modules-s6000"]
 	path = platform/broadcom/sonic-platform-modules-s6000
-	url = http://gitli.corp.linkedin.com/sonic/sonic-platform-modules-s6000.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-s6000.git
 [submodule "platform/broadcom/sonic-platform-modules-arista"]
 	path = platform/broadcom/sonic-platform-modules-arista
 	url = https://github.com/aristanetworks/sonic
 [submodule "platform/broadcom/sonic-platform-modules-dell"]
 	path = platform/broadcom/sonic-platform-modules-dell
-	url = http://gitli.corp.linkedin.com/sonic/sonic-platform-modules-dell.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-dell.git
 [submodule "platform/broadcom/sonic-platform-modules-ingrasys"]
 	path = platform/broadcom/sonic-platform-modules-ingrasys
-	url = http://gitli.corp.linkedin.com/sonic/sonic-platform-modules-ingrasys.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-ingrasys.git
 [submodule "src/SAI"]
 	path = src/SAI
 	url = https://github.com/opencomputeproject/SAI
 	branch = v0.9.4
 [submodule "src/sonic-platform-daemons"]
 	path = src/sonic-platform-daemons
-	url = http://gitli.corp.linkedin.com/sonic/sonic-platform-daemons.git
+	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-daemons.git
 [submodule "platform/broadcom/sonic-platform-modules-accton"]
 	path = platform/broadcom/sonic-platform-modules-accton
-	url = https://github.com/edge-core/sonic-platform-modules-accton.git
-
+	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-accton.git
