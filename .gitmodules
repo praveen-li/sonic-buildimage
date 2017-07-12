@@ -46,7 +46,7 @@
 	url = git@gitli.corp.linkedin.com:sonic/sonic-utilities.git
 [submodule "platform/broadcom/sonic-platform-modules-s6000"]
 	path = platform/broadcom/sonic-platform-modules-s6000
-	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-s6000.git
+	url = https://github.com/Azure/sonic-platform-modules-s6000
 [submodule "platform/broadcom/sonic-platform-modules-arista"]
 	path = platform/broadcom/sonic-platform-modules-arista
 	url = https://github.com/aristanetworks/sonic
@@ -55,7 +55,7 @@
 	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-dell.git
 [submodule "platform/broadcom/sonic-platform-modules-ingrasys"]
 	path = platform/broadcom/sonic-platform-modules-ingrasys
-	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-ingrasys.git
+	url = https://github.com/Ingrasys-sonic/sonic-platform-modules-ingrasys
 [submodule "src/SAI"]
 	path = src/SAI
 	url = https://github.com/opencomputeproject/SAI
@@ -65,4 +65,4 @@
 	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-daemons.git
 [submodule "platform/broadcom/sonic-platform-modules-accton"]
 	path = platform/broadcom/sonic-platform-modules-accton
-	url = git@gitli.corp.linkedin.com:sonic/sonic-platform-modules-accton.git
+	url = https://github.com/edge-core/sonic-platform-modules-accton.git
