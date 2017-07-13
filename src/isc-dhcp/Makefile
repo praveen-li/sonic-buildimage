@@ -20,11 +20,10 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 
 	# Build source and Debian packages
 	pushd ./isc-dhcp
-	dpkg-buildpackage -rfakeroot -b -us -uc
+	dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS)
 	popd
 
 	# Move the newly-built .deb packages to the destination directory
 	mv $* $(DERIVED_TARGETS) $(DEST)/
 
 $(addprefix $(DEST)/, $(DERIVED_TARGETS)): $(DEST)/% : $(DEST)/$(MAIN_TARGET)
-
