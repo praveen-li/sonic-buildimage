@@ -188,6 +188,9 @@ def parse_dpg(dpg, hname):
         for mgmtintf in mgmtintfs.findall(str(QName(ns1, "ManagementIPInterface"))):
             ipprefix = mgmtintf.find(str(QName(ns1, "PrefixStr"))).text
             mgmtipn = ipaddress.IPNetwork(ipprefix)
+            # Ignore IPv6 management address
+            if mgmtipn.version == 6:
+                continue
             ipaddr = mgmtipn.ip
             prefix_len = str(mgmtipn.prefixlen)
             ipmask = mgmtipn.netmask
@@ -281,9 +284,10 @@ def parse_cpg(cpg, hname):
                         if bgpPeer.find(str(QName(ns1, "PeersRange"))) is not None:
                             name = bgpPeer.find(str(QName(ns1, "Name"))).text
                             ip_range = bgpPeer.find(str(QName(ns1, "PeersRange"))).text
+                            ip_range_group = ip_range.split(';') if ip_range and ip_range != "" else []
                             bgp_peers_with_range.append({
                                 'name': name,
-                                'ip_range': ip_range
+                                'ip_range': ip_range_group
                             })
                 else:
                     for bgp_session in bgp_sessions:

@@ -6,6 +6,9 @@
 .ONESHELL:
 SHELL = /bin/bash
 .SHELLFLAGS += -e
+USER = $(shell id -un)
+UID = $(shell id -u)
+GUID = $(shell id -g)
 
 .SECONDEXPANSION:
 
@@ -21,6 +24,7 @@ RULES_PATH = rules
 TARGET_PATH = target
 DOCKERS_PATH = dockers
 DEBS_PATH = $(TARGET_PATH)/debs
+FILES_PATH = $(TARGET_PATH)/files
 PYTHON_WHEELS_PATH = $(TARGET_PATH)/python-wheels
 PROJECT_ROOT = $(shell pwd)
 
@@ -41,11 +45,15 @@ endif
 
 configure :
 	@mkdir -p target/debs
+	@mkdir -p target/files
 	@mkdir -p target/python-wheels
 	@echo $(PLATFORM) > .platform
 
 distclean : .platform clean
 	@rm -f .platform
+
+list :
+	@$(foreach target,$(SONIC_TARGET_LIST),echo $(target);)
 
 ###############################################################################
 ## Include other rules
@@ -77,13 +85,21 @@ export SONIC_CONFIG_MAKE_JOBS
 ## Dumping key config attributes associated to current building exercise
 ###############################################################################
 
-ifndef $(CONFIGURED_PLATFORM)
-$(info CONFIGURED_PLATFORM is $(CONFIGURED_PLATFORM))
-endif
-
-ifndef $(SONIC_ROUTING_STACK)
-$(info ROUTING_STACK is $(SONIC_ROUTING_STACK))
-endif
+$(info SONiC Build System)
+$(info )
+$(info Build Configuration)
+$(info "CONFIGURED_PLATFORM"             : "$(if $(PLATFORM),$(PLATFORM),$(CONFIGURED_PLATFORM))")
+$(info "SONIC_CONFIG_PRINT_DEPENDENCIES" : "$(SONIC_CONFIG_PRINT_DEPENDENCIES)")
+$(info "SONIC_CONFIG_BUILD_JOBS"         : "$(SONIC_CONFIG_BUILD_JOBS)")
+$(info "SONIC_CONFIG_MAKE_JOBS"          : "$(SONIC_CONFIG_MAKE_JOBS)")
+$(info "DEFAULT_USERNAME"                : "$(DEFAULT_USERNAME)")
+$(info "DEFAULT_PASSWORD"                : "$(DEFAULT_PASSWORD)")
+$(info "ENABLE_DHCP_GRAPH_SERVICE"       : "$(ENABLE_DHCP_GRAPH_SERVICE)")
+$(info "SHUTDOWN_BGP_ON_START"           : "$(SHUTDOWN_BGP_ON_START)")
+$(info "SONIC_CONFIG_DEBUG"              : "$(SONIC_CONFIG_DEBUG)")
+$(info "ROUTING_STACK"                   : "$(SONIC_ROUTING_STACK)")
+$(info "ENABLE_SYNCD_RPC"                : "$(ENABLE_SYNCD_RPC)")
+$(info )
 
 ###############################################################################
 ## Generic rules section
@@ -105,15 +121,19 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_COPY_DEBS)) : $(DEBS_PATH)/% : .platform
 	    { cp $($(deb)_PATH)/$(deb) $(DEBS_PATH)/ $(LOG) || exit 1 ; } ; )
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_COPY_DEBS))
+
 # Copy regular files from local directory
 # Add new package for copy:
 #     SOME_NEW_FILE = some_new_file
 #     $(SOME_NEW_FILE)_PATH = path/to/some_new_file
 #     SONIC_COPY_FILES += $(SOME_NEW_FILE)
-$(addprefix $(DEBS_PATH)/, $(SONIC_COPY_FILES)) : $(DEBS_PATH)/% : .platform
+$(addprefix $(FILES_PATH)/, $(SONIC_COPY_FILES)) : $(FILES_PATH)/% : .platform
 	$(HEADER)
-	cp $($*_PATH)/$* $(DEBS_PATH)/ $(LOG) || exit 1
+	cp $($*_PATH)/$* $(FILES_PATH)/ $(LOG) || exit 1
 	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(FILES_PATH)/, $(SONIC_COPY_FILES))
 
 ###############################################################################
 ## Online targets
@@ -127,8 +147,10 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_COPY_FILES)) : $(DEBS_PATH)/% : .platform
 $(addprefix $(DEBS_PATH)/, $(SONIC_ONLINE_DEBS)) : $(DEBS_PATH)/% : .platform
 	$(HEADER)
 	$(foreach deb,$* $($*_DERIVED_DEBS), \
-	    { wget -O $(DEBS_PATH)/$(deb) $($(deb)_URL) $(LOG) || exit 1 ; } ; )
+	    { wget --no-use-server-timestamps -O $(DEBS_PATH)/$(deb) $($(deb)_URL) $(LOG) || exit 1 ; } ; )
 	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_ONLINE_DEBS))
 
 # Download regular files from online location
 # Files are stored in deb packages directory for convenience
@@ -136,10 +158,12 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_ONLINE_DEBS)) : $(DEBS_PATH)/% : .platform
 #     SOME_NEW_FILE = some_new_file
 #     $(SOME_NEW_FILE)_URL = https://url/to/this/file
 #     SONIC_ONLINE_FILES += $(SOME_NEW_FILE)
-$(addprefix $(DEBS_PATH)/, $(SONIC_ONLINE_FILES)) : $(DEBS_PATH)/% : .platform
+$(addprefix $(FILES_PATH)/, $(SONIC_ONLINE_FILES)) : $(FILES_PATH)/% : .platform
 	$(HEADER)
-	wget -O  $@ $($*_URL) $(LOG)
+	wget --no-use-server-timestamps -O  $@ $($*_URL) $(LOG)
 	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(FILES_PATH)/, $(SONIC_ONLINE_FILES))
 
 ###############################################################################
 ## Debian package related targets
@@ -165,6 +189,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_MAKE_DEBS)) : $(DEBS_PATH)/% : .platform $$(a
 	if [ -f $($*_SRC_PATH).patch/series ]; then pushd $($*_SRC_PATH) && quilt pop -a -f; popd; fi
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_MAKE_DEBS))
+
 # Build project with dpkg-buildpackage
 # Add new package for build:
 #     SOME_NEW_DEB = some_new_deb.deb
@@ -186,6 +212,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_DPKG_DEBS)) : $(DEBS_PATH)/% : .platform $$(a
 	mv $(addprefix $($*_SRC_PATH)/../, $* $($*_DERIVED_DEBS) $($*_EXTRA_DEBS)) $(DEBS_PATH) $(LOG)
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_DPKG_DEBS))
+
 # Build project with python setup.py --command-packages=stdeb.command
 # Add new package for build:
 #     SOME_NEW_DEB = some_new_deb.deb
@@ -201,6 +229,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_PYTHON_STDEB_DEBS)) : $(DEBS_PATH)/% : .platf
 	mv $(addprefix $($*_SRC_PATH)/deb_dist/, $* $($*_DERIVED_DEBS)) $(DEBS_PATH) $(LOG)
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_PYTHON_STDEB_DEBS))
+
 # Rules for derived debian packages (dev, dbg, etc.)
 # All noise takes place in main deb recipe, so we are just telling that
 # we depend on it and move our deb to other targets
@@ -213,6 +243,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_DERIVED_DEBS)) : $(DEBS_PATH)/% : .platform $
 	# Put newer timestamp
 	[ -f $@ ] && touch $@
 	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_DERIVED_DEBS))
 
 # Rules for extra debian packages
 # All noise takes place in main deb recipe, so we are just telling that
@@ -227,6 +259,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_EXTRA_DEBS)) : $(DEBS_PATH)/% : .platform $$(
 	[ -f $@ ] && touch $@
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(DEBS_PATH)/, $(SONIC_EXTRA_DEBS))
+
 # Targets for installing debian packages prior to build one that depends on them
 SONIC_INSTALL_TARGETS = $(addsuffix -install,$(addprefix $(DEBS_PATH)/, \
 			$(SONIC_ONLINE_DEBS) \
@@ -238,7 +272,7 @@ SONIC_INSTALL_TARGETS = $(addsuffix -install,$(addprefix $(DEBS_PATH)/, \
 			$(SONIC_EXTRA_DEBS)))
 $(SONIC_INSTALL_TARGETS) : $(DEBS_PATH)/%-install : .platform $$(addsuffix -install,$$(addprefix $(DEBS_PATH)/,$$($$*_DEPENDS))) $(DEBS_PATH)/$$*
 	$(HEADER)
-	[ -f $(DEBS_PATH)/$* ] || { echo $(DEBS_PATH)/$* does not exist $(LOG) && exit 1; }
+	[ -f $(DEBS_PATH)/$* ] || { echo $(DEBS_PATH)/$* does not exist $(LOG) && false $(LOG) }
 	# put a lock here because dpkg does not allow installing packages in parallel
 	while true; do
 	if mkdir $(DEBS_PATH)/dpkg_lock &> /dev/null; then
@@ -272,6 +306,8 @@ $(addprefix $(PYTHON_WHEELS_PATH)/, $(SONIC_PYTHON_WHEELS)) : $(PYTHON_WHEELS_PA
 	mv $($*_SRC_PATH)/dist/$* $(PYTHON_WHEELS_PATH) $(LOG)
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(PYTHON_WHEELS_PATH)/, $(SONIC_PYTHON_WHEELS))
+
 # Targets for installing python wheels.
 # Autogenerated
 SONIC_INSTALL_WHEELS = $(addsuffix -install, $(addprefix $(PYTHON_WHEELS_PATH)/, $(SONIC_PYTHON_WHEELS)))
@@ -297,25 +333,31 @@ docker-start :
 # targets for building simple docker images that do not depend on any debian packages
 $(addprefix $(TARGET_PATH)/, $(SONIC_SIMPLE_DOCKER_IMAGES)) : $(TARGET_PATH)/%.gz : .platform docker-start $$(addsuffix -load,$$(addprefix $(TARGET_PATH)/,$$($$*.gz_LOAD_DOCKERS)))
 	$(HEADER)
-	docker build --squash --no-cache -t $* $($*.gz_PATH) $(LOG)
+	docker build --squash --no-cache --build-arg user=$(USER) --build-arg uid=$(UID) --build-arg guid=$(GUID) -t $* $($*.gz_PATH) $(LOG)
 	docker save $* | gzip -c > $@
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_SIMPLE_DOCKER_IMAGES))
+
 # Targets for building docker images
-$(addprefix $(TARGET_PATH)/, $(SONIC_DOCKER_IMAGES)) : $(TARGET_PATH)/%.gz : .platform docker-start $$(addprefix $(DEBS_PATH)/,$$($$*.gz_DEPENDS) $$($$*.gz_FILES)) $$(addprefix $(PYTHON_WHEELS_PATH)/,$$($$*.gz_PYTHON_WHEELS)) $$(addsuffix -load,$$(addprefix $(TARGET_PATH)/,$$($$*.gz_LOAD_DOCKERS))) $$($$*.gz_PATH)/Dockerfile.j2
+$(addprefix $(TARGET_PATH)/, $(SONIC_DOCKER_IMAGES)) : $(TARGET_PATH)/%.gz : .platform docker-start $$(addprefix $(DEBS_PATH)/,$$($$*.gz_DEPENDS)) $$(addprefix $(FILES_PATH)/,$$($$*.gz_FILES)) $$(addprefix $(PYTHON_WHEELS_PATH)/,$$($$*.gz_PYTHON_WHEELS)) $$(addsuffix -load,$$(addprefix $(TARGET_PATH)/,$$($$*.gz_LOAD_DOCKERS))) $$($$*.gz_PATH)/Dockerfile.j2
 	$(HEADER)
 	mkdir -p $($*.gz_PATH)/debs $(LOG)
+	mkdir -p $($*.gz_PATH)/files $(LOG)
 	mkdir -p $($*.gz_PATH)/python-wheels $(LOG)
 	sudo mount --bind $(DEBS_PATH) $($*.gz_PATH)/debs $(LOG)
+	sudo mount --bind $(FILES_PATH) $($*.gz_PATH)/files $(LOG)
 	sudo mount --bind $(PYTHON_WHEELS_PATH) $($*.gz_PATH)/python-wheels $(LOG)
 	# Export variables for j2. Use path for unique variable names, e.g. docker_orchagent_debs
 	$(eval export $(subst -,_,$(notdir $($*.gz_PATH)))_debs=$(shell printf "$(subst $(SPACE),\n,$(call expand,$($*.gz_DEPENDS),RDEPENDS))\n" | awk '!a[$$0]++'))
 	$(eval export $(subst -,_,$(notdir $($*.gz_PATH)))_whls=$(shell printf "$(subst $(SPACE),\n,$(call expand,$($*.gz_PYTHON_WHEELS)))\n" | awk '!a[$$0]++'))
 	$(eval export $(subst -,_,$(notdir $($*.gz_PATH)))_dbgs=$(shell printf "$(subst $(SPACE),\n,$(call expand,$($*.gz_DBG_PACKAGES)))\n" | awk '!a[$$0]++'))
 	j2 $($*.gz_PATH)/Dockerfile.j2 > $($*.gz_PATH)/Dockerfile
-	docker build --squash --no-cache -t $* $($*.gz_PATH) $(LOG)
+	docker build --squash --no-cache --build-arg user=$(USER) --build-arg uid=$(UID) --build-arg guid=$(GUID) -t $* $($*.gz_PATH) $(LOG)
 	docker save $* | gzip -c > $@
 	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_DOCKER_IMAGES))
 
 DOCKER_LOAD_TARGETS = $(addsuffix -load,$(addprefix $(TARGET_PATH)/, \
 		      $(SONIC_SIMPLE_DOCKER_IMAGES) \
@@ -330,7 +372,7 @@ $(DOCKER_LOAD_TARGETS) : $(TARGET_PATH)/%.gz-load : .platform docker-start $$(TA
 ###############################################################################
 
 # targets for building installers with base image
-$(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : .platform onie-image.conf $$(addprefix $(DEBS_PATH)/,$$($$*_DEPENDS)) $$(addprefix $(DEBS_PATH)/,$$($$*_INSTALLS)) $(addprefix $(DEBS_PATH)/,$(INITRAMFS_TOOLS) $(LINUX_KERNEL) $(IGB_DRIVER) $(SONIC_DEVICE_DATA) $(SONIC_UTILS)) $$(addprefix $(TARGET_PATH)/,$$($$*_DOCKERS)) $$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE))
+$(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : .platform onie-image.conf $$(addprefix $(DEBS_PATH)/,$$($$*_DEPENDS)) $$(addprefix $(DEBS_PATH)/,$$($$*_INSTALLS)) $$(addprefix $(FILES_PATH)/,$$($$*_FILES)) $(addprefix $(DEBS_PATH)/,$(INITRAMFS_TOOLS) $(LINUX_KERNEL) $(IGB_DRIVER) $(SONIC_DEVICE_DATA) $(SONIC_UTILS)) $$(addprefix $(TARGET_PATH)/,$$($$*_DOCKERS)) $$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE))
 	$(HEADER)
 	## Pass initramfs and linux kernel explicitly. They are used for all platforms
 	export initramfs_tools="$(DEBS_PATH)/$(INITRAMFS_TOOLS)"
@@ -386,6 +428,8 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : .platform
 	chmod a+x $@
 	$(FOOTER)
 
+SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS))
+
 ###############################################################################
 ## Clean targets
 ###############################################################################
@@ -400,10 +444,18 @@ SONIC_CLEAN_DEBS = $(addsuffix -clean,$(addprefix $(DEBS_PATH)/, \
 		   $(SONIC_PYTHON_STDEB_DEBS) \
 		   $(SONIC_DERIVED_DEBS) \
 		   $(SONIC_EXTRA_DEBS)))
+
+SONIC_CLEAN_FILES = $(addsuffix -clean,$(addprefix $(FILES_PATH)/, \
+		   $(SONIC_ONLINE_FILES) \
+		   $(SONIC_COPY_FILES)))
+
 $(SONIC_CLEAN_DEBS) : $(DEBS_PATH)/%-clean : .platform $$(addsuffix -clean,$$(addprefix $(DEBS_PATH)/,$$($$*_MAIN_DEB)))
 	@# remove derived or extra targets if main one is removed, because we treat them
 	@# as part of one package
 	@rm -f $(addprefix $(DEBS_PATH)/, $* $($*_DERIVED_DEBS) $($*_EXTRA_DEBS))
+
+$(SONIC_CLEAN_FILES) : $(FILES_PATH)/%-clean : .platform
+	@rm -f $(FILES_PATH)/$*
 
 SONIC_CLEAN_TARGETS += $(addsuffix -clean,$(addprefix $(TARGET_PATH)/, \
 		       $(SONIC_DOCKER_IMAGES) \
@@ -418,9 +470,9 @@ $(SONIC_CLEAN_WHEELS) : $(PYTHON_WHEELS_PATH)/%-clean : .platform
 	@rm -f $(PYTHON_WHEELS_PATH)/$*
 
 clean-logs : .platform
-	@rm -f $(TARGET_PATH)/*.log $(DEBS_PATH)/*.log
+	@rm -f $(TARGET_PATH)/*.log $(DEBS_PATH)/*.log $(FILES_PATH)/*.log $(PYTHON_WHEELS_PATH)/*.log
 
-clean : .platform clean-logs $$(SONIC_CLEAN_DEBS) $$(SONIC_CLEAN_TARGETS) $$(SONIC_CLEAN_WHEELS)
+clean : .platform clean-logs $$(SONIC_CLEAN_DEBS) $$(SONIC_CLEAN_FILES) $$(SONIC_CLEAN_TARGETS) $$(SONIC_CLEAN_WHEELS)
 
 ###############################################################################
 ## all
@@ -432,6 +484,6 @@ all : .platform $$(addprefix $(TARGET_PATH)/,$$(SONIC_ALL))
 ## Standard targets
 ###############################################################################
 
-.PHONY : $(SONIC_CLEAN_DEBS) $(SONIC_CLEAN_TARGETS) $(SONIC_CLEAN_WHEELS) clean distclean configure
+.PHONY : $(SONIC_CLEAN_DEBS) $(SONIC_CLEAN_FILES) $(SONIC_CLEAN_TARGETS) $(SONIC_CLEAN_WHEELS) clean distclean configure
 
 .INTERMEDIATE : $(SONIC_INSTALL_TARGETS) $(SONIC_INSTALL_WHEELS) $(DOCKER_LOAD_TARGETS) docker-start .platform
