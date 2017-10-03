@@ -32,13 +32,12 @@ function fast_reboot {
   esac
 }
 
-
 # Restore FDB and ARP table ASAP
 fast_reboot
 
-HWSKU=`sonic-cfggen -m /etc/sonic/minigraph.xml -v minigraph_hwsku`
+HWSKU=`sonic-cfggen -m /etc/sonic/minigraph.xml -d -v "DEVICE_METADATA['localhost']['hwsku']"`
 
-SWSSCONFIG_ARGS="00-copp.config.json ipinip.json mirror.json "
+SWSSCONFIG_ARGS="00-copp.config.json ipinip.json mirror.json ports.json "
 
 if [ "$HWSKU" == "Force10-S6000" ]; then
     SWSSCONFIG_ARGS+="td2.32ports.buffers.json td2.32ports.qos.json "
@@ -46,10 +45,9 @@ elif [ "$HWSKU" == "Force10-S6000-Q32" ]; then
     SWSSCONFIG_ARGS+="td2.32ports.buffers.json td2.32ports.qos.json "
 elif [ "$HWSKU" == "Arista-7050-QX32" ]; then
     SWSSCONFIG_ARGS+="td2.32ports.buffers.json td2.32ports.qos.json "
-elif [ "$HWSKU" == "ACS-MSN2700" ]; then
-    SWSSCONFIG_ARGS+="msn2700.32ports.buffers.json msn2700.32ports.qos.json "
-elif [ "$HWSKU" == "ACS-MSN2740" ]; then
-    SWSSCONFIG_ARGS+="msn2740.32ports.buffers.json msn2740.32ports.qos.json "
+elif [[ "$HWSKU" == "ACS-MSN27"* ]]; then
+    sonic-cfggen -m /etc/sonic/minigraph.xml -t /usr/share/sonic/templates/msn27xx.32ports.buffers.json.j2 > /etc/swss/config.d/msn27xx.32ports.buffers.json
+    SWSSCONFIG_ARGS+="msn27xx.32ports.buffers.json msn2700.32ports.qos.json "
 fi
 
 for file in $SWSSCONFIG_ARGS; do

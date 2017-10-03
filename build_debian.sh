@@ -63,6 +63,7 @@ if [[ -d $FILESYSTEM_ROOT ]]; then
 fi
 mkdir -p $FILESYSTEM_ROOT
 mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR
+mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR/x86_64-grub
 touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
 
 ## Build a basic Debian system by debootstrap
@@ -132,6 +133,8 @@ sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-premount/arista-
 ## 2. Bind-mount docker working directory (docker aufs cannot work over aufs rootfs)
 sudo cp files/initramfs-tools/union-mount $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/union-mount
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/union-mount
+sudo cp files/initramfs-tools/varlog $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/varlog
+sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/varlog
 sudo cp files/initramfs-tools/union-fsck $FILESYSTEM_ROOT/etc/initramfs-tools/hooks/union-fsck
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/hooks/union-fsck
 sudo chroot $FILESYSTEM_ROOT update-initramfs -u
@@ -203,7 +206,13 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     curl                    \
     kexec-tools             \
     less                    \
-    unzip
+    unzip                   \
+    gdisk
+
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y download \
+    grub-pc-bin
+
+sudo mv $FILESYSTEM_ROOT/grub-pc-bin*.deb $FILESYSTEM_ROOT/$PLATFORM_DIR/x86_64-grub
 
 ## Disable kexec supported reboot which was installed by default
 sudo sed -i 's/LOAD_KEXEC=true/LOAD_KEXEC=false/' $FILESYSTEM_ROOT/etc/default/kexec
@@ -239,10 +248,11 @@ EOF
 ## Config sysctl
 sudo mkdir -p $FILESYSTEM_ROOT/var/core
 sudo augtool --autosave "
-set /files/etc/sysctl.conf/kernel.core_pattern '|/usr/bin/coredump-compress %e %p'
+set /files/etc/sysctl.conf/kernel.core_pattern '|/usr/bin/coredump-compress %e %t %p'
 
 set /files/etc/sysctl.conf/kernel.softlockup_panic 1
 set /files/etc/sysctl.conf/kernel.panic 10
+set /files/etc/sysctl.conf/fs.suid_dumpable 2
 
 set /files/etc/sysctl.conf/net.ipv4.conf.default.forwarding 1
 set /files/etc/sysctl.conf/net.ipv4.conf.all.forwarding 1
@@ -310,6 +320,14 @@ EOF
 
 if [ -f sonic_debian_extension.sh ]; then
     ./sonic_debian_extension.sh $FILESYSTEM_ROOT $PLATFORM_DIR
+fi
+
+## Organization specific extensions such as Configuration & Scripts for features like AAA, ZTP...
+if [ "${enable_organization_extensions}" = "y" ]; then
+   if [ -f files/build_templates/organization_extensions.sh ]; then
+      sudo chmod 755 files/build_templates/organization_extensions.sh 
+      ./files/build_templates/organization_extensions.sh -f $FILESYSTEM_ROOT -h $HOSTNAME
+   fi
 fi
 
 ## Clean up apt

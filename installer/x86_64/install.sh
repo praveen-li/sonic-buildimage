@@ -24,8 +24,25 @@ _trap_push true
 set -e
 cd $(dirname $0)
 
+if [ -d "/etc/sonic" ]; then
+    echo "Installing SONiC in SONiC"
+    install_env="sonic"
+elif grep -Fxqs "DISTRIB_ID=onie" /etc/lsb-release > /dev/null
+then
+    echo "Installing SONiC in ONIE"
+    install_env="onie"
+else
+    echo "Installing SONiC in BUILD"
+    install_env="build"
+fi
+
+if [ -r ./machine.conf ]; then
 . ./machine.conf
+fi
+
+if [ -r ./onie-image.conf ]; then
 . ./onie-image.conf
+fi
 
 echo "ONIE Installer: platform: $platform"
 
@@ -40,7 +57,7 @@ if [ -r /etc/machine.conf ]; then
     . /etc/machine.conf
 elif [ -r /host/machine.conf ]; then
     . /host/machine.conf
-else
+elif [ "$install_env" != "build" ]; then
     echo "cannot find machine.conf"
     exit 1
 fi
@@ -58,26 +75,20 @@ ONIE_PLATFORM_EXTRA_CMDLINE_LINUX=""
 # Default var/log device size in MB
 VAR_LOG_SIZE=4096
 
-if [ -d "/etc/sonic" ]; then
-    echo "Installing SONiC in SONiC"
-    install_env="sonic"
-else
-    echo "Installing SONiC in ONIE"
-    install_env="onie"
-fi
-
 [ -r platforms/$onie_platform ] && . platforms/$onie_platform
 
 # Install demo on same block device as ONIE
-onie_dev=$(blkid | grep ONIE-BOOT | head -n 1 | awk '{print $1}' |  sed -e 's/:.*$//')
-blk_dev=$(echo $onie_dev | sed -e 's/[1-9][0-9]*$//' | sed -e 's/\([0-9]\)\(p\)/\1/')
-# Note: ONIE has no mount setting for / with device node, so below will be empty string
-cur_part=$(cat /proc/mounts | awk "{ if(\$2==\"/\") print \$1 }" | grep $blk_dev || true)
+if [ "$install_env" != "build" ]; then
+    onie_dev=$(blkid | grep ONIE-BOOT | head -n 1 | awk '{print $1}' |  sed -e 's/:.*$//')
+    blk_dev=$(echo $onie_dev | sed -e 's/[1-9][0-9]*$//' | sed -e 's/\([0-9]\)\(p\)/\1/')
+    # Note: ONIE has no mount setting for / with device node, so below will be empty string
+    cur_part=$(cat /proc/mounts | awk "{ if(\$2==\"/\") print \$1 }" | grep $blk_dev || true)
 
-[ -b "$blk_dev" ] || {
-    echo "Error: Unable to determine block device of ONIE install"
-    exit 1
-}
+    [ -b "$blk_dev" ] || {
+        echo "Error: Unable to determine block device of ONIE install"
+        exit 1
+    }
+fi
 
 # If running in ONIE
 if [ "$install_env" = "onie" ]; then
@@ -108,7 +119,7 @@ else
     firmware="bios"
 fi
 
-if [ "$install_env" != "sonic" ]; then
+if [ "$install_env" = "onie" ]; then
     # determine ONIE partition type
     onie_partition_type=$(${onie_bin} onie-sysinfo -t)
     # demo partition size in MB
@@ -310,6 +321,7 @@ demo_install_grub()
             cat $grub_install_log && rm -f $grub_install_log
             exit 1
         }
+
         rm -f $grub_install_log
 
         # restore immutable flag on the core.img file as discussed
@@ -374,7 +386,7 @@ demo_install_uefi_grub()
 
 image_dir="image-$image_version"
 
-if [ "$install_env" != "sonic" ]; then
+if [ "$install_env" = "onie" ]; then
     eval $create_demo_partition $blk_dev
     demo_dev=$(echo $blk_dev | sed -e 's/\(mmcblk[0-9]\)/\1p/')$demo_part
 
@@ -391,7 +403,8 @@ if [ "$install_env" != "sonic" ]; then
         echo "Error: Unable to mount $demo_dev on $demo_mnt"
         exit 1
     }
-else
+    
+elif [ "$install_env" = "sonic" ]; then
     demo_mnt="/host"
     running_sonic_revision=$(cat /etc/sonic/sonic_version.yml | grep build_version | cut -f2 -d" ")
     # Prevent installing existing SONiC if it is running
@@ -406,6 +419,15 @@ else
             rm -rf $f
         fi
     done
+else
+    demo_mnt="build_raw_image_mnt"
+    demo_dev=$cur_wd/"%%OUTPUT_RAW_IMAGE%%"
+
+    mkfs.ext4 -L $demo_volume_label $demo_dev
+
+    echo "Mounting $demo_dev on $demo_mnt..."
+    mkdir $demo_mnt
+    mount -t auto -o loop $demo_dev $demo_mnt
 fi
 
 echo "Installing SONiC to $demo_mnt/$image_dir"
@@ -428,25 +450,7 @@ TAR_EXTRA_OPTION="--numeric-owner"
 mkdir -p $demo_mnt/$image_dir/$DOCKERFS_DIR
 unzip -op $ONIE_INSTALLER_PAYLOAD "$FILESYSTEM_DOCKERFS" | tar xz $TAR_EXTRA_OPTION -f - -C $demo_mnt/$image_dir/$DOCKERFS_DIR
 
-# Create loop device for /var/log to limit its size to $VAR_LOG_SIZE MB
-if [ -f $demo_mnt/disk-img/var-log.ext4 ]; then
-    current_log_size_mb=$(ls -l --block-size=M $demo_mnt/disk-img/var-log.ext4 | cut -f5 -d" ")
-    if [ "$current_log_size_mb" = "$VAR_LOG_SIZE"M ]; then
-        echo "Log file system already exists. Size: ${VAR_LOG_SIZE}MB"
-        VAR_LOG_SIZE=0
-    else
-        rm -rf $demo_mnt/disk-img
-    fi
-fi
-
-if [ "$VAR_LOG_SIZE" != "0" ]; then
-    echo "Creating new log file system. Size: ${VAR_LOG_SIZE}MB"
-    mkdir -p $demo_mnt/disk-img
-    dd if=/dev/zero of=$demo_mnt/disk-img/var-log.ext4 count=$((2048*$VAR_LOG_SIZE))
-    mkfs.ext4 -q $demo_mnt/disk-img/var-log.ext4 -F
-fi
-
-if [ "$install_env" != "sonic" ]; then
+if [ "$install_env" = "onie" ]; then
     # Store machine description in target file system
     cp /etc/machine.conf $demo_mnt
 
@@ -531,6 +535,12 @@ if [ "$install_env" = "sonic" ]; then
     onie_menuentry=$(cat /host/grub/grub.cfg | sed "/menuentry ONIE/,/}/!d")
 fi
 
+if [ "$install_env" = "build" ]; then
+    grub_cfg_root=%%SONIC_ROOT%%
+else
+    grub_cfg_root=$demo_dev
+fi
+
 cat <<EOF >> $grub_cfg
 menuentry '$demo_grub_entry' {
         search --no-floppy --label --set=root $demo_volume_label
@@ -539,15 +549,15 @@ menuentry '$demo_grub_entry' {
         if [ x$grub_platform = xxen ]; then insmod xzio; insmod lzopio; fi
         insmod part_msdos
         insmod ext2
-        linux   /$image_dir/boot/vmlinuz-3.16.0-4-amd64 root=$demo_dev rw $GRUB_CMDLINE_LINUX  \
+        linux   /$image_dir/boot/vmlinuz-3.16.0-4-amd64 root=$grub_cfg_root rw $GRUB_CMDLINE_LINUX  \
                 loop=$image_dir/$FILESYSTEM_SQUASHFS loopfstype=squashfs                       \
-                apparmor=1 security=apparmor $ONIE_PLATFORM_EXTRA_CMDLINE_LINUX
+                apparmor=1 security=apparmor varlog_size=$VAR_LOG_SIZE $ONIE_PLATFORM_EXTRA_CMDLINE_LINUX
         echo    'Loading $demo_volume_label $demo_type initial ramdisk ...'
         initrd  /$image_dir/boot/initrd.img-3.16.0-4-amd64
 }
 EOF
 
-if [ "$install_env" != "sonic" ]; then
+if [ "$install_env" = "onie" ]; then
     # Add menu entries for ONIE -- use the grub fragment provided by the
     # ONIE distribution.
     $onie_root_dir/grub.d/50_onie_grub >> $grub_cfg
@@ -559,7 +569,12 @@ $onie_menuentry
 EOF
 fi
 
-cp $grub_cfg $onie_initrd_tmp/$demo_mnt/grub/grub.cfg
+if [ "$install_env" = "build" ]; then
+    cp $grub_cfg $demo_mnt/grub.cfg
+    umount $demo_mnt
+else
+    cp $grub_cfg $onie_initrd_tmp/$demo_mnt/grub/grub.cfg
+fi
 
 cd /
 

@@ -13,18 +13,22 @@
 #  AGENT BEHAVIOUR
 #
 
-{% if minigraph_mgmt_interface.addr | ipv4 %}
+{% if MGMT_INTERFACE %}
 #  Listen for connections on localhost, loopback ip and mgmt (eth0) ip
 agentAddress udp:127.0.0.1:161
-agentAddress udp:{{ minigraph_mgmt_interface.addr }}:161
-{% for minigraph_lo_interface in minigraph_lo_interfaces %}
+{% for (name, prefix) in MGMT_INTERFACE %}
+{% if prefix | ipv4 %}
+agentAddress udp:{{ prefix | ip }}:161
+{% endif %}
+{% endfor %}
 # TODO: only support ipv4 lo addresses, add ipv6 support later
-{% if minigraph_lo_interface.addr | ipv4 %}
-agentAddress udp:{{ minigraph_lo_interface.addr }}:161
+{% for (name, prefix) in LOOPBACK_INTERFACE %}
+{% if prefix | ipv4 %}
+agentAddress udp:{{ prefix | ip }}:161
 {% endif %}
 {% endfor %}
 {% else %}
-# Listen on all addresses as mgmt ip not specified in minigraph
+# Listen on all addresses as mgmt ip not specified
 agentAddress udp:161
 {% endif %}
 
@@ -57,7 +61,7 @@ sysServices    72
 #
 #  Process Monitoring
 #
-# TODO: should we enable snmp based monitoring of sswsyncd and other processes?
+# todo: should we enable snmp based monitoring of sswsyncd and other processes?
 
 # At least one 'sendmail' process, but no more than 10
 #proc  sendmail 10 1
@@ -72,12 +76,7 @@ sysServices    72
                                # 10MBs required on root disk, 5% free on /var, 10% free on all other disks
 disk       /     10000
 disk       /var  5%
-
-# Note: includeAllDisks will conflict with ignoredisk
-# TODO: /root/* are introduced by aufs union mount, happening in initramfs stage. Clean them in the mount list.
-ignoredisk /root/host
-ignoredisk /root/dev
-ignoredisk /root/dev/pts
+includeAllDisks  10%
 
 #  Walk the UCD-SNMP-MIB::dskTable to see the resulting output
 #  Note that this table will be empty if there are no "disk" entries in the snmpd.conf file
