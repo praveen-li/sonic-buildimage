@@ -83,7 +83,7 @@ class TestCfgGen(TestCase):
     def test_minigraph_vlans(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v VLAN'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'Vlan1000': {'members': ['Ethernet8'], 'vlanid': '1000'}}")
+        self.assertEqual(output.strip(), "{'Vlan1000': {'dhcp_servers': ['192.0.0.1', '192.0.0.2'], 'members': ['Ethernet8'], 'vlanid': '1000'}}")
 
     def test_minigraph_vlan_interfaces(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v "VLAN_INTERFACE.keys()"'
@@ -106,9 +106,9 @@ class TestCfgGen(TestCase):
         self.assertEqual(output.strip(), "[('PortChannel01', 'FC00::71/126'), ('PortChannel01', '10.0.0.56/31')]")
 
     def test_minigraph_neighbors(self):
-        argument = '-m "' + self.sample_graph_t0 + '" -p "' + self.port_config + '" -v "DEVICE_NEIGHBOR[\'ARISTA01T1\']"'
+        argument = '-m "' + self.sample_graph_t0 + '" -p "' + self.port_config + '" -v "DEVICE_NEIGHBOR[\'Ethernet124\']"'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'mgmt_addr': None, 'hwsku': 'Arista', 'lo_addr': None, 'local_port': 'Ethernet112', 'type': 'LeafRouter', 'port': 'Ethernet1/1'}")
+        self.assertEqual(output.strip(), "{'name': 'ARISTA04T1', 'port': 'Ethernet1/1'}")
 
     def test_minigraph_bgp(self):
         argument = '-m "' + self.sample_graph_bgp_speaker + '" -p "' + self.port_config + '" -v "BGP_NEIGHBOR[\'10.0.0.59\']"'
