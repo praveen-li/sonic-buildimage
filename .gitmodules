@@ -66,3 +66,6 @@
 [submodule "platform/broadcom/sonic-platform-modules-dell"]
 	path = platform/broadcom/sonic-platform-modules-dell
 	url = https://github.com/Azure/sonic-platform-modules-dell
+[submodule "files/lnos-internal"]
+	path = files/lnos-internal
+	url = git@gitli.corp.linkedin.com:sonic/lnos-internal.git
