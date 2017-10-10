@@ -1,2 +1,3 @@
 owners: [ ntrianta, rjonnadu, rmolina, sfardeen, zxu ]
 paths: [ '.*' ]
+exclude_paths: [ 'src/.*', 'files/.*' ]
