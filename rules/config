@@ -24,7 +24,7 @@ SONIC_CONFIG_MAKE_JOBS = $(shell nproc)
 DEFAULT_USERNAME = admin
 
 # DEFAULT_PASSWORD - default password for installer build
-DEFAULT_PASSWORD = YourPaSsWoRd
+DEFAULT_PASSWORD = admin123
 
 # ENABLE_DHCP_GRAPH_SERVICE - specify the source of minigraph to generate configuration file.
 # If set to y SONiC will get the minigraph from graph service. Graph service URL need to be 
@@ -43,7 +43,7 @@ DEFAULT_PASSWORD = YourPaSsWoRd
 # SONIC_ROUTING_STACK - specify the routing-stack being elected to drive SONiC's control-plane.
 # Quagga will be the default routing-stack for all the SONiC platforms. Other supported
 # routing-stacks: frr, gobgp.
-SONIC_ROUTING_STACK = quagga
+SONIC_ROUTING_STACK = frr
 
 # ENABLE_SYNCD_RPC - build docker-syncd with rpc packages for testing purposes.
 # Uncomment to enable:
