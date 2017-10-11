@@ -10,13 +10,17 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 		git clone -b stable/$(FRR_VERSION) https://github.com/FRRouting/frr.git; \
 	fi
 
+	pushd ./frr
+
+        # Stepping back in time to the last commit-id that sonic-frr built with.
+	git reset --hard 5424c62d
+
         # Replacing frr's rules/install files with SONiC's own versions to activate
         # specific knobs and adjust install process to address SONiC's needs.
-	cp sonic_frr.rules frr/debian/rules
-	cp sonic_frr.install frr/debian/frr.install
+	cp ../sonic_frr.rules debian/rules
+	cp ../sonic_frr.install debian/frr.install
 
         # Build the package
-	pushd ./frr
 	rm -f debian/*.debhelper.log
 	dpkg-buildpackage -rfakeroot -b -us -uc
 	popd
