@@ -45,8 +45,17 @@ done
 
 echo "Executing SONIC Organization Extensions"
 
-## Place your Organization specific code / scipts here ... 
+## LNOS Extensions to AAA
+if [ -f files/lnos-internal/aaa/lnos_aaa.sh ]; then
+   sudo chmod 755 files/lnos-internal/aaa/lnos_aaa.sh
+   ./files/lnos-internal/aaa/lnos_aaa.sh $FILESYSTEM_ROOT $HOSTNAME
+fi
 
+## LNOS Extensions to CLI
+if [ -f files/lnos-internal/scripts/lnos_cli_extensions.sh ]; then
+   sudo chmod 755 files/lnos-internal/scripts/lnos_cli_extensions.sh
+   ./files/lnos-internal/scripts/lnos_cli_extensions.sh $FILESYSTEM_ROOT
+fi
 
 echo "SONIC Organization Extensions - Done"
 
