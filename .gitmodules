@@ -69,3 +69,6 @@
 [submodule "files/lnos-internal"]
 	path = files/lnos-internal
 	url = git@gitli.corp.linkedin.com:sonic/lnos-internal.git
+[submodule "src/sonic-frr/frr"]
+	path = src/sonic-frr/frr
+	url = https://github.com/FRRouting/frr.git
