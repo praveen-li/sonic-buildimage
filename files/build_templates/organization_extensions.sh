@@ -57,5 +57,11 @@ if [ -f files/lnos-internal/scripts/lnos_cli_extensions.sh ]; then
    ./files/lnos-internal/scripts/lnos_cli_extensions.sh $FILESYSTEM_ROOT
 fi
 
+## LNOS Extensions to ZTP
+if [ -f files/lnos-internal/ztp/lnos_ztp.sh ]; then
+   sudo chmod 755 files/lnos-internal/ztp/lnos_ztp.sh
+   ./files/lnos-internal/ztp/lnos_ztp.sh $FILESYSTEM_ROOT
+fi
+
 echo "SONIC Organization Extensions - Done"
 
