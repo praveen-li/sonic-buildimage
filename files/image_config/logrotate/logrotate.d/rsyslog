@@ -31,8 +31,6 @@
 /var/log/cron.log
 /var/log/syslog
 /var/log/teamd.log
-/var/log/quagga/bgpd.log
-/var/log/quagga/zebra.log
 /var/log/swss/sairedis.rec
 /var/log/swss/swss.rec
 {
