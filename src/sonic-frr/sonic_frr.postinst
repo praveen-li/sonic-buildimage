@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+# Adjusting FRR's file-system permissions to allow 'sonic' user to own
+# the FRR's execution environment.
+
+chown -R sonic:sonic /etc/frr
+touch /etc/frr/vtysh.conf
+chgrp sonic /etc/frr/vtysh*
+chmod 640 /etc/frr/*
+chown -R sonic:sonic /var/run/frr
+chown -R sonic:sonic /var/log/frr
+
+
+ENVIRONMENTFILE=/etc/environment
+if ! grep --quiet VTYSH_PAGER=/bin/cat ${ENVIRONMENTFILE}; then
+    echo "VTYSH_PAGER=/bin/cat"  >> ${ENVIRONMENTFILE}
+fi
+
+if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
+${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*"}
+
+# This is most likely due to the answer "no" to the "really stop the server"
+# question in the prerm script.
+if [ "$1" = "abort-upgrade" ]; then
+  exit 0
+fi
+
+. /usr/share/debconf/confmodule
+
+db_stop
+
+#DEBHELPER#
+

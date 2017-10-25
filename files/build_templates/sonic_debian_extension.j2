@@ -230,3 +230,18 @@ sudo cp target/files/$MLNX_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC.mfa
 j2 platform/mellanox/mlnx-fw-upgrade.j2 | sudo tee $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh
 sudo chmod 755 $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh
 {% endif %}
+
+## If FRR is elected as the routing-stack, its corresponding configuration file
+## will be exposed to the host's file-system. With that goal in mind, here we are
+## creating a dummy/empty config-file to serve as a placeholder for FRR's full
+## configuration.
+{%- if SONIC_ROUTING_STACK == "frr" %}
+sudo mkdir $FILESYSTEM_ROOT/etc/sonic/frr
+sudo touch $FILESYSTEM_ROOT/etc/sonic/frr/frr.conf
+sudo touch $FILESYSTEM_ROOT/etc/sonic/frr/vtysh.conf
+sudo cp dockers/docker-fpm-frr/debian.conf $FILESYSTEM_ROOT/etc/sonic/frr/
+sudo cp dockers/docker-fpm-frr/daemons $FILESYSTEM_ROOT/etc/sonic/frr/
+sudo chown -R $SONIC_USER_UID:$SONIC_USER_GID $FILESYSTEM_ROOT/etc/sonic/frr
+sudo chmod 750 $FILESYSTEM_ROOT/etc/sonic/frr
+sudo chmod -R 640 $FILESYSTEM_ROOT/etc/sonic/frr/
+{%- endif %}

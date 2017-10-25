@@ -60,6 +60,9 @@ start() {
 {%- if docker_container_name != "database" %}
         -v /usr/share/sonic/device/$PLATFORM/$HWSKU:/usr/share/sonic/hwsku:ro \
 {%- endif %}
+{%- if docker_image_name == "docker-fpm-frr" %}
+        -v /etc/sonic/frr:/etc/frr:rw \
+{%- endif %}
         --name={{docker_container_name}} {{docker_image_name}}:latest
 
     postStartAction

@@ -41,9 +41,9 @@ override_dh_auto_configure:
 		--enable-vtysh=yes \
 		--enable-isisd=yes \
 		--enable-multipath=256 \
-		--enable-user=frr \
-		--enable-group=frr \
-		--enable-vty-group=frrvty \
+		--enable-user=sonic \
+		--enable-group=sonic \
+		--enable-vty-group=sonic \
 		--enable-configfile-mask=0640 \
 		--enable-logfile-mask=0640 \
 		--enable-werror \

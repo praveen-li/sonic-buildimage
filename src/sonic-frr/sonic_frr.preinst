@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
+${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*"}
+set -e
+set -u
+
+# creating sonic group if it isn't already there
+if ! getent group sonic > /dev/null; then
+    groupadd -g $SONIC_USER_GID sonic > /dev/null
+fi
+
+# creating sonic user if isn't already there
+if ! getent passwd sonic >/dev/null; then
+    useradd -u $SONIC_USER_UID -g $SONIC_USER_GID \
+            --shell /bin/false sonic > /dev/null
+fi
+
+# Do not change permissions when upgrading as it would violate policy.
+if [ "$1" = "install" ]; then
+  # Logfiles are group readable in case users were put into the sonic group.
+  d=/var/log/frr/
+    mkdir -p $d
+    chown -R sonic:sonic $d
+    chmod u=rw,g=r,o= $d
+    find $d -type f -print0 | xargs -0 --no-run-if-empty   chmod u=rw,g=r,o=
+
+  # Strict permissions for the sockets.
+  d=/var/run/frr/
+    mkdir -p $d
+    chown -R sonic:sonic $d
+    chmod u=rwx,go=rx $d
+    find $d -type f -print0 | xargs -0 --no-run-if-empty   chmod u=rw,go=
+
+  # Config files. Vtysh does not have access to the individual daemons config file
+  d=/etc/frr/
+    mkdir -p $d
+    chown sonic:sonic $d
+    chmod u=rwx,g=r,o= $d
+    find $d -type f -print0 | xargs -0 --no-run-if-empty   chown sonic:sonic
+    find $d -type f -print0 | xargs -0 --no-run-if-empty   chmod u=rw,g=r,o=
+
+    # Exceptions for vtysh.
+    f=$d/vtysh.conf
+    if [ -f $f ]; then
+      chown sonic:sonic $f
+      chmod u=rw,g=r,o= $f
+    fi
+
+    # Exceptions for vtysh.
+    f=$d/frr.conf
+    if [ -f $d/Zebra.conf ]; then
+      mv $d/Zebra.conf $f
+    fi
+    if [ -f $f ]; then
+      chown sonic:sonic $f
+      chmod u=rw,g=r,o= $f
+    fi
+fi
+
+#DEBHELPER#

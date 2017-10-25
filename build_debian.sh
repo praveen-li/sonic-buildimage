@@ -165,6 +165,11 @@ sudo LANG=C chroot $FILESYSTEM_ROOT useradd -G sudo,docker $USERNAME -c "$DEFAUL
 ## Create password for the default user
 echo $USERNAME:$PASSWORD_ENCRYPTED | sudo LANG=C chroot $FILESYSTEM_ROOT chpasswd -e
 
+## Create special 'sonic' user -- refer to rules/config for details.
+sudo LANG=C chroot $FILESYSTEM_ROOT groupadd -g $SONIC_USER_GID sonic
+sudo LANG=C chroot $FILESYSTEM_ROOT useradd -u $SONIC_USER_UID \
+     -g $SONIC_USER_GID -M -s /bin/false sonic
+
 ## Pre-install hardware drivers
 sudo LANG=C chroot $FILESYSTEM_ROOT apt-get -y install      \
     firmware-linux-nonfree

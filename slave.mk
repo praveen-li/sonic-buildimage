@@ -98,6 +98,15 @@ $(info "ENABLE_SYNCD_RPC"                : "$(ENABLE_SYNCD_RPC)")
 $(info "ENABLE_ORGANIZATION_EXTENSIONS"  : "$(ENABLE_ORGANIZATION_EXTENSIONS)")
 $(info )
 
+# Exporting ROUTING_STACK as an env-var to allow build-infra to conditionaly compile
+# routing stack dependent components.
+export SONIC_ROUTING_STACK
+
+# Exporting SONIC_USER_UID/GID values.
+export SONIC_USER_UID
+export SONIC_USER_GID
+
+
 ###############################################################################
 ## Generic rules section
 ## All rules must go after includes for propper targets expansion
