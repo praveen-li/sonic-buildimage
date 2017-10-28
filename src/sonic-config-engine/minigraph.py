@@ -350,7 +350,7 @@ def parse_xml(filename, platform=None, port_config_file=None):
     port_alias_map.update(alias_map)
     for child in root:
         if child.tag == str(QName(ns, "DpgDec")):
-            (intfs, lo_intfs, mgmt_intf, vlans, pcs, acls) = parse_dpg(child, hostname)
+            (intfs, lo_intfs, mgmt_intf, vlans, vlan_members, pcs, acls) = parse_dpg(child, hostname)
         elif child.tag == str(QName(ns, "CpgDec")):
             (bgp_sessions, bgp_asn, bgp_peers_with_range) = parse_cpg(child, hostname)
         elif child.tag == str(QName(ns, "PngDec")):
