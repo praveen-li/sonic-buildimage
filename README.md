@@ -18,26 +18,23 @@ Any server can be a build image server. We are using a server with 1T hard disk.
 # Prerequisites
 
 ## SAI Version 
-SONiC V2 is using [SAI 0.9.4](https://github.com/opencomputeproject/SAI/tree/v0.9.4). 
+Please refer to [SONiC roadmap](https://github.com/Azure/SONiC/wiki/Sonic-Roadmap-Planning) on the SAI version for each SONiC release. 
 
 ## Clone or fetch the code repository with all git submodules
 To clone the code repository recursively, assuming git version 1.9 or newer:
 
     git clone --recursive https://github.com/Azure/sonic-buildimage.git
 
-NOTE: If the repo has already been cloned, however there are no files under the submodule directories (e.g., src/lldpd, src/ptf, src/sonic-linux-kernel, etc.), you can manually fetch all the git submodules as follows:
-
-    git submodule update --init --recursive
-
-You also need to change all git paths to relative path as we build all submodules inside the docker:
-
-    git submodule foreach --recursive '[ -f .git ] && echo "gitdir: $(realpath --relative-to=. $(cut -d" " -f2 .git))" > .git'
-    
 ## Usage
 
 To build SONiC installer image and docker images, run the following commands:
 
+    # Execute make init once after cloning the repo, or fetched remote repo with submodule updates
+    make init
+
+    # Execute make configure once to configure ASIC
     make configure PLATFORM=[ASIC_VENDOR]
+
     make
 
  **NOTE**: We recommend reserving 50G free space to build one platform.
@@ -45,7 +42,7 @@ To build SONiC installer image and docker images, run the following commands:
 The SONiC installer contains all docker images needed. SONiC uses one image for all devices of a same ASIC vendor. The supported ASIC vendors are:
 
 - PLATFORM=broadcom
-- PLATFORM=marvell (*pending*)
+- PLATFORM=marvell 
 - PLATFORM=mellanox
 - PLATFORM=cavium
 - PLATFORM=centec

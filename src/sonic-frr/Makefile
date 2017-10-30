@@ -6,7 +6,6 @@ MAIN_TARGET = frr_$(FRR_VERSION)_amd64.deb
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	pushd ./frr
-
         # Replacing frr's rules/install files with SONiC's own versions to activate
         # specific knobs and adjust install process to address SONiC's needs.
 	cp ../sonic_frr.rules debian/rules

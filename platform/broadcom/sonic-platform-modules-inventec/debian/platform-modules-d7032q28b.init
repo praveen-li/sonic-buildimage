@@ -15,43 +15,14 @@ case "$1" in
 start)
 	echo -n "Setting up board... "
 	
-	depmod -a
-	modprobe inv_platform
-	modprobe inv_psoc
-	modprobe inv_cpld
-	
-	/usr/local/bin/onie-syseeprom -S /tmp/eeprom
-	# Attach 32 instances of EEPROM driver QSFP ports on IO module 1
-	#eeprom can dump data using below command
-	for ((i=22;i<=29;i++));
-	do
-	echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-0/i2c-4/i2c-$i/new_device 
-	done
-
-	for ((i=30;i<=37;i++));
-	do
-	echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-0/i2c-5/i2c-$i/new_device 
-	done
-
-	for ((i=6;i<=13;i++));
-	do
-	echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-0/i2c-2/i2c-$i/new_device 
-	done
-
-	for ((i=14;i<=21;i++));
-	do
-	echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-0/i2c-3/i2c-$i/new_device 
-	done
-	
+	depmod -a    
+	/usr/local/bin/inventec_d7032_util.py -f install
 	echo "done."
 	;;
 
 stop)
-	
-	rmmod inv_cpld
-	rmmod inv_psoc
-	rmmod inv_platform 
-	
+    
+        /usr/local/bin/inventec_d7032_util.py -f clean
 	echo "done."
 
 	;;

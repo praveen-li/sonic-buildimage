@@ -195,3 +195,4 @@ module_init(plat_redwood_x86_init);
 MODULE_AUTHOR("Inventec");
 MODULE_DESCRIPTION("Redwood_x86 Platform devices");
 MODULE_LICENSE("GPL");
+

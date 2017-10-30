@@ -12,33 +12,19 @@ from collections import defaultdict
 from lxml import etree as ET
 from lxml.etree import QName
 
-DOCUMENTATION = '''
----
-module: minigraph_facts
+from portconfig import get_port_config
+
+"""minigraph.py
 version_added: "1.9"
 author: Guohan Lu (gulv@microsoft.com)
-short_description: Retrive minigraph facts for a device.
-description:
-    - Retrieve minigraph facts for a device, the facts will be
-      inserted to the ansible_facts key.
-options:
-    host:
-        description:
-            - Set to target snmp server (normally {{inventory_hostname}})
-        required: true
-'''
-
-EXAMPLES = '''
-# Gather minigraph facts
-- name: Gathering minigraph facts about the device
-  minigraph_facts: host={{ hostname }}
-'''
+short_description: Parse minigraph xml file and device description xml file
+"""
 
 ns = "Microsoft.Search.Autopilot.Evolution"
 ns1 = "http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution"
 ns2 = "Microsoft.Search.Autopilot.NetMux"
 ns3 = "http://www.w3.org/2001/XMLSchema-instance"
-
+KEY_SEPARATOR = '|'
 
 class minigraph_encoder(json.JSONEncoder):
     def default(self, obj):
@@ -167,6 +153,7 @@ def parse_dpg(dpg, hname):
         vlanintfs = child.find(str(QName(ns, "VlanInterfaces")))
         vlan_intfs = []
         vlans = {}
+        vlan_members = {}
         for vintf in vlanintfs.findall(str(QName(ns, "VlanInterface"))):
             vintfname = vintf.find(str(QName(ns, "Name"))).text
             vlanid = vintf.find(str(QName(ns, "VlanID"))).text
@@ -174,7 +161,10 @@ def parse_dpg(dpg, hname):
             vmbr_list = vintfmbr.split(';')
             for i, member in enumerate(vmbr_list):
                 vmbr_list[i] = port_alias_map.get(member, member)
-            vlan_attributes = {'members': vmbr_list, 'vlanid': vlanid}
+                sonic_vlan_member_name = "Vlan%s%s%s" % (vlanid, KEY_SEPARATOR, vmbr_list[i])
+                vlan_members[sonic_vlan_member_name] = {'tagging_mode': 'untagged'}
+
+            vlan_attributes = {'vlanid': vlanid}
 
             # If this VLAN requires a DHCP relay agent, it will contain a <DhcpRelays> element
             # containing a list of DHCP server IPs
@@ -208,8 +198,8 @@ def parse_dpg(dpg, hname):
                     break;
             if acl_intfs:
                 acls[aclname] = { 'policy_desc': aclname, 'ports': acl_intfs, 'type': 'mirror' if is_mirror else 'L3'}
-        return intfs, lo_intfs, mgmt_intf, vlans, pcs, acls
-    return None, None, None, None, None, None
+        return intfs, lo_intfs, mgmt_intf, vlans, vlan_members, pcs, acls
+    return None, None, None, None, None, None, None
 
 
 def parse_cpg(cpg, hname):
@@ -234,7 +224,6 @@ def parse_cpg(cpg, hname):
                 else:
                     keepalive = 60
                 nhopself = 1 if session.find(str(QName(ns, "NextHopSelf"))) is not None else 0
-
                 if end_router == hname:
                     bgp_sessions[start_peer] = {
                         'name': start_router,
@@ -275,7 +264,7 @@ def parse_cpg(cpg, hname):
                         bgp_session = bgp_sessions[peer]
                         if hostname == bgp_session['name']:
                             bgp_session['asn'] = asn
-
+    bgp_sessions = { key: bgp_sessions[key] for key in bgp_sessions if bgp_sessions[key].has_key('asn') and int(bgp_sessions[key]['asn']) != 0 }
     return bgp_sessions, myasn, bgp_peers_with_range
 
 
@@ -320,40 +309,6 @@ def parse_deviceinfo(meta, hwsku):
                 ethernet_interfaces[port_alias_map.get(alias, alias)] = speed
     return ethernet_interfaces
 
-def parse_port_config(hwsku, platform=None, port_config_file=None):
-    port_config_candidates = []
-    if port_config_file != None:
-        port_config_candidates.append(port_config_file)
-    port_config_candidates.append('/usr/share/sonic/hwsku/port_config.ini')
-    if platform != None:
-        port_config_candidates.append(os.path.join('/usr/share/sonic/device', platform, hwsku, 'port_config.ini'))
-    port_config_candidates.append(os.path.join('/usr/share/sonic/platform', hwsku, 'port_config.ini'))
-    port_config_candidates.append(os.path.join('/usr/share/sonic', hwsku, 'port_config.ini'))
-    port_config = None
-    for candidate in port_config_candidates:
-        if os.path.isfile(candidate):
-            port_config = candidate
-            break
-    if port_config == None:
-        return None
-
-    ports = {}
-    with open(port_config) as data:
-        for line in data:
-            if line.startswith('#'):
-                continue
-            tokens = line.split()
-            if len(tokens) < 2:
-                continue
-            name = tokens[0].strip()
-            if len(tokens) == 2:
-                alias = name
-            else:
-                alias = tokens[2].strip()
-            ports[name] = {'alias': alias}
-            port_alias_map[alias] = name
-    return ports
-
 def parse_xml(filename, platform=None, port_config_file=None):
     root = ET.parse(filename).getroot()
     mini_graph_path = filename
@@ -367,6 +322,7 @@ def parse_xml(filename, platform=None, port_config_file=None):
     vlan_intfs = None
     pc_intfs = None
     vlans = None
+    vlan_members = None
     pcs = None
     mgmt_intf = None
     lo_intf = None
@@ -390,11 +346,11 @@ def parse_xml(filename, platform=None, port_config_file=None):
         if child.tag == str(hostname_qn):
             hostname = child.text
 
-    ports = parse_port_config(hwsku, platform, port_config_file)
-
+    (ports, alias_map) = get_port_config(hwsku, platform, port_config_file)
+    port_alias_map.update(alias_map)
     for child in root:
         if child.tag == str(QName(ns, "DpgDec")):
-            (intfs, lo_intfs, mgmt_intf, vlans, pcs, acls) = parse_dpg(child, hostname)
+            (intfs, lo_intfs, mgmt_intf, vlans, vlan_members, pcs, acls) = parse_dpg(child, hostname)
         elif child.tag == str(QName(ns, "CpgDec")):
             (bgp_sessions, bgp_asn, bgp_peers_with_range) = parse_cpg(child, hostname)
         elif child.tag == str(QName(ns, "PngDec")):
@@ -442,8 +398,10 @@ def parse_xml(filename, platform=None, port_config_file=None):
     results['PORT'] = ports
     results['PORTCHANNEL'] = pcs
     results['VLAN'] = vlans
+    results['VLAN_MEMBER'] = vlan_members
 
     results['DEVICE_NEIGHBOR'] = neighbors
+    results['DEVICE_NEIGHBOR_METADATA'] = { key:devices[key] for key in devices if key != hostname }
     results['SYSLOG_SERVER'] = dict((item, {}) for item in syslog_servers)
     results['DHCP_SERVER'] = dict((item, {}) for item in dhcp_servers)
     results['NTP_SERVER'] = dict((item, {}) for item in ntp_servers)

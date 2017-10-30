@@ -17,8 +17,6 @@ class SfpUtil(SfpUtilBase):
     PORT_END = 31
     PORTS_IN_BLOCK = 32
 
-#    EEPROM_OFFSET = 20
-
     _port_to_eeprom_mapping = {}
     qsfp_ports = range(0, PORTS_IN_BLOCK + 1)
 
