@@ -7,6 +7,13 @@ case $reason in
             hostname -F /etc/hostname
             sed -i "/\s$current_host_name$/d" /etc/hosts
             echo "127.0.0.1 $new_host_name" >> /etc/hosts
+
+            # update hostname in Sudoers Machine Group
+            mkdir -p $FILESYSTEM_ROOT/etc/sudo.d/
+            echo "Host_Alias APP_SERVER = $new_host_name" > /etc/sudo.d/sudoers-MACHINE_GROUP
+            echo "Host_Alias DEVOPSPROD = $new_host_name" >> /etc/sudo.d/sudoers-MACHINE_GROUP
+            echo "Host_Alias INFRATOOL_MACHINES = $new_host_name" >> /etc/sudo.d/sudoers-MACHINE_GROUP
+
         fi
         ;;
 esac
