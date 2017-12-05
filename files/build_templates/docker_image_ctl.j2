@@ -73,6 +73,12 @@ attach() {
 }
 
 stop() {
+{%- if docker_container_name == "syncd" %}
+    # When stopping the syncd service, we don't allow any traffic going through ASIC
+    # This is to prevent some potential reboot hang issue
+    bcmcmd "port xe enable=false stp=disable"
+    bcmcmd "port ce enable=false stp=disable"
+{%- endif %}
     docker stop {{docker_container_name}}
 }
 
