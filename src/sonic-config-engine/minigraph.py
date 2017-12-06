@@ -307,9 +307,10 @@ def parse_deviceinfo(meta, hwsku):
             for interface in interfaces.findall(str(QName(ns1, "EthernetInterface"))):
                 alias = interface.find(str(QName(ns, "InterfaceName"))).text
                 speed = interface.find(str(QName(ns, "Speed"))).text
-                desc  = interface.find(str(QName(ns, "Description"))).text
+                desc  = interface.find(str(QName(ns, "Description")))
+                if desc != None:
+                    port_descriptions[port_alias_map.get(alias, alias)] = desc.text
                 port_speeds[port_alias_map.get(alias, alias)] = speed
-                port_descriptions[port_alias_map.get(alias, alias)] = desc
     return port_speeds, port_descriptions
 
 def parse_xml(filename, platform=None, port_config_file=None):
