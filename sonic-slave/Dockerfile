@@ -164,10 +164,11 @@ RUN apt-get update && apt-get install -y \
         cppcheck \
         clang \
         pylint \
-        python-pytest \
         gcovr \
         python-pytest=2.6.3* \
+        python3-pytest=2.6.3* \
         python-pytest-cov \
+        python3-pytest-cov \
         python-parse \
 # For snmpd
         libmysqlclient-dev \
@@ -196,13 +197,27 @@ RUN apt-get update && apt-get install -y \
         python-netaddr \
         python-ipaddr \
         python-yaml \
+# For sonic utilities
+        python3-netaddr \
 # For lockfile
         procmail \
 # For gtest
         libgtest-dev \
         cmake \
+# For pam_tacplus build
+        autoconf-archive \
 # For python-based swsscommon
-        swig3.0
+        swig3.0 \
+# For iproute2
+        cm-super-minimal \
+        libatm1-dev \
+        libelf-dev \
+        libmnl-dev \
+        libselinux1-dev \
+        linuxdoc-tools \
+        lynx \
+        texlive-latex-extra \
+        texlive-latex-recommended
 
 # For linux build
 RUN apt-get -y build-dep linux

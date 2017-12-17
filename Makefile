@@ -12,6 +12,7 @@
 #  * USERNAME: Desired username -- default at rules/config
 #  * PASSWORD: Desired password -- default at rules/config
 #  * KEEP_SLAVE_ON: Keeps slave container up after building-process concludes.
+#  * SOURCE_FOLDER: host path to be mount as /var/src, only effective when KEEP_SLAVE_ON=yes
 #
 ###############################################################################
 
@@ -25,8 +26,8 @@ $(shell rm -f .screen)
 
 MAKEFLAGS += -B
 
-SLAVE_BASE_TAG = $(shell shasum sonic-slave/Dockerfile | awk '{print substr($$1,0,11);}')
-SLAVE_TAG = $(shell cat sonic-slave/Dockerfile.user sonic-slave/Dockerfile | shasum | awk '{print substr($$1,0,11);}')
+SLAVE_BASE_TAG = $(shell sha1sum sonic-slave/Dockerfile | awk '{print substr($$1,0,11);}')
+SLAVE_TAG = $(shell cat sonic-slave/Dockerfile.user sonic-slave/Dockerfile | sha1sum | awk '{print substr($$1,0,11);}')
 SLAVE_BASE_IMAGE = sonic-slave-base
 SLAVE_IMAGE = sonic-slave-$(USER)
 
@@ -72,7 +73,11 @@ SONIC_BUILD_INSTRUCTION :=  make \
 	    { echo Image $(SLAVE_IMAGE):$(SLAVE_TAG) not found. Building... ; \
 	    $(DOCKER_BUILD) ; }
 ifeq "$(KEEP_SLAVE_ON)" "yes"
-	@$(DOCKER_RUN) $(SLAVE_IMAGE):$(SLAVE_TAG) bash -c "$(SONIC_BUILD_INSTRUCTION) $@; /bin/bash"
+    ifdef SOURCE_FOLDER
+		@$(DOCKER_RUN) -v $(SOURCE_FOLDER):/var/src $(SLAVE_IMAGE):$(SLAVE_TAG) bash -c "$(SONIC_BUILD_INSTRUCTION) $@; /bin/bash"
+    else
+		@$(DOCKER_RUN) $(SLAVE_IMAGE):$(SLAVE_TAG) bash -c "$(SONIC_BUILD_INSTRUCTION) $@; /bin/bash"
+    endif
 else
 	@$(DOCKER_RUN) $(SLAVE_IMAGE):$(SLAVE_TAG) $(SONIC_BUILD_INSTRUCTION) $@
 endif

@@ -89,6 +89,14 @@ sudo cp -f $IMAGE_CONFIGS/bash/bash.bashrc $FILESYSTEM_ROOT/etc/
 sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/sonic-device-data_*.deb || \
     sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
 
+# Install pam-tacplus and nss-tacplus
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/libtac2_*.deb
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/libpam-tacplus_*.deb
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/libnss-tacplus_*.deb
+# Disable tacplus by default
+sudo LANG=C chroot $FILESYSTEM_ROOT pam-auth-update --remove tacplus
+sudo sed -i -e '/^passwd/s/ tacplus//' $FILESYSTEM_ROOT/etc/nsswitch.conf
+
 # Copy crontabs
 sudo cp -f $IMAGE_CONFIGS/cron.d/* $FILESYSTEM_ROOT/etc/cron.d/
 
@@ -119,6 +127,17 @@ sudo cp $IMAGE_CONFIGS/interfaces/*.j2 $FILESYSTEM_ROOT/usr/share/sonic/template
 
 # Copy initial interfaces configuration file, will be overwritten on first boot
 sudo cp $IMAGE_CONFIGS/interfaces/init_interfaces $FILESYSTEM_ROOT/etc/network
+
+# Copy hostcfgd files
+sudo cp $IMAGE_CONFIGS/hostcfgd/hostcfgd.service $FILESYSTEM_ROOT/etc/systemd/system/
+sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable hostcfgd.service
+sudo cp $IMAGE_CONFIGS/hostcfgd/hostcfgd $FILESYSTEM_ROOT/usr/bin/
+sudo cp $IMAGE_CONFIGS/hostcfgd/*.j2 $FILESYSTEM_ROOT/usr/share/sonic/templates/
+
+# Copy hostname configuration scripts
+sudo cp $IMAGE_CONFIGS/hostname/hostname-config.service  $FILESYSTEM_ROOT/etc/systemd/system/
+sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable hostname-config.service
+sudo cp $IMAGE_CONFIGS/hostname/hostname-config.sh $FILESYSTEM_ROOT/usr/bin/
 
 # Copy updategraph script and service file
 sudo cp $IMAGE_CONFIGS/updategraph/updategraph.service  $FILESYSTEM_ROOT/etc/systemd/system/
@@ -187,6 +206,11 @@ sudo dpkg --root=$FILESYSTEM_ROOT -P {{ debname }}
 {% endif %}
 
 sudo rm -f $FILESYSTEM_ROOT/usr/sbin/policy-rc.d
+
+## Revise /etc/init.d/networking for Arista switches
+if [ "$image_type" = "aboot" ]; then
+    sudo sed -i 's/udevadm settle/udevadm settle -E \/sys\/class\/net\/eth0/' $FILESYSTEM_ROOT/etc/init.d/networking
+fi
 
 ## copy platform rc.local
 sudo cp $IMAGE_CONFIGS/platform/rc.local $FILESYSTEM_ROOT/etc/

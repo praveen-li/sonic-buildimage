@@ -71,3 +71,9 @@
 [submodule "src/sonic-frr/frr"]
 	path = src/sonic-frr/frr
 	url = https://github.com/FRRouting/frr.git
+[submodule "platform/p4/p4-hlir/p4-hlir-v1.1"]
+	path = platform/p4/p4-hlir/p4-hlir-v1.1
+	url = https://github.com/p4lang/p4-hlir.git
+[submodule "platform/p4/SAI-P4-BM"]
+	path = platform/p4/SAI-P4-BM
+	url = https://github.com/Mellanox/SAI-P4-BM.git

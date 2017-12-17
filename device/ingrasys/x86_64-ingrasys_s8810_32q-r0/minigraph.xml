@@ -103,7 +103,7 @@
       <DeviceLinkBase i:type="DeviceInterfaceLink">
         <Bandwidth>40000</Bandwidth>
         <ElementType>DeviceInterfaceLink</ElementType>
-        <EndDevice>OCPSCH8810MS</EndDevice>
+        <EndDevice>OCPSCH0104002MS</EndDevice>
         <EndPort>Ethernet0</EndPort>
         <StartDevice>OCPSCH01040HHLF</StartDevice>
         <StartPort>Ethernet52</StartPort>
@@ -111,7 +111,7 @@
     </DeviceInterfaceLinks>
     <Devices>
       <Device i:type="LeafRouter">
-        <Hostname>OCPSCH8810HHLF</Hostname>
+        <Hostname>OCPSCH01040HHLF</Hostname>
         <HwSku>INGRASYS-S8810-32Q</HwSku>
       </Device>
     </Devices>
