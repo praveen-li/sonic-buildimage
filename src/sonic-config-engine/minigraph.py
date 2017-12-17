@@ -24,7 +24,7 @@ ns = "Microsoft.Search.Autopilot.Evolution"
 ns1 = "http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution"
 ns2 = "Microsoft.Search.Autopilot.NetMux"
 ns3 = "http://www.w3.org/2001/XMLSchema-instance"
-KEY_SEPARATOR = '|'
+
 
 class minigraph_encoder(json.JSONEncoder):
     def default(self, obj):
@@ -153,7 +153,6 @@ def parse_dpg(dpg, hname):
         vlanintfs = child.find(str(QName(ns, "VlanInterfaces")))
         vlan_intfs = []
         vlans = {}
-        vlan_members = {}
         for vintf in vlanintfs.findall(str(QName(ns, "VlanInterface"))):
             vintfname = vintf.find(str(QName(ns, "Name"))).text
             vlanid = vintf.find(str(QName(ns, "VlanID"))).text
@@ -161,10 +160,7 @@ def parse_dpg(dpg, hname):
             vmbr_list = vintfmbr.split(';')
             for i, member in enumerate(vmbr_list):
                 vmbr_list[i] = port_alias_map.get(member, member)
-                sonic_vlan_member_name = "Vlan%s%s%s" % (vlanid, KEY_SEPARATOR, vmbr_list[i])
-                vlan_members[sonic_vlan_member_name] = {'tagging_mode': 'untagged'}
-
-            vlan_attributes = {'vlanid': vlanid}
+            vlan_attributes = {'members': vmbr_list, 'vlanid': vlanid}
 
             # If this VLAN requires a DHCP relay agent, it will contain a <DhcpRelays> element
             # containing a list of DHCP server IPs
@@ -198,8 +194,8 @@ def parse_dpg(dpg, hname):
                     break;
             if acl_intfs:
                 acls[aclname] = { 'policy_desc': aclname, 'ports': acl_intfs, 'type': 'mirror' if is_mirror else 'L3'}
-        return intfs, lo_intfs, mgmt_intf, vlans, vlan_members, pcs, acls
-    return None, None, None, None, None, None, None
+        return intfs, lo_intfs, mgmt_intf, vlans, pcs, acls
+    return None, None, None, None, None, None
 
 
 def parse_cpg(cpg, hname):
@@ -326,7 +322,6 @@ def parse_xml(filename, platform=None, port_config_file=None):
     vlan_intfs = None
     pc_intfs = None
     vlans = None
-    vlan_members = None
     pcs = None
     mgmt_intf = None
     lo_intf = None
@@ -406,7 +401,6 @@ def parse_xml(filename, platform=None, port_config_file=None):
     results['PORT'] = ports
     results['PORTCHANNEL'] = pcs
     results['VLAN'] = vlans
-    results['VLAN_MEMBER'] = vlan_members
 
     results['DEVICE_NEIGHBOR'] = neighbors
     results['DEVICE_NEIGHBOR_METADATA'] = { key:devices[key] for key in devices if key != hostname }
