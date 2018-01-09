@@ -64,7 +64,7 @@
 	url = git@gitli.corp.linkedin.com:sonic/lnos-internal.git
 [submodule "src/sonic-frr/frr"]
 	path = src/sonic-frr/frr
-	url = https://github.com/FRRouting/frr.git
+	url = git@gitli.corp.linkedin.com:sonic/frr.git
 [submodule "platform/p4/p4-hlir/p4-hlir-v1.1"]
 	path = platform/p4/p4-hlir/p4-hlir-v1.1
 	url = https://github.com/p4lang/p4-hlir.git
