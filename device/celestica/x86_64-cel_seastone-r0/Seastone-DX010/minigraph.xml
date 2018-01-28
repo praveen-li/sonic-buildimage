@@ -813,7 +813,7 @@
   <PngDec>
     <Devices>
       <Device i:type="LeafRouter">
-        <Hostname>switch1</Hostname>
+        <Hostname>sonic</Hostname>
         <HwSku>Seastone-DX010</HwSku>
       </Device>
     </Devices>
@@ -848,6 +848,6 @@
     </Devices>
     <Properties xmlns:a="http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution"/>
   </MetadataDeclaration>
-  <Hostname>switch1</Hostname>
+  <Hostname>sonic</Hostname>
   <HwSku>Seastone-DX010</HwSku>
 </DeviceMiniGraph>

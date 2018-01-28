@@ -10,12 +10,12 @@ function postStartAction()
 {%- if docker_container_name != "database" %}
     :
 {%- else %}
-    while true; do
-        if [[ "$(docker exec -i database redis-cli ping)" =~ PONG.* ]]; then
-            break
-        fi
-        sleep 1
+    until [[ $(/usr/bin/docker exec database redis-cli ping | grep -c PONG) -gt 0 ]]; do
+      sleep 1;
     done
+{%- endif %}
+{%- if docker_container_name == "snmp" %}
+    docker exec -i database redis-cli -n 6 HSET 'DEVICE_METADATA|localhost' chassis_serial_number $(decode-syseeprom -s)
 {%- endif %}
 }
 
@@ -63,6 +63,8 @@ start() {
 {%- if docker_image_name == "docker-fpm-frr" %}
         -v /etc/sonic/frr:/etc/frr:rw \
 {%- endif %}
+        --tmpfs /tmp \
+        --tmpfs /var/tmp \
         --name={{docker_container_name}} {{docker_image_name}}:latest
 
     postStartAction

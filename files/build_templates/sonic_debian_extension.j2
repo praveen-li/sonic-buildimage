@@ -64,18 +64,24 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
 # Install SONiC config engine Python package
 CONFIG_ENGINE_WHEEL_NAME=$(basename {{config_engine_wheel_path}})
 sudo cp {{config_engine_wheel_path}} $FILESYSTEM_ROOT/$CONFIG_ENGINE_WHEEL_NAME
-sudo LANG=C chroot $FILESYSTEM_ROOT pip install $CONFIG_ENGINE_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $CONFIG_ENGINE_WHEEL_NAME
 sudo rm -rf $FILESYSTEM_ROOT/$CONFIG_ENGINE_WHEEL_NAME
 
 # Install Python client for Redis
-sudo LANG=C chroot $FILESYSTEM_ROOT pip install redis
-sudo LANG=C chroot $FILESYSTEM_ROOT pip install redis-dump-load
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install redis
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install redis-dump-load
 
 # Install SwSS SDK Python 2 package
 SWSSSDK_PY2_WHEEL_NAME=$(basename {{swsssdk_py2_wheel_path}})
 sudo cp {{swsssdk_py2_wheel_path}} $FILESYSTEM_ROOT/$SWSSSDK_PY2_WHEEL_NAME
-sudo LANG=C chroot $FILESYSTEM_ROOT pip install $SWSSSDK_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $SWSSSDK_PY2_WHEEL_NAME
 sudo rm -rf $FILESYSTEM_ROOT/$SWSSSDK_PY2_WHEEL_NAME
+
+# Install sonic-platform-common Python 2 package
+PLATFORM_COMMON_PY2_WHEEL_NAME=$(basename {{platform_common_py2_wheel_path}})
+sudo cp {{platform_common_py2_wheel_path}} $FILESYSTEM_ROOT/$PLATFORM_COMMON_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $PLATFORM_COMMON_PY2_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$PLATFORM_COMMON_PY2_WHEEL_NAME
 
 # Install SONiC Utilities (and its dependencies via 'apt-get -y install -f')
 sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/python-sonic-utilities_*.deb || \
@@ -161,6 +167,12 @@ sudo cp $IMAGE_CONFIGS/asn/deployment_id_asn_map.yml $FILESYSTEM_ROOT/etc/sonic/
 
 # Copy sudoers configuration file
 sudo cp $IMAGE_CONFIGS/sudoers/sudoers $FILESYSTEM_ROOT/etc/
+
+# Copy control plane ACL management daemon files
+sudo cp $IMAGE_CONFIGS/caclmgrd/caclmgrd.service  $FILESYSTEM_ROOT/etc/systemd/system/
+sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable caclmgrd.service
+sudo cp $IMAGE_CONFIGS/caclmgrd/caclmgrd-start.sh $FILESYSTEM_ROOT/usr/bin/
+sudo cp $IMAGE_CONFIGS/caclmgrd/caclmgrd $FILESYSTEM_ROOT/usr/bin/
 
 ## Install package without starting service
 ## ref: https://wiki.debian.org/chroot

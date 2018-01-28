@@ -68,7 +68,7 @@ touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
 
 ## Build a basic Debian system by debootstrap
 echo '[INFO] Debootstrap...'
-sudo debootstrap --variant=minbase --arch amd64 jessie $FILESYSTEM_ROOT http://ftp.us.debian.org/debian
+sudo http_proxy=$http_proxy debootstrap --variant=minbase --arch amd64 jessie $FILESYSTEM_ROOT http://debian-archive.trafficmanager.net/debian
 
 ## Config hostname and hosts, otherwise 'sudo ...' will complain 'sudo: unable to resolve host ...'
 sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '$HOSTNAME' > /etc/hostname"
@@ -78,6 +78,9 @@ sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '127.0.0.1       localhos
 ## Config basic fstab
 sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c 'echo "proc /proc proc defaults 0 0" >> /etc/fstab'
 sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c 'echo "sysfs /sys sysfs defaults 0 0" >> /etc/fstab'
+
+## Setup proxy
+[ -n "$http_proxy" ] && sudo /bin/bash -c "echo 'Acquire::http::Proxy \"$http_proxy\";' > $FILESYSTEM_ROOT/etc/apt/apt.conf.d/01proxy"
 
 ## Note: mounting is necessary to makedev and install linux image
 echo '[INFO] Mount all'
@@ -143,6 +146,9 @@ sudo chroot $FILESYSTEM_ROOT update-initramfs -u
 
 ## Install latest intel igb driver
 sudo cp target/debs/igb.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-4-amd64/kernel/drivers/net/ethernet/intel/igb/igb.ko
+
+## Install latest intel ixgbe driver
+sudo cp target/debs/ixgbe.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-4-amd64/kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 
 ## Install docker
 echo '[INFO] Install docker'
@@ -215,6 +221,7 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     less                    \
     unzip                   \
     gdisk                   \
+    sysfsutils              \
     grub2-common
 
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y download \
@@ -231,6 +238,8 @@ sudo cp files/sshd/host-ssh-keygen.sh $FILESYSTEM_ROOT/usr/local/bin/
 sudo cp -f files/sshd/sshd.service $FILESYSTEM_ROOT/lib/systemd/system/ssh.service
 ## Config sshd
 sudo augtool --autosave "set /files/etc/ssh/sshd_config/UseDNS no" -r $FILESYSTEM_ROOT
+sudo sed -i 's/^ListenAddress ::/#ListenAddress ::/' $FILESYSTEM_ROOT/etc/ssh/sshd_config
+sudo sed -i 's/^#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/' $FILESYSTEM_ROOT/etc/ssh/sshd_config
 
 ## Config monit
 sudo sed -i '
@@ -292,8 +301,8 @@ set /files/etc/sysctl.conf/net.core.rmem_max 2097152
 " -r $FILESYSTEM_ROOT
 
 ## docker-py is needed by Ansible docker module
-sudo LANG=C chroot $FILESYSTEM_ROOT easy_install pip
-sudo LANG=C chroot $FILESYSTEM_ROOT pip install 'docker-py==1.6.0'
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT easy_install pip
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install 'docker-py==1.6.0'
 ## Note: keep pip installed for maintainance purpose
 
 ## Create /var/run/redis folder for docker-database to mount
@@ -317,7 +326,7 @@ sudo cp files/dhcp/dhclient.conf $FILESYSTEM_ROOT/etc/dhcp/
 sudo mkdir -p $FILESYSTEM_ROOT/etc/sonic
 sudo tee $FILESYSTEM_ROOT/etc/sonic/sonic_version.yml > /dev/null <<EOF
 build_version: $(sonic_get_version)
-debian_version: $(cat $FILESYSTEM_ROOT/etc/debian_version)
+debian_version: '$(cat $FILESYSTEM_ROOT/etc/debian_version)'
 kernel_version: $kversion
 asic_type: $sonic_asic_platform
 commit_id: $(git rev-parse --short HEAD)
@@ -345,6 +354,9 @@ sudo LANG=C chroot $FILESYSTEM_ROOT apt-get autoremove
 sudo LANG=C chroot $FILESYSTEM_ROOT apt-get autoclean
 sudo LANG=C chroot $FILESYSTEM_ROOT apt-get clean
 sudo LANG=C chroot $FILESYSTEM_ROOT bash -c 'rm -rf /usr/share/doc/* /usr/share/locale/* /var/lib/apt/lists/* /tmp/*'
+
+## Clean up proxy
+[ -n "$http_proxy" ] && sudo rm -f $FILESYSTEM_ROOT/etc/apt/apt.conf.d/01proxy
 
 ## Umount all
 echo '[INFO] Umount all'

@@ -1,5 +1,6 @@
 *master*: Broadcom: [![Broadcom](https://sonic-jenkins.westus2.cloudapp.azure.com/job/broadcom/job/buildimage-brcm-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/broadcom/job/buildimage-brcm-all)
 Mellanox: [![Mellanox](https://sonic-jenkins.westus2.cloudapp.azure.com/job/mellanox/job/buildimage-mlnx-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/mellanox/job/buildimage-mlnx-all)
+Nephos: [![Nephos](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-all)
 P4: [![P4](https://sonic-jenkins.westus2.cloudapp.azure.com/job/p4/job/buildimage-p4-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/p4/job/buildimage-p4-all)
 VS: [![VS](https://sonic-jenkins.westus2.cloudapp.azure.com/job/vs/job/buildimage-vs-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/vs/job/buildimage-vs-all)
 
@@ -7,7 +8,7 @@ VS: [![VS](https://sonic-jenkins.westus2.cloudapp.azure.com/job/vs/job/buildimag
 Broadcom: [![Broadcom](https://sonic-jenkins.westus2.cloudapp.azure.com/job/broadcom/job/buildimage-brcm-201709/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/broadcom/job/buildimage-brcm-201709/)
 Cavium: [![Cavium](https://sonic-jenkins.westus2.cloudapp.azure.com/job/cavium/job/buildimage-cavm-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/cavium/job/buildimage-cavm-all/)
 Centec: [![Centec](https://sonic-jenkins.westus2.cloudapp.azure.com/job/centec/job/buildimage-centec-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/centec/job/buildimage-centec-all/)
-Nephos: [![Nephos](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-all/)
+Nephos: [![Nephos](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-201709/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/nephos/job/buildimage-nephos-201709/)
 Marvell: [![Marvell](https://sonic-jenkins.westus2.cloudapp.azure.com/job/marvell/job/buildimage-mrvl-all/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/marvell/job/buildimage-mrvl-all/)
 Mellanox: [![Mellanox](https://sonic-jenkins.westus2.cloudapp.azure.com/job/mellanox/job/buildimage-mlnx-201709/badge/icon)](https://sonic-jenkins.westus2.cloudapp.azure.com/job/mellanox/job/buildimage-mlnx-201709/)
 
@@ -30,11 +31,16 @@ Please refer to [SONiC roadmap](https://github.com/Azure/SONiC/wiki/Sonic-Roadma
 ## Clone or fetch the code repository with all git submodules
 To clone the code repository recursively, assuming git version 1.9 or newer:
 
-    git clone --recursive https://github.com/Azure/sonic-buildimage.git
+    git clone https://github.com/Azure/sonic-buildimage.git
 
 ## Usage
 
 To build SONiC installer image and docker images, run the following commands:
+
+    cd sonic-buildimage
+
+    # (Optional) Checkout a specific branch. By default, it uses master branch
+    git checkout [branch_name]
 
     # Execute make init once after cloning the repo, or fetched remote repo with submodule updates
     make init
@@ -44,8 +50,11 @@ To build SONiC installer image and docker images, run the following commands:
 
     make
 
- **NOTE**: We recommend reserving 50G free space to build one platform.
-    
+ **NOTE**:
+
+- We recommend reserving 50G free space to build one platform.
+- Use ```http_proxy=[your_proxy] https_proxy=[your_proxy] make``` to enable http(s) proxy in the build process.
+
 The SONiC installer contains all docker images needed. SONiC uses one image for all devices of a same ASIC vendor. The supported ASIC vendors are:
 
 - PLATFORM=broadcom
@@ -53,6 +62,7 @@ The SONiC installer contains all docker images needed. SONiC uses one image for 
 - PLATFORM=mellanox
 - PLATFORM=cavium
 - PLATFORM=centec
+- PLATFORM=nephos
 - PLATFORM=p4
 - PLATFORM=vs
 
@@ -96,9 +106,11 @@ This may take a while, but it is a one-time action, so please be patient.
   - docker-orchagent-brcm.gz: docker image for SWitch State Service (SWSS) on Broadcom platform (gzip tar archive)
   - docker-orchagent-cavm.gz: docker image for SWitch State Service (SWSS) on Cavium platform (gzip tar archive)
   - docker-orchagent-mlnx.gz: docker image for SWitch State Service (SWSS) on Mellanox platform (gzip tar archive)
+  - docker-orchagent-nephos.gz: docker image for SWitch State Service (SWSS) on Nephos platform (gzip tar archive)
   - docker-syncd-brcm.gz: docker image for the daemon to sync database and Broadcom switch ASIC (gzip tar archive)
   - docker-syncd-cavm.gz: docker image for the daemon to sync database and Cavium switch ASIC (gzip tar archive)
   - docker-syncd-mlnx.gz: docker image for the daemon to sync database and Mellanox switch ASIC (gzip tar archive)
+  - docker-syncd-nephos.gz: docker image for the daemon to sync database and Nephos switch ASIC (gzip tar archive)
   - docker-sonic-p4.gz: docker image for all-in-one for p4 software switch (gzip tar archive)
   - docker-sonic-vs.gz: docker image for all-in-one for software virtual switch (gzip tar archive)
 

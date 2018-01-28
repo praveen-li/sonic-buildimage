@@ -74,7 +74,11 @@ ifeq ($(PASSWORD),)
 override PASSWORD := $(DEFAULT_PASSWORD)
 endif
 
-MAKEFLAGS += -j $(SONIC_CONFIG_BUILD_JOBS)
+ifeq ($(SONIC_BUILD_JOBS),)
+override SONIC_BUILD_JOBS := $(SONIC_CONFIG_BUILD_JOBS)
+endif
+
+MAKEFLAGS += -j $(SONIC_BUILD_JOBS)
 export SONIC_CONFIG_MAKE_JOBS
 
 ###############################################################################
@@ -86,7 +90,7 @@ $(info )
 $(info Build Configuration)
 $(info "CONFIGURED_PLATFORM"             : "$(if $(PLATFORM),$(PLATFORM),$(CONFIGURED_PLATFORM))")
 $(info "SONIC_CONFIG_PRINT_DEPENDENCIES" : "$(SONIC_CONFIG_PRINT_DEPENDENCIES)")
-$(info "SONIC_CONFIG_BUILD_JOBS"         : "$(SONIC_CONFIG_BUILD_JOBS)")
+$(info "SONIC_BUILD_JOBS"                : "$(SONIC_BUILD_JOBS)")
 $(info "SONIC_CONFIG_MAKE_JOBS"          : "$(SONIC_CONFIG_MAKE_JOBS)")
 $(info "DEFAULT_USERNAME"                : "$(DEFAULT_USERNAME)")
 $(info "DEFAULT_PASSWORD"                : "$(DEFAULT_PASSWORD)")
@@ -96,6 +100,8 @@ $(info "SONIC_CONFIG_DEBUG"              : "$(SONIC_CONFIG_DEBUG)")
 $(info "ROUTING_STACK"                   : "$(SONIC_ROUTING_STACK)")
 $(info "ENABLE_SYNCD_RPC"                : "$(ENABLE_SYNCD_RPC)")
 $(info "ENABLE_ORGANIZATION_EXTENSIONS"  : "$(ENABLE_ORGANIZATION_EXTENSIONS)")
+$(info "HTTP_PROXY"                      : "$(HTTP_PROXY)")
+$(info "HTTPS_PROXY"                     : "$(HTTPS_PROXY)")
 $(info )
 
 # Exporting ROUTING_STACK as an env-var to allow build-infra to conditionaly compile
@@ -213,8 +219,8 @@ $(addprefix $(DEBS_PATH)/, $(SONIC_DPKG_DEBS)) : $(DEBS_PATH)/% : .platform $$(a
 	pushd $($*_SRC_PATH) $(LOG)
 	[ ! -f ./autogen.sh ] || ./autogen.sh $(LOG)
 	$(if $($*_DPKG_TARGET),
-		dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS) --as-root -T$($*_DPKG_TARGET) $(LOG),
-		dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS) $(LOG)
+		DEB_BUILD_OPTIONS=$($*_DEB_BUILD_OPTIONS) dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS) --as-root -T$($*_DPKG_TARGET) $(LOG),
+		DEB_BUILD_OPTIONS=$($*_DEB_BUILD_OPTIONS) dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS) $(LOG)
 	)
 	popd $(LOG)
 	# Clean up
@@ -334,7 +340,7 @@ $(SONIC_INSTALL_WHEELS) : $(PYTHON_WHEELS_PATH)/%-install : .platform $$(addsuff
 	# put a lock here to avoid race conditions
 	while true; do
 	if mkdir $(PYTHON_WHEELS_PATH)/pip_lock &> /dev/null; then
-	{ sudo pip$($*_PYTHON_VERSION) install $(PYTHON_WHEELS_PATH)/$* $(LOG) && rm -d $(PYTHON_WHEELS_PATH)/pip_lock && break; } || { rm -d $(PYTHON_WHEELS_PATH)/pip_lock && exit 1 ; }
+	{ sudo -E pip$($*_PYTHON_VERSION) install $(PYTHON_WHEELS_PATH)/$* $(LOG) && rm -d $(PYTHON_WHEELS_PATH)/pip_lock && break; } || { rm -d $(PYTHON_WHEELS_PATH)/pip_lock && exit 1 ; }
 	fi
 	done
 	$(FOOTER)
@@ -345,12 +351,20 @@ $(SONIC_INSTALL_WHEELS) : $(PYTHON_WHEELS_PATH)/%-install : .platform $$(addsuff
 
 # start docker daemon
 docker-start :
+	@sudo sed -i '/http_proxy/d' /etc/default/docker
+	@sudo bash -c "echo \"export http_proxy=$$http_proxy\" >> /etc/default/docker"
 	@sudo service docker status &> /dev/null || ( sudo service docker start &> /dev/null && sleep 1 )
 
 # targets for building simple docker images that do not depend on any debian packages
 $(addprefix $(TARGET_PATH)/, $(SONIC_SIMPLE_DOCKER_IMAGES)) : $(TARGET_PATH)/%.gz : .platform docker-start $$(addsuffix -load,$$(addprefix $(TARGET_PATH)/,$$($$*.gz_LOAD_DOCKERS)))
 	$(HEADER)
-	docker build --squash --no-cache --build-arg user=$(USER) --build-arg uid=$(UID) --build-arg guid=$(GUID) -t $* $($*.gz_PATH) $(LOG)
+	docker build --squash --no-cache \
+		--build-arg http_proxy=$(HTTP_PROXY) \
+		--build-arg https_proxy=$(HTTPS_PROXY) \
+		--build-arg user=$(USER) \
+		--build-arg uid=$(UID) \
+		--build-arg guid=$(GUID) \
+		-t $* $($*.gz_PATH) $(LOG)
 	docker save $* | gzip -c > $@
 	$(FOOTER)
 
@@ -370,7 +384,13 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_DOCKER_IMAGES)) : $(TARGET_PATH)/%.gz : .pl
 	$(eval export $(subst -,_,$(notdir $($*.gz_PATH)))_whls=$(shell printf "$(subst $(SPACE),\n,$(call expand,$($*.gz_PYTHON_WHEELS)))\n" | awk '!a[$$0]++'))
 	$(eval export $(subst -,_,$(notdir $($*.gz_PATH)))_dbgs=$(shell printf "$(subst $(SPACE),\n,$(call expand,$($*.gz_DBG_PACKAGES)))\n" | awk '!a[$$0]++'))
 	j2 $($*.gz_PATH)/Dockerfile.j2 > $($*.gz_PATH)/Dockerfile
-	docker build --squash --no-cache --build-arg user=$(USER) --build-arg uid=$(UID) --build-arg guid=$(GUID) -t $* $($*.gz_PATH) $(LOG)
+	docker build --squash --no-cache \
+		--build-arg http_proxy=$(HTTP_PROXY) \
+		--build-arg https_proxy=$(HTTPS_PROXY) \
+		--build-arg user=$(USER) \
+		--build-arg uid=$(UID) \
+		--build-arg guid=$(GUID) \
+		-t $* $($*.gz_PATH) $(LOG)
 	docker save $* | gzip -c > $@
 	$(FOOTER)
 
@@ -399,12 +419,14 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         $(addprefix $(DEBS_PATH)/,$(INITRAMFS_TOOLS) \
                 $(LINUX_KERNEL) \
                 $(IGB_DRIVER) \
+                $(IXGBE_DRIVER) \
                 $(SONIC_DEVICE_DATA) \
                 $(SONIC_UTILS) \
                 $(LIBPAM_TACPLUS) \
                 $(LIBNSS_TACPLUS)) \
         $$(addprefix $(TARGET_PATH)/,$$($$*_DOCKERS)) \
-        $$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE))
+        $$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE)) \
+        $$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PLATFORM_COMMON_PY2))
 	$(HEADER)
 	# Pass initramfs and linux kernel explicitly. They are used for all platforms
 	export initramfs_tools="$(DEBS_PATH)/$(INITRAMFS_TOOLS)"
@@ -421,6 +443,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
 	export installer_images="$(addprefix $(TARGET_PATH)/,$($*_DOCKERS))"
 	export config_engine_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE))"
 	export swsssdk_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SWSSSDK_PY2))"
+	export platform_common_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PLATFORM_COMMON_PY2))"
 	
 	$(foreach docker, $($*_DOCKERS),\
 		export docker_image="$(docker)"
