@@ -241,7 +241,7 @@ RUN pip install j2cli
 RUN pip install pyangbind==0.5.10
 
 # For sonic utilities testing
-RUN pip install click-default-group click natsort tabulate
+RUN pip install click-default-group click natsort tabulate netifaces==0.10.6
 
 # For supervisor build
 RUN pip install meld3 mock
