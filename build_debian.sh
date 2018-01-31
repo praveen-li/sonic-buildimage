@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 ## This script is to automate the preparation for a debian file system, which will be used for
 ## an ONIE installer image.
 ##
