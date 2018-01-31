@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 ## This script is to automate the preparation for a debian file system, which will be used for
 ## an ONIE installer image.
 ##
@@ -305,6 +305,11 @@ sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT easy_install pip
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install 'docker-py==1.6.0'
 ## Note: keep pip installed for maintainance purpose
 
+## Get gcc and python dev pkgs
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install libpython2.7-dev
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install gcc
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install 'netifaces==0.10.6'
+
 ## Create /var/run/redis folder for docker-database to mount
 sudo mkdir -p $FILESYSTEM_ROOT/var/run/redis
 
@@ -348,6 +353,10 @@ if [ "${enable_organization_extensions}" = "y" ]; then
                                                          -p $PASSWORD_ENCRYPTED
    fi
 fi
+
+## Remove gcc and python dev pkgs
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y remove libpython2.7-dev
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y remove gcc
 
 ## Clean up apt
 sudo LANG=C chroot $FILESYSTEM_ROOT apt-get autoremove
