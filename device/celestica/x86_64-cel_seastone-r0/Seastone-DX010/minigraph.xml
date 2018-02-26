@@ -1,5 +1,6 @@
 <DeviceMiniGraph xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Search.Autopilot.Evolution">
   <CpgDec>
+    <?ignore
     <IsisRouters xmlns:a="http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution"/>
     <PeeringSessions>
       <BGPSession>
@@ -620,6 +621,7 @@
         <a:RouteMaps/>
       </a:BGPRouterDeclaration>
     </Routers>
+    ?>
   </CpgDec>
   <DpgDec>
     <DeviceDataPlaneInfo>
