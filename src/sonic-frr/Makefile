@@ -14,7 +14,8 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	pushd ./frr
 
 	if [ ${SONIC_USER_GID}"unset" = "unset" ] || [ ${SONIC_USER_UID}"unset" = "unset" ]; then
-		sed -i "/SONIC_USER/d" $(DEBIAN8_DIR)/frr.preinst
+		sed -i "/SONIC_USER_GID=/d" $(DEBIAN8_DIR)/frr.preinst
+		sed -i "/SONIC_USER_UID=/d" $(DEBIAN8_DIR)/frr.preinst
 		if patch -Rsfp1 --dry-run < ../tools.frr.patch; then
 			patch -Rsfp1 < ../tools.frr.patch
 		fi
