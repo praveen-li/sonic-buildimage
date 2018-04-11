@@ -114,7 +114,7 @@ echo '[INFO] Install SONiC linux kernel image'
 ## Note: duplicate apt-get command to ensure every line return zero
 sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/initramfs-tools_*.deb || \
     sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
-sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/linux-image-3.16.0-4-amd64_*.deb || \
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/linux-image-3.16.0-5-amd64_*.deb || \
     sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
 
 ## Update initramfs for booting with squashfs+aufs
@@ -133,6 +133,10 @@ sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/hooks/setfacl
 sudo cp files/initramfs-tools/arista-net $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-premount/arista-net
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-premount/arista-net
 
+# Hook into initramfs: resize root partition after migration from another NOS to SONiC on Dell switches
+sudo cp files/initramfs-tools/resize-rootfs $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-premount/resize-rootfs
+sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-premount/resize-rootfs
+
 ## Hook into initramfs: after partition mount and loop file mount
 ## 1. Prepare layered file system
 ## 2. Bind-mount docker working directory (docker aufs cannot work over aufs rootfs)
@@ -140,15 +144,18 @@ sudo cp files/initramfs-tools/union-mount $FILESYSTEM_ROOT/etc/initramfs-tools/s
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/union-mount
 sudo cp files/initramfs-tools/varlog $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/varlog
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/varlog
+# Management interface (eth0) dhcp can be optionally turned off (during a migration from another NOS to SONiC)
+sudo cp files/initramfs-tools/mgmt-intf-dhcp $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/mgmt-intf-dhcp
+sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/scripts/init-bottom/mgmt-intf-dhcp
 sudo cp files/initramfs-tools/union-fsck $FILESYSTEM_ROOT/etc/initramfs-tools/hooks/union-fsck
 sudo chmod +x $FILESYSTEM_ROOT/etc/initramfs-tools/hooks/union-fsck
 sudo chroot $FILESYSTEM_ROOT update-initramfs -u
 
 ## Install latest intel igb driver
-sudo cp target/debs/igb.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-4-amd64/kernel/drivers/net/ethernet/intel/igb/igb.ko
+sudo cp target/debs/igb.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-5-amd64/kernel/drivers/net/ethernet/intel/igb/igb.ko
 
 ## Install latest intel ixgbe driver
-sudo cp target/debs/ixgbe.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-4-amd64/kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
+sudo cp target/debs/ixgbe.ko $FILESYSTEM_ROOT/lib/modules/3.16.0-5-amd64/kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 
 ## Install docker
 echo '[INFO] Install docker'
@@ -222,12 +229,16 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     unzip                   \
     gdisk                   \
     sysfsutils              \
-    grub2-common
+    grub2-common            \
+    ethtool
 
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y download \
     grub-pc-bin
 
 sudo mv $FILESYSTEM_ROOT/grub-pc-bin*.deb $FILESYSTEM_ROOT/$PLATFORM_DIR/x86_64-grub
+
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/libwrap0_*.deb || \
+    sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
 
 ## Disable kexec supported reboot which was installed by default
 sudo sed -i 's/LOAD_KEXEC=true/LOAD_KEXEC=false/' $FILESYSTEM_ROOT/etc/default/kexec
@@ -298,6 +309,7 @@ set /files/etc/sysctl.conf/net.ipv6.conf.all.accept_dad 0
 set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_ra_defrtr 0
 
 set /files/etc/sysctl.conf/net.core.rmem_max 2097152
+set /files/etc/sysctl.conf/net.core.wmem_max 2097152
 " -r $FILESYSTEM_ROOT
 
 ## docker-py is needed by Ansible docker module
@@ -329,11 +341,11 @@ sudo cp files/dhcp/dhclient.conf $FILESYSTEM_ROOT/etc/dhcp/
 ## Version file
 sudo mkdir -p $FILESYSTEM_ROOT/etc/sonic
 sudo tee $FILESYSTEM_ROOT/etc/sonic/sonic_version.yml > /dev/null <<EOF
-build_version: $(sonic_get_version)
+build_version: '$(sonic_get_version)'
 debian_version: '$(cat $FILESYSTEM_ROOT/etc/debian_version)'
-kernel_version: $kversion
+kernel_version: '$kversion'
 asic_type: $sonic_asic_platform
-commit_id: $(git rev-parse --short HEAD)
+commit_id: '$(git rev-parse --short HEAD)'
 build_date: $(date -u)
 build_number: ${BUILD_NUMBER:-0}
 built_by: $USER@$BUILD_HOSTNAME

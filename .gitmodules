@@ -26,9 +26,6 @@
 [submodule "src/sonic-py-swsssdk"]
 	path = src/sonic-py-swsssdk
 	url = git@gitli.corp.linkedin.com:sonic/sonic-py-swsssdk.git
-[submodule "src/lldpd"]
-	path = src/lldpd
-	url = https://github.com/vincentbernat/lldpd.git
 [submodule "src/sonic-snmpagent"]
 	path = src/sonic-snmpagent
 	url = git@gitli.corp.linkedin.com:sonic/sonic-snmpagent.git
@@ -77,3 +74,9 @@
 [submodule "platform/nephos/sonic-platform-modules-ingrasys"]
 	path = platform/nephos/sonic-platform-modules-ingrasys
 	url = https://github.com/Ingrasys-sonic/sonic-platform-modules-ingrasys-nephos.git
+[submodule "platform/broadcom/sonic-platform-modules-quanta"]
+	path = platform/broadcom/sonic-platform-modules-quanta
+	url = https://github.com/QuantaSwitchONIE/sonic-platform-modules-quanta.git
+[submodule "platform/broadcom/sonic-platform-modules-mitac"]
+	path = platform/broadcom/sonic-platform-modules-mitac
+	url = https://github.com/MiTAC-EBU/sonic-platform-modules-mitac.git

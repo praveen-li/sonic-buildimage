@@ -10,14 +10,19 @@ class TestCfgGen(TestCase):
         self.sample_graph = os.path.join(self.test_dir, 'sample_graph.xml')
         self.sample_graph_t0 = os.path.join(self.test_dir, 't0-sample-graph.xml')
         self.sample_graph_simple = os.path.join(self.test_dir, 'simple-sample-graph.xml')
+        self.sample_graph_metadata = os.path.join(self.test_dir, 'simple-sample-graph-metadata.xml')
         self.sample_graph_pc_test = os.path.join(self.test_dir, 'pc-test-graph.xml')
         self.sample_graph_bgp_speaker = os.path.join(self.test_dir, 't0-sample-bgp-speaker.xml')
         self.sample_device_desc = os.path.join(self.test_dir, 'device.xml')
         self.port_config = os.path.join(self.test_dir, 't0-sample-port-config.ini')
 
-    def run_script(self, argument):
+    def run_script(self, argument, check_stderr=False):
         print '\n    Running sonic-cfggen ' + argument
-        output = subprocess.check_output(self.script_file + ' ' + argument, shell=True)
+        if check_stderr:
+            output = subprocess.check_output(self.script_file + ' ' + argument, stderr=subprocess.STDOUT, shell=True)
+        else:
+            output = subprocess.check_output(self.script_file + ' ' + argument, shell=True)
+
         linecount = output.strip().count('\n')
         if linecount <= 0:
             print '    Output: ' + output.strip()
@@ -72,8 +77,13 @@ class TestCfgGen(TestCase):
 
     def test_minigraph_acl(self):
         argument = '-m "' + self.sample_graph_t0 + '" -p "' + self.port_config + '" -v ACL_TABLE'
-        output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'DATAACL': {'type': 'L3', 'policy_desc': 'DATAACL', 'service': 'N/A', 'ports': ['Ethernet112', 'Ethernet116', 'Ethernet120', 'Ethernet124']}}")
+        output = self.run_script(argument, True)
+        self.assertEqual(output.strip(), "Warning: Ignoring Control Plane ACL NTP_ACL without type\n"
+                                         "{'SSH_ACL': {'services': ['SSH'], 'type': 'CTRLPLANE', 'policy_desc': 'SSH_ACL'},"
+                                         " 'SNMP_ACL': {'services': ['SNMP'], 'type': 'CTRLPLANE', 'policy_desc': 'SNMP_ACL'},"
+                                         " 'DATAACL': {'type': 'L3', 'policy_desc': 'DATAACL', 'ports': ['Ethernet112', 'Ethernet116', 'Ethernet120', 'Ethernet124']},"
+                                         " 'NTP_ACL': {'services': ['NTP'], 'type': 'CTRLPLANE', 'policy_desc': 'NTP_ACL'},"
+                                         " 'ROUTER_PROTECT': {'services': ['SSH', 'SNMP'], 'type': 'CTRLPLANE', 'policy_desc': 'ROUTER_PROTECT'}}")
 
     def test_minigraph_everflow(self):
         argument = '-m "' + self.sample_graph_t0 + '" -p "' + self.port_config + '" -v MIRROR_SESSION'
@@ -88,7 +98,7 @@ class TestCfgGen(TestCase):
     def test_minigraph_vlans(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v VLAN'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'Vlan1000': {'dhcp_servers': ['192.0.0.1', '192.0.0.2'], 'vlanid': '1000'}}")
+        self.assertEqual(output.strip(), "{'Vlan1000': {'alias': 'ab1', 'dhcp_servers': ['192.0.0.1', '192.0.0.2'], 'vlanid': '1000'}}")
 
     def test_minigraph_vlan_members(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v VLAN_MEMBER'
@@ -139,3 +149,22 @@ class TestCfgGen(TestCase):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v "PORT[\'Ethernet8\']"'
         output = self.run_script(argument)
         self.assertEqual(output.strip(), "{'alias': 'fortyGigE0/8', 'lanes': '37,38,39,40', 'description': 'Interface description', 'speed': '40000'}")
+        argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v "PORT[\'Ethernet12\']"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'alias': 'fortyGigE0/12', 'lanes': '33,34,35,36', 'fec': 'rs', 'speed': '100000', 'description': 'Interface description'}")
+
+    def test_metadata_everflow(self):
+        argument = '-m "' + self.sample_graph_metadata + '" -p "' + self.port_config + '" -v "MIRROR_SESSION"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'everflow0': {'src_ip': '10.1.0.32', 'dst_ip': '10.0.100.1'}}")
+
+    def test_metadata_tacacs(self):
+        argument = '-m "' + self.sample_graph_metadata + '" -p "' + self.port_config + '" -v "TACPLUS_SERVER"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'10.0.10.7': {'priority': '1', 'tcp_port': '49'}, '10.0.10.8': {'priority': '1', 'tcp_port': '49'}}")
+
+    def test_metadata_ntp(self):
+        argument = '-m "' + self.sample_graph_metadata + '" -p "' + self.port_config + '" -v "NTP_SERVER"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'10.0.10.1': {}, '10.0.10.2': {}}")
+

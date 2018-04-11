@@ -22,9 +22,9 @@
     },
     {
         "PORT_TABLE:Ethernet12": {
-            "speed": "1000000",
+            "speed": "100000",
             "description": "Interface description"
         },
         "OP": "SET"
-    },
+    }
 ]

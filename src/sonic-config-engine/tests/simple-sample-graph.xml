@@ -128,7 +128,7 @@
       </PortChannelInterfaces>
       <VlanInterfaces>
         <VlanInterface>
-          <Name>Vlan1000</Name>
+          <Name>ab1</Name>
           <AttachTo>fortyGigE0/8</AttachTo>
           <DhcpRelays>192.0.0.1;192.0.0.2</DhcpRelays>
           <VlanID>1000</VlanID>
@@ -159,17 +159,21 @@
         </IPInterface>
         <IPInterface>
           <Name i:nil="true"/>
-          <AttachTo>Vlan1000</AttachTo>
+          <AttachTo>ab1</AttachTo>
           <Prefix>192.168.0.1/27</Prefix>
         </IPInterface>
       </IPInterfaces>
       <DataAcls/>
       <AclInterfaces>
         <AclInterface>
-          <AttachTo>
-            PortChannel01
-          </AttachTo>
+          <AttachTo>PortChannel01</AttachTo>
           <InAcl>DataAcl</InAcl>
+          <Type>DataPlane</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>SNMP</AttachTo>
+          <InAcl>SNMP_ACL</InAcl>
+          <Type>SNMP</Type>
         </AclInterface>
       </AclInterfaces>
       <DownstreamSummaries/>
@@ -256,7 +260,7 @@
           <MultiPortsInterface>false</MultiPortsInterface>
           <PortName>0</PortName>
           <Priority>0</Priority>
-          <Speed>1000000</Speed>
+          <Speed>100000</Speed>
           <Description>Interface description</Description>
         </a:EthernetInterface>
       </EthernetInterfaces>

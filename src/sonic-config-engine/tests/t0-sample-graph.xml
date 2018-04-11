@@ -262,10 +262,38 @@
       <DataAcls/>
       <AclInterfaces>
         <AclInterface>
-          <AttachTo>
-            PortChannel01;PortChannel02;PortChannel03;PortChannel04
-          </AttachTo>
+          <AttachTo>PortChannel01;PortChannel02;PortChannel03;PortChannel04</AttachTo>
           <InAcl>DataAcl</InAcl>
+          <Type>DataPlane</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>SNMP</AttachTo>
+          <InAcl>SNMP_ACL</InAcl>
+          <Type>SNMP</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>NTP</AttachTo>
+          <InAcl>NTP_ACL</InAcl>
+          <Type>NTP</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>SSH</AttachTo>
+          <InAcl>SSH_ACL</InAcl>
+          <Type>SSH</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>SSH</AttachTo>
+          <InAcl>ROUTER-PROTECT</InAcl>
+          <Type>SSH</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>SNMP</AttachTo>
+          <InAcl>ROUTER-PROTECT</InAcl>
+          <Type>SNMP</Type>
+        </AclInterface>
+        <AclInterface>
+          <AttachTo>NTP</AttachTo>
+          <InAcl>NTP_ACL</InAcl>
         </AclInterface>
       </AclInterfaces>
       <DownstreamSummaries/>
