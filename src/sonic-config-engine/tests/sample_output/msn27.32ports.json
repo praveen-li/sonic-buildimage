@@ -88,13 +88,13 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PORT_INGRESS_PROFILE_LIST:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24": {
+        "BUFFER_PORT_INGRESS_PROFILE_LIST:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124": {
             "profile_list" : "[BUFFER_PROFILE_TABLE:ingress_lossless_profile],[BUFFER_PROFILE_TABLE:ingress_lossy_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PORT_EGRESS_PROFILE_LIST:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24": {
+        "BUFFER_PORT_EGRESS_PROFILE_LIST:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124": {
             "profile_list" : "[BUFFER_PROFILE_TABLE:egress_lossless_profile],[BUFFER_PROFILE_TABLE:egress_lossy_profile]"
         },
         "OP": "SET"
@@ -102,12 +102,6 @@
 
 
 
-    {
-        "BUFFER_PG_TABLE:Ethernet8:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
     {
         "BUFFER_PG_TABLE:Ethernet0:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
@@ -121,49 +115,67 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet108:3-4": {
+        "BUFFER_PG_TABLE:Ethernet8:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet100:3-4": {
+        "BUFFER_PG_TABLE:Ethernet12:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet104:3-4": {
+        "BUFFER_PG_TABLE:Ethernet16:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet68:3-4": {
+        "BUFFER_PG_TABLE:Ethernet20:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet96:3-4": {
+        "BUFFER_PG_TABLE:Ethernet24:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet124:3-4": {
+        "BUFFER_PG_TABLE:Ethernet28:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet92:3-4": {
+        "BUFFER_PG_TABLE:Ethernet32:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet120:3-4": {
+        "BUFFER_PG_TABLE:Ethernet36:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet40:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet44:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet48:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
@@ -181,13 +193,7 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet76:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
-    {
-        "BUFFER_PG_TABLE:Ethernet72:3-4": {
+        "BUFFER_PG_TABLE:Ethernet60:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
@@ -199,37 +205,19 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet32:3-4": {
+        "BUFFER_PG_TABLE:Ethernet68:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet16:3-4": {
+        "BUFFER_PG_TABLE:Ethernet72:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet36:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
-    {
-        "BUFFER_PG_TABLE:Ethernet12:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
-    {
-        "BUFFER_PG_TABLE:Ethernet88:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
-    {
-        "BUFFER_PG_TABLE:Ethernet116:3-4": {
+        "BUFFER_PG_TABLE:Ethernet76:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
@@ -241,55 +229,67 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet112:3-4": {
-                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
-        },
-        "OP": "SET"
-    },
-    {
         "BUFFER_PG_TABLE:Ethernet84:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet48:3-4": {
+        "BUFFER_PG_TABLE:Ethernet88:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet44:3-4": {
+        "BUFFER_PG_TABLE:Ethernet92:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet40:3-4": {
+        "BUFFER_PG_TABLE:Ethernet96:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet28:3-4": {
+        "BUFFER_PG_TABLE:Ethernet100:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet60:3-4": {
+        "BUFFER_PG_TABLE:Ethernet104:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet20:3-4": {
+        "BUFFER_PG_TABLE:Ethernet108:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet24:3-4": {
+        "BUFFER_PG_TABLE:Ethernet112:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet116:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet120:3-4": {
+                "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
+        },
+        "OP": "SET"
+    },
+    {
+        "BUFFER_PG_TABLE:Ethernet124:3-4": {
                 "profile" : "[BUFFER_PROFILE_TABLE:pg_lossless_40G_300m_profile]"
         },
         "OP": "SET"
@@ -306,19 +306,19 @@
         "OP": "SET"
     },
     {
-        "BUFFER_PG_TABLE:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24:0-1": {
+        "BUFFER_PG_TABLE:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124:0-1": {
             "profile" : "[BUFFER_PROFILE_TABLE:pg_lossy_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_QUEUE_TABLE:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24:3-4": {
+        "BUFFER_QUEUE_TABLE:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124:3-4": {
             "profile" : "[BUFFER_PROFILE_TABLE:q_lossless_profile]"
         },
         "OP": "SET"
     },
     {
-        "BUFFER_QUEUE_TABLE:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24:0-1": {
+        "BUFFER_QUEUE_TABLE:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124:0-1": {
             "profile" : "[BUFFER_PROFILE_TABLE:q_lossy_profile]"
         },
         "OP": "SET"
@@ -333,7 +333,7 @@
         "OP": "SET"
     },
     {
-        "PORT_QOS_MAP_TABLE:Ethernet8,Ethernet0,Ethernet4,Ethernet108,Ethernet100,Ethernet104,Ethernet68,Ethernet96,Ethernet124,Ethernet92,Ethernet120,Ethernet52,Ethernet56,Ethernet76,Ethernet72,Ethernet64,Ethernet32,Ethernet16,Ethernet36,Ethernet12,Ethernet88,Ethernet116,Ethernet80,Ethernet112,Ethernet84,Ethernet48,Ethernet44,Ethernet40,Ethernet28,Ethernet60,Ethernet20,Ethernet24": {
+        "PORT_QOS_MAP_TABLE:Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124": {
             "pfc_to_pg_map"   : "[PFC_PRIORITY_TO_PRIORITY_GROUP_MAP_TABLE:AZURE]"
         },
         "OP": "SET"
