@@ -227,7 +227,7 @@ def main():
         for attr in ['ip', 'network', 'prefixlen', 'netmask']:
             env.filters[attr] = partial(prefix_attr, attr)
         template = env.get_template(template_file)
-        print template.render(sort_data(data))
+        print(template.render(sort_data(data)))
 
     if args.var != None:
         template = jinja2.Template('{{' + args.var + '}}')
