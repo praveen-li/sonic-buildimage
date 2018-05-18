@@ -44,7 +44,7 @@ def get_system_mac():
     proc = subprocess.Popen("ip link show eth0 | grep ether | awk '{print $2}'", shell=True, stdout=subprocess.PIPE)
     (mac, err) = proc.communicate()
     mac = mac.strip()
-    
+
     # Align last byte of MAC if necessary
     version_info = get_sonic_version_info()
     if version_info and (version_info['asic_type'] == 'mellanox' or version_info['asic_type'] == 'centec'):
@@ -53,3 +53,19 @@ def get_system_mac():
         mac = mac[:-2] + aligned_last_byte
     return mac
 
+def get_system_routing_stack():
+    command = "sudo docker ps | grep bgp | awk '{print$2}' | cut -d'-' -f3 | cut -d':' -f1"
+
+    try:
+        proc = subprocess.Popen(command,
+                                stdout=subprocess.PIPE,
+                                shell=True,
+                                stderr=subprocess.STDOUT)
+        stdout = proc.communicate()[0]
+        proc.wait()
+        result = stdout.rstrip('\n')
+
+    except OSError, e:
+        raise OSError("Cannot detect routing-stack")
+
+    return result
