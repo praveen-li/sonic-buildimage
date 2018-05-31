@@ -230,7 +230,14 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     gdisk                   \
     sysfsutils              \
     grub2-common            \
-    ethtool
+    ethtool                 \
+    screen                  \
+    gdb                     \
+    patch                   \
+    wget                    \
+    strace                  \
+    htop                    \
+    valgrind
 
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y download \
     grub-pc-bin

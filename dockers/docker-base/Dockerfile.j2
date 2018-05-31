@@ -31,7 +31,7 @@ RUN apt-get -y install \
     less
 
 # Pre-install troubleshooting packages
-RUN apt-get -y install socat
+RUN apt-get -y install socat gdb patch htop strace
 
 COPY ["etc/rsyslog.conf", "/etc/rsyslog.conf"]
 COPY ["etc/rsyslog.d/*", "/etc/rsyslog.d/"]
