@@ -74,4 +74,4 @@ SONIC_DEBUGGING_ON = y
 SONIC_USER_UID = 888
 SONIC_USER_GID = 888
 # ENABLE_SYSTEM_TELEMETRY - build docker-sonic-telemetry for system telemetry support
-# ENABLE_SYSTEM_TELEMETRY = y
+ENABLE_SYSTEM_TELEMETRY = y
