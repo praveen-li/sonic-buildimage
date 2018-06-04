@@ -56,6 +56,12 @@ SONIC_ROUTING_STACK = frr
 # Enable Origanization Extensions - Specific to the deployment scenarios of the Organization
 ENABLE_ORGANIZATION_EXTENSIONS = y
 
+# Debugging option allows sonic debian packages to get built including symbols
+# information. Profiling option, disables compiler optimizations (-O0) as well
+# as includes symbols information too.
+SONIC_DEBUGGING_ON = y
+#SONIC_PROFILING_ON = y
+
 # SONIC_USER_UID/GID - A special user ('sonic') will be always created during
 # image compilation. This special user will be in charged of running SONiC's
 # critical applications, provided that these applications are willing to run
