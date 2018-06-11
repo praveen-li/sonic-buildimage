@@ -79,6 +79,12 @@ if [ -f files/lnos-internal/ztp/lnos_ztp.sh ]; then
    ./files/lnos-internal/ztp/lnos_ztp.sh $FILESYSTEM_ROOT
 fi
 
+## LNOS Extensions /usr/local/netops
+if [ -f files/lnos-internal/scripts/lnos_usr_local_netops.sh ]; then
+   sudo chmod 755 files/lnos-internal/scripts/lnos_usr_local_netops.sh
+   ./files/lnos-internal/scripts/lnos_usr_local_netops.sh $FILESYSTEM_ROOT
+fi
+
 ## LNOS Extension to allow explicit setting of the system's root-password
 echo "root:$PASSWORD_ENCRYPTED" | sudo LANG=C chroot $FILESYSTEM_ROOT chpasswd -e
 
