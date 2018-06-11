@@ -37,6 +37,9 @@ if ! shopt -oq posix; then
     fi
 fi
 
+# Disable tab-auto-completion for *.sh files -- full-path must be typed
+export FIGNORE=".sh"
+
 # if the command-not-found package is installed, use it
 if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then
     function command_not_found_handle {
