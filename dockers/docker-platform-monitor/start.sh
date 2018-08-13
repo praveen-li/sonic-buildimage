@@ -22,6 +22,29 @@ if [ -e /usr/share/sonic/platform/fancontrol ]; then
     rm -f /var/run/fancontrol.pid
 
     /bin/cp -f /usr/share/sonic/platform/fancontrol /etc/
+
+    #
+    # Verify if the i2c-busid utilized by the hw-monitor driver matches the one
+    # defined in fancontrol configuration file. If a mismatch is detected, proceed
+    # to adjust fancontrol config accordingly. Note that if no explicit hwmon
+    # device is provided in configuration, we will skip this configuration-adjustment
+    # process.
+    #
+    CONF_DEVNAME=`egrep "^DEVNAME=$*" /etc/fancontrol | cut -d'=' -f2`
+
+    CONF_I2C_BUSID=`egrep "^DEVPATH=" /etc/fancontrol | sed 's/^.*\(i2c-[0-9]\/i2c-\).*$/\1/' | cut -d'/' -f1`
+
+    REAL_I2C_BUSID=`readlink -f "/sys/class/hwmon/$CONF_DEVNAME" | sed 's/^.*\(i2c-[0-9]\)\/i2c-.*$/\1/'`
+
+    if [ ! -z "$CONF_I2C_BUSID" ] && [ "$CONF_I2C_BUSID" != "$REAL_I2C_BUSID" ]
+    then
+        echo -e "I2C bus-id mismatch detected between /etc/fancontrol config-file"\
+                "($CONF_I2C_BUSID) and actual i2c-driver ($REAL_I2C_BUSID)."\
+                "Adjusting fancontrol configuration..."
+
+        sed -i "s/$CONF_I2C_BUSID\/i2c-/$REAL_I2C_BUSID\/i2c-/g" /etc/fancontrol
+    fi
+
     supervisorctl start fancontrol
 fi
 
