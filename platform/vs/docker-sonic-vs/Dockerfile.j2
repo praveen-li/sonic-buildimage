@@ -72,11 +72,17 @@ COPY ["start.sh", "orchagent.sh", "/usr/bin/"]
 COPY ["brcm.profile.ini", "/usr/share/sonic/device/vswitch/"]
 COPY ["buffers.json.j2", "/usr/share/sonic/device/vswitch/"]
 COPY ["pg_profile_lookup.ini", "/usr/share/sonic/device/vswitch/"]
-COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
 COPY ["files/configdb-load.sh", "/usr/bin/"]
 COPY ["files/arp_update", "/usr/bin"]
 
 RUN echo "docker-sonic-vs" > /etc/hostname
+
+{%- if SONIC_ROUTING_STACK == "frr" %}
+COPY ["supervisord.conf.frr", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN touch /etc/frr/frr.conf
+{% else %}
+COPY ["supervisord.conf.quagga", "/etc/supervisor/conf.d/supervisord.conf"]
 RUN touch /etc/quagga/zebra.conf
+{% endif %}
 
 ENTRYPOINT ["/usr/bin/supervisord"]
