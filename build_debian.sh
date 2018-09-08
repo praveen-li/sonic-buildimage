@@ -237,7 +237,8 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     wget                    \
     strace                  \
     htop                    \
-    valgrind
+    valgrind                \
+    smartmontools
 
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y download \
     grub-pc-bin
