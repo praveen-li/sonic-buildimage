@@ -62,6 +62,10 @@ if [ -f /tmp/pending_config_migration ]; then
 
         # Disable Linkedin ZTP process if doing config migration
         sed -i "s/ZTP_MODE=TRUE/ZTP_MODE=FALSE/g" /etc/ztp/ztp.conf
+
+        # Restore Linkedin FRR configuration
+        cp -r /etc/sonic/old_config/frr /etc/sonic/
+
     fi
     rm -f /tmp/pending_config_migration
     sed -i "/enabled=/d" /etc/sonic/updategraph.conf
