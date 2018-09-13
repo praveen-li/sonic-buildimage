@@ -59,6 +59,9 @@ if [ -f /tmp/pending_config_migration ]; then
         echo "Use config_db.json from old system..."
         cp /etc/sonic/old_config/config_db.json /etc/sonic/
         sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
+
+        # Disable Linkedin ZTP process if doing config migration
+        sed -i "s/ZTP_MODE=TRUE/ZTP_MODE=FALSE/g" /etc/ztp/ztp.conf
     fi
     rm -f /tmp/pending_config_migration
     sed -i "/enabled=/d" /etc/sonic/updategraph.conf
