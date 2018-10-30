@@ -22,6 +22,12 @@ _trap_push true
 
 # Main
 set -e
+
+# set fixed parameters
+uefi_esp_partition="EFI System"
+grub_boot_partition="GRUB-BOOT"
+onie_boot_partition="ONIE-BOOT"
+
 cd $(dirname $0)
 
 if [ -d "/etc/sonic" ]; then
@@ -137,7 +143,7 @@ if [ "$install_env" = "onie" ]; then
 fi
 
 # Creates a new partition for the DEMO OS.
-# 
+#
 # arg $1 -- base block device
 #
 # Returns the created partition number in $demo_part
@@ -146,13 +152,37 @@ demo_part=""
 legacy_volume_label="ACS-OS"
 create_demo_gpt_partition()
 {
+
     blk_dev="$1"
+    # Start: Delete all partitions except ONIE-BOOT, GRUB-BOOT and DIAG
+    echo "Try to delete partitions, skip ONIE-BOOT, GRUB-BOOT and DIAG."
+    # loop through all existing partitions
+    sgdisk -p $blk_dev | sed -e '1,/Start (sector)/d' | awk '{print $7}'| while read partition_name; do
+        case $partition_name in
+            *DIAG*)
+                echo "Skipping Partition $partition_name"
+                ;;
+            $uefi_esp_partition|$grub_boot_partition|$onie_boot_partition)
+                echo "Skipping Partition $partition_name"
+                ;;
+            *)
+                partition_num="$(sgdisk -p $blk_dev | grep $partition_name | awk '{print $1}')"
+                echo "Deleting Partition $partition_name"
+                sgdisk -d $partition_num $blk_dev || {
+                    echo "Unable to delete partition $partition_name on $blk_dev"
+                    exit 1
+                }
+                partprobe $blk_dev
+                ;;
+        esac
+    done
+    # End: Delete Partitions #
 
     # Create a temp fifo and store string in variable
     tmpfifo=$(mktemp -u)
     trap_push "rm $tmpfifo || true"
     mkfifo -m 600 "$tmpfifo"
-    
+
     # See if demo partition already exists
     demo_part=$(sgdisk -p $blk_dev | grep -e "$demo_volume_label" -e "$legacy_volume_label" | awk '{print $1}')
     if [ -n "$demo_part" ] ; then
@@ -413,7 +443,7 @@ if [ "$install_env" = "onie" ]; then
         echo "Error: Unable to mount $demo_dev on $demo_mnt"
         exit 1
     }
-    
+
 elif [ "$install_env" = "sonic" ]; then
     demo_mnt="/host"
     eval running_sonic_revision=$(cat /etc/sonic/sonic_version.yml | grep build_version | cut -f2 -d" ")
