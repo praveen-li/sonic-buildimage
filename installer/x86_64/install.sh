@@ -24,6 +24,10 @@ _trap_push true
 set -e
 
 # set fixed parameters
+uefi_esp_gpt_uuid="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+grub_boot_gpt_uuid="21686148-6449-6E6F-744E-656564454649"
+onie_boot_gpt_uuid="7412F7D5-A156-4B13-81DC-867174929325"
+
 uefi_esp_partition="EFI System"
 grub_boot_partition="GRUB-BOOT"
 onie_boot_partition="ONIE-BOOT"
@@ -155,9 +159,9 @@ create_demo_gpt_partition()
 
     blk_dev="$1"
     # Start: Delete all partitions except ONIE-BOOT, GRUB-BOOT and DIAG
-    echo "Try to delete partitions, skip ONIE-BOOT, GRUB-BOOT and DIAG."
+    echo "Try to delete partitions, skip ONIE-BOOT, GRUB-BOOT, EFI System and DIAG."
     # loop through all existing partitions
-    sgdisk -p $blk_dev | sed -e '1,/Start (sector)/d' | awk '{print $7}'| while read partition_name; do
+    sgdisk -p $blk_dev | sed -e '1,/Start (sector)/d' | awk '{print $7" "$8}'| while read partition_name; do
         case $partition_name in
             *DIAG*)
                 echo "Skipping Partition $partition_name"
@@ -166,14 +170,24 @@ create_demo_gpt_partition()
                 echo "Skipping Partition $partition_name"
                 ;;
             *)
+                # Double check guid to avoid wrong partition deletion. Guid Check
+                # is needed, if Partition name are changed in future such as from
+                # ONIE-BOOT to 'ONIE BOOT'.
                 partition_num="$(sgdisk -p $blk_dev | grep $partition_name | awk '{print $1}')"
-                echo "Deleting Partition $partition_name"
-                sgdisk -d $partition_num $blk_dev || {
-                    echo "Unable to delete partition $partition_name on $blk_dev"
-                    exit 1
-                }
-                partprobe $blk_dev
-                ;;
+                part_guid="$(sgdisk -i $partition_num /dev/sda | grep 'Partition GUID code:' | sed -e 's/Partition GUID code: \(.*\) (.*$/\1/')"
+                case $part_guid in
+                    $uefi_esp_gpt_uuid|$grub_boot_gpt_uuid|$onie_boot_gpt_uuid)
+                        echo "Skipping $partition_name with $part_guid"
+                    ;;
+                    *)
+                        echo "Deleting Partition $partition_name"
+                        sgdisk -d $partition_num $blk_dev || {
+                            echo "Unable to delete partition $partition_name on $blk_dev"
+                            exit 1
+                        }
+                        partprobe $blk_dev
+                        ;;
+                 esac
         esac
     done
     # End: Delete Partitions #
