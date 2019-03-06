@@ -1,0 +1,7 @@
+sonic-platform-linkedin-modules (0.1) unstable; urgency=low
+
+  * Initial release
+    Bring up the USB based internal ethernet interface
+    Add ssh keys to BMC module so no password needed from switch login
+
+ -- Zhenggen Xu <zxu@linkedin.com> Tue, 19 Mar 2019 20:33:15 -0800
