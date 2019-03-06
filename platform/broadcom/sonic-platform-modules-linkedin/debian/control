@@ -1,0 +1,18 @@
+Source: sonic-platform-linkedin-modules
+Section: main
+Priority: extra
+Maintainer: Zhenggen Xu <zxu@linkedin.com>
+Build-Depends: debhelper (>= 8.0.0), bzip2
+Standards-Version: 3.9.3
+
+Package: platform-modules-bolt-flex
+Architecture: amd64
+Description: initial scripts to bring up USB based interface and add ssh key to BMC
+
+Package: platform-modules-bolt-cel
+Architecture: amd64
+Description: initial scripts to bring up USB based interface and add ssh key to BMC
+
+Package: platform-modules-bolt-flex-old
+Architecture: amd64
+Description: initial scripts to bring up USB based interface and add ssh key to BMC

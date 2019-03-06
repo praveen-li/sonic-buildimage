@@ -1,0 +1,65 @@
+#!/bin/bash
+# This script setup the USB Eth port and default ssh keys
+
+### BEGIN INIT INFO
+# Provides:          setup-usb-eth-channel-with-bmc
+# Required-Start:    $local_fs $network $syslog
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: Setup USB Ethernet channel with BMC
+### END INIT INFO
+
+readonly USB_INTF='usb0'
+readonly LOCAL_IP='192.168.0.2'
+readonly REMOTE_IP='192.168.0.1'
+readonly NETMASK='255.255.255.0'
+readonly PRE_LEN='24'
+readonly TEMP_PASS='0penBmc'
+
+case "$1" in
+start)
+        echo -en "Setting up USB Ethernet port...\n"
+        ip link show $USB_INTF
+        retval=$?
+        if [ $retval -ne 0 ]; then
+           echo "USB interface does not exist: $USB_INTF"
+           exit $retval
+        fi
+
+        ip link set dev $USB_INTF down
+        ip addr flush dev $USB_INTF
+        ip addr add $LOCAL_IP/$PRE_LEN dev $USB_INTF
+        ip link set dev $USB_INTF up
+
+        if [ ! -f ~/.ssh/id_rsa ]; then
+            echo -en "Setting up ssh key on BMC module to avoid login password from here\n"
+            ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
+            sshpass -p $TEMP_PASS sudo ssh-copy-id -i ~/.ssh/id_rsa.pub -o "StrictHostKeyChecking no" root@$REMOTE_IP
+            retval=$?
+            if [ $retval -ne 0 ]; then
+               echo "copy ssh key failed, err code: $retval"
+               exit $retval
+            fi
+        fi
+
+        echo "done."
+        ;;
+
+stop)
+        echo "done."
+        ;;
+
+force-reload|restart)
+        echo "Not supported"
+        ;;
+
+*)
+        echo "Usage: /etc/init.d/platform-modules-bolt.init {start|stop}"
+        exit 1
+        ;;
+esac
+
+exit 0
