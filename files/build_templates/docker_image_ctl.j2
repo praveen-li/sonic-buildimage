@@ -98,6 +98,10 @@ stop() {
     bcmcmd "port ce enable=false stp=disable"
 {%- endif %}
 
+{%- if docker_container_name == "swss" %}
+    rm -rf /tmp/portstat/.__CaChEd_StAtS__*
+{%- endif %}
+
     docker stop {{docker_container_name}}
 }
 
