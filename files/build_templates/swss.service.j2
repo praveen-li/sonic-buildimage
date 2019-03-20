@@ -23,6 +23,8 @@ ExecStartPre=/usr/bin/docker exec database redis-cli -n 1 FLUSHDB
 ExecStartPre=/usr/bin/docker exec database redis-cli -n 2 FLUSHDB
 ExecStartPre=/usr/bin/docker exec database redis-cli -n 5 FLUSHDB
 ExecStartPre=/usr/bin/docker exec database redis-cli -n 6 FLUSHDB
+ExecStartPre=/usr/bi/portstat -d
+
 
 {% if sonic_asic_platform == 'mellanox' %}
 Environment=FAST_BOOT=1
@@ -36,7 +38,7 @@ ExecStartPre=/bin/bash -c "/usr/share/sonic/device/$(sonic-cfggen -H -v DEVICE_M
 ExecStartPre=/etc/init.d/xpnet.sh start
 {% endif %}
 
-ExecStartPre=/usr/bin/{{docker_container_name}}.sh start 
+ExecStartPre=/usr/bin/{{docker_container_name}}.sh start
 ExecStartPre=/usr/bin/syncd.sh start
 ExecStart=/usr/bin/{{docker_container_name}}.sh attach
 
