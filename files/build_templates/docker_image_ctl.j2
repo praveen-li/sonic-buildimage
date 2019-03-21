@@ -97,7 +97,6 @@ stop() {
     bcmcmd "port xe enable=false stp=disable"
     bcmcmd "port ce enable=false stp=disable"
 {%- endif %}
-
     docker stop {{docker_container_name}}
 }
 
