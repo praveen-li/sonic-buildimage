@@ -46,7 +46,7 @@
 	url = https://github.com/Ingrasys-sonic/sonic-platform-modules-ingrasys
 [submodule "src/sonic-platform-common"]
 	path = src/sonic-platform-common
-	url = https://github.com/Azure/sonic-platform-common
+	url = ssh://git.corp.linkedin.com:29418/sonic/sonic-platform-common.git
 [submodule "src/sonic-platform-daemons"]
 	path = src/sonic-platform-daemons
 	url = ssh://git.corp.linkedin.com:29418/sonic/sonic-platform-daemons.git
