@@ -1,0 +1,13 @@
+{
+        "URL_DATA": {
+                "BMC_HOST": "192.168.0.1",
+                "REST_PORT": "8080",
+		"PROTO_FORMAT": "http",
+                "AUTH_TOKEN": "cm9vdDowcGVuQm1j",
+                "ROOT_PATH": "/api/sys/"
+        },
+	"SSH_DATA": {
+		"KEY": "/root/.ssh/id_rsa",
+		"USER": "root"
+	}
+}
