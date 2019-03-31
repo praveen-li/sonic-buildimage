@@ -37,8 +37,17 @@ wait_syncd() {
     done
 }
 
+wait_done=0
 # If this platform has an initialization file for the Broadcom LED microprocessor, load it
 if [ -r ${PLATFORM_DIR}/led_proc_init.soc ]; then
     wait_syncd
+    wait_done=1
     supervisorctl start ledinit
+fi
+
+if [ -x ${PLATFORM_DIR}/i2c_init.sh ]; then
+    if [ $wait_done == 0]; then
+        wait_syncd
+    fi
+    supervisorctl start i2cinit
 fi
