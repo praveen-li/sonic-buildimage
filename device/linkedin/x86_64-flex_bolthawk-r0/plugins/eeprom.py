@@ -7,7 +7,6 @@
 #	- the eeprom format definition						#
 # Obtain the proper eeprom information from BMC API				#
 #################################################################################
-
 from __future__ import print_function
 from __future__ import absolute_import
 
@@ -18,6 +17,7 @@ try:
     import json
     import requests
     import sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
     from urlheader import UrlList
     from syslog_helper import LogHelper
 

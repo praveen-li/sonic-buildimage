@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 #################################################################################
 # This is a common URL Header File                                              #
 # All the URLs should be declared here                                          #
@@ -58,7 +57,7 @@ class UrlList(object):
 				LogHelper(SYSLOG_IDENTIFIER).log_error("{} API is not implemented yet".format(path))
 				raise NotImplementedError("{} API is not implemented yet".format(path))
 		else:
-			LogHelper(SYSLOG_IDENTIFIER).log_error('{} file is NOT FOUND'.format(self.HELPER_FILE)
+			LogHelper(SYSLOG_IDENTIFIER).log_error('{} file is NOT FOUND'.format(self.HELPER_FILE))
 			raise FileNotFoundError('{} file is NOT FOUND'.format(self.HELPER_FILE))
 
         def url_respose(self, path):
