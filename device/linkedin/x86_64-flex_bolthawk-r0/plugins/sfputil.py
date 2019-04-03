@@ -6,6 +6,7 @@
 try:
     import os
     import binascii
+    import shlex
     import subprocess
     from sonic_sfp.sfputilbase import SfpUtilBase
 except ImportError as e:
@@ -84,15 +85,15 @@ class SfpUtil(SfpUtilBase):
         return self._port_to_eeprom_mapping
 
     def _i2c_write_command(self, addr, channel):
-        cmd = "bcmcmd 'i2c write {} {}'".format(addr, channel)
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        cmd = "/usr/bin/bcmcmd 'i2c write {} {}'".format(addr, channel)
+        p = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE)
         (_, err) = p.communicate()
         if err:
             raise IOError("could not communicate to I2C driver")
 
     def _i2c_read_command(self, addr, offset, size):
-        cmd = "bcmcmd 'i2c read {} {} {}'".format(addr, offset, size)
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        cmd = "/usr/bin/bcmcmd 'i2c read {} {} {}'".format(addr, offset, size)
+        p = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE)
         (output, err) = p.communicate()
         if err:
             raise IOError("could not communicate to I2C driver")
