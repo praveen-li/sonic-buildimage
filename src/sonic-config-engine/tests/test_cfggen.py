@@ -103,7 +103,7 @@ class TestCfgGen(TestCase):
     def test_minigraph_vlan_members(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v VLAN_MEMBER'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'Vlan1000|Ethernet8': {'tagging_mode': 'untagged'}}")
+        self.assertEqual(output.strip(), "{('Vlan1000', 'Ethernet8'): {'tagging_mode': 'untagged'}}")
 
     def test_minigraph_vlan_interfaces(self):
         argument = '-m "' + self.sample_graph_simple + '" -p "' + self.port_config + '" -v "VLAN_INTERFACE.keys()"'

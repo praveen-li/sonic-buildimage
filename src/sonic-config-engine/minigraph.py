@@ -24,7 +24,6 @@ ns = "Microsoft.Search.Autopilot.Evolution"
 ns1 = "http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution"
 ns2 = "Microsoft.Search.Autopilot.NetMux"
 ns3 = "http://www.w3.org/2001/XMLSchema-instance"
-KEY_SEPARATOR = '|'
 
 class minigraph_encoder(json.JSONEncoder):
     def default(self, obj):
@@ -171,8 +170,8 @@ def parse_dpg(dpg, hname):
             vmbr_list = vintfmbr.split(';')
             for i, member in enumerate(vmbr_list):
                 vmbr_list[i] = port_alias_map.get(member, member)
-                sonic_vlan_member_name = "Vlan%s%s%s" % (vlanid, KEY_SEPARATOR, vmbr_list[i])
-                vlan_members[sonic_vlan_member_name] = {'tagging_mode': 'untagged'}
+                sonic_vlan_member_name = "Vlan%s" % (vlanid)
+                vlan_members[(sonic_vlan_member_name, vmbr_list[i])] = {'tagging_mode': 'untagged'}
 
             vlan_attributes = {'vlanid': vlanid}
 
