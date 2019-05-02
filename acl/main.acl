@@ -1,3 +1,3 @@
-owners: [ pchaudha, pmao, rmolina, samaity, zxu ]
+owners: [ pchaudha, pmao, svc-lnos-user, arajure, samaity, zxu ]
 paths: [ '.*' ]
 exclude_paths: [ 'src/.*', 'files/.*', 'platform/.*' ]
