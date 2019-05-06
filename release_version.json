@@ -1,15 +1,15 @@
 {
-  "lldp": "1.3.0", 
-  "pmon": "1.3.0", 
-  "sonic-image": "1.3.0", 
-  "cli": "1.3.0", 
-  "database": "1.3.0", 
-  "radv": "1.3.0", 
-  "telemetry": "1.3.0", 
-  "snmp": "1.3.0", 
-  "bgp": "1.3.0", 
-  "dhcp_relay": "1.3.0", 
-  "teamd": "1.3.0", 
-  "syncd": "1.3.0", 
-  "swss": "1.3.0"
+  "lldp": "1.3.1", 
+  "pmon": "1.3.1", 
+  "sonic-image": "1.3.1", 
+  "cli": "1.3.1", 
+  "database": "1.3.1", 
+  "radv": "1.3.1", 
+  "telemetry": "1.3.1", 
+  "snmp": "1.3.1", 
+  "bgp": "1.3.1", 
+  "dhcp_relay": "1.3.1", 
+  "teamd": "1.3.1", 
+  "syncd": "1.3.1", 
+  "swss": "1.3.1"
 }
