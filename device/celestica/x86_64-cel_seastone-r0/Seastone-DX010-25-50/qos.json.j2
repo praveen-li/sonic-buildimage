@@ -102,4 +102,23 @@
         }
     },
 {%- endmacro %}
+{%- macro generate_wred_profile() %}
+    "WRED_PROFILE": {
+        "AZURE_LOSSLESS" : {
+            "wred_green_enable"      : "true",
+            "wred_yellow_enable"     : "true",
+            "wred_red_enable"        : "true",
+            "ecn"                    : "ecn_all",
+            "green_max_threshold"    : "2097152",
+            "green_min_threshold"    : "153712",
+            "yellow_max_threshold"   : "2097152",
+            "yellow_min_threshold"   : "153712",
+            "red_max_threshold"      : "2097152",
+            "red_min_threshold"      : "153712",
+            "green_drop_probability" : "5",
+            "yellow_drop_probability": "5",
+            "red_drop_probability"   : "5"
+            }
+    },
+{%- endmacro %}
 {%- include 'qos_config.j2' %}
