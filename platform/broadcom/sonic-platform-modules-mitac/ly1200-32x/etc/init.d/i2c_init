@@ -11,7 +11,6 @@
 # Short-Description: Setup ly1200-32x board.
 ### END INIT INFO
 
-I2C_BUS_RM_ALL=0
 I2C_I801_RM_PRINT=0
 I2C_ISMT_RM_PRINT=0
 I2C_I801_INS_PRINT=0
@@ -48,21 +47,6 @@ function log_msg() {
 
 # Load kernel modules
 load_modules () {
-        while [ 1 ]
-        do
-                if [ `lsmod | grep -c "i2c_i801 "` -eq 1 ] && [ `lsmod | grep -c "i2c_ismt "` -eq 1 ]; then
-                        log_msg "The kernel module i801 and ismt was insert."
-                        break;
-                fi
-                if [ $I2C_BUS_RM_ALL -eq 0 ]; then
-                        I2C_BUS_RM_ALL=1
-                        log_msg "Wait for i2c_i801 and i2c_ismt module insert."
-                fi
-                sleep 1
-        done
-        if [ $I2C_BUS_RM_ALL -eq 1 ]; then
-                log_msg "i2c_i801 and i2c_ismt auto insert success."
-        fi
         #----------remove i801 start---------------------
         if [ `lsmod | grep -c "i2c_i801 "` -eq 1 ]; then
                 rmmod i2c_i801

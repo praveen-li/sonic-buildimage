@@ -3,15 +3,14 @@ SHELL = /bin/bash
 .SHELLFLAGS += -e
 
 MAIN_TARGET = isc-dhcp-common_$(ISC_DHCP_VERSION)_amd64.deb
-DERIVED_TARGETS = isc-dhcp-relay_$(ISC_DHCP_VERSION)_amd64.deb \
-                  isc-dhcp-client_$(ISC_DHCP_VERSION)_amd64.deb
+DERIVED_TARGETS = isc-dhcp-relay_$(ISC_DHCP_VERSION)_amd64.deb
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	# Remove any stale files
 	rm -rf ./isc-dhcp
 
 	# Clone isc-dhcp repo
-	git clone https://salsa.debian.org/berni/isc-dhcp.git
+	git clone https://salsa.debian.org/dhcp-team/isc-dhcp.git
 	pushd ./isc-dhcp
 
 	# Reset HEAD to the commit of the proper tag

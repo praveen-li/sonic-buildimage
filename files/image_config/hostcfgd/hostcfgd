@@ -44,8 +44,6 @@ class AaaCfg(object):
     def __init__(self):
         self.auth_default = {
             'login': 'local',
-            'failthrough': True,
-            'fallback': True
         }
         self.tacplus_global_default = {
             'auth_type': TACPLUS_SERVER_AUTH_TYPE_DEFAULT,
@@ -127,10 +125,10 @@ class AaaCfg(object):
         # Add tacplus in nsswitch.conf if TACACS+ enable
         if 'tacacs+' in auth['login']:
             if os.path.isfile(NSS_CONF):
-                os.system("sed -i -e '/tacplus/b' -e '/^passwd/s/compat/& tacplus/' /etc/nsswitch.conf")
+                os.system("sed -i -e '/tacplus/b' -e '/^passwd/s/compat/tacplus &/' /etc/nsswitch.conf")
         else:
             if os.path.isfile(NSS_CONF):
-                os.system("sed -i -e '/^passwd/s/ tacplus//' /etc/nsswitch.conf")
+                os.system("sed -i -e '/^passwd/s/tacplus //' /etc/nsswitch.conf")
 
         # Set tacacs+ server in nss-tacplus conf
         template_file = os.path.abspath(NSS_TACPLUS_CONF_TEMPLATE)
@@ -159,14 +157,14 @@ class HostConfigDaemon:
         log_data = copy.deepcopy(data)
         if log_data.has_key('passkey'):
             log_data['passkey'] = obfuscate(log_data['passkey'])
-        syslog.syslog(syslog.LOG_DEBUG, 'value of {} changed to {}'.format(key, log_data))
+        syslog.syslog(syslog.LOG_INFO, 'value of {} changed to {}'.format(key, log_data))
 
     def tacacs_global_handler(self, key, data):
         self.aaacfg.tacacs_global_update(key, data)
         log_data = copy.deepcopy(data)
         if log_data.has_key('passkey'):
             log_data['passkey'] = obfuscate(log_data['passkey'])
-        syslog.syslog(syslog.LOG_DEBUG, 'value of {} changed to {}'.format(key, log_data))
+        syslog.syslog(syslog.LOG_INFO, 'value of {} changed to {}'.format(key, log_data))
 
     def start(self):
         self.config_db.subscribe('AAA', lambda table, key, data: self.aaa_handler(key, data))

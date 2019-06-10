@@ -21,9 +21,9 @@ init_devnum() {
 # Attach/Detach CPU board mux @ 0x70
 cpu_board_mux() {
     case $1 in
-        "new_device")    i2c_config "echo pca9547 0x70 > /sys/bus/i2c/devices/i2c-${devnum}/$1"
+        "new_device")    i2c_mux_create pca9547 0x70 $devnum 2
                          ;;
-        "delete_device") i2c_config "echo 0x70 > /sys/bus/i2c/devices/i2c-${devnum}/$1"
+        "delete_device") i2c_mux_delete 0x70 $devnum
                          ;;
         *)               echo "z9100_platform: cpu_board_mux: invalid command !"
                          ;;
@@ -33,9 +33,9 @@ cpu_board_mux() {
 # Attach/Detach switch board MUX to IOM CPLDs @ 0x71
 switch_board_mux() {
     case $1 in
-        "new_device")    i2c_config "echo pca9548 0x71 > /sys/bus/i2c/devices/i2c-4/$1"
+        "new_device")    i2c_mux_create pca9548 0x71 4 10
                          ;;
-        "delete_device") i2c_config "echo 0x71 > /sys/bus/i2c/devices/i2c-4/$1"
+        "delete_device") i2c_mux_delete 0x71 4
                          ;;
         *)               echo "z9100_platform: switch_board_mux : invalid command !"
                          ;;
@@ -78,12 +78,16 @@ switch_board_cpld() {
 switch_board_qsfp_mux() {
     case $1 in
         "new_device")
+                      # The mux for the QSFPs spawn {18..25}, {26..33}, {34..41} and {42..49}
+                      # starting at chennel 18 and 8 channels per mux.
+                      channel_first=18
                       for ((i=9;i>=6;i--));
                       do
                           # 0x71 mux on the IOM 1
                           mux_index=$(expr $i - 5)
                           echo "Attaching PCA9548 $mux_index"
-                          i2c_config "echo pca9548 0x71 > /sys/bus/i2c/devices/i2c-$i/$1"
+                          i2c_mux_create pca9548 0x71 $i $channel_first
+                          channel_first=$(expr $channel_first + 8)
                       done
                       ;;
         "delete_device")
@@ -92,7 +96,7 @@ switch_board_qsfp_mux() {
                           # 0x71 mux on the IOM 1
                           mux_index=$(expr $i - 5)
                           echo "Detaching PCA9548 $mux_index"
-                          i2c_config "echo 0x71 > /sys/bus/i2c/devices/i2c-$devnum/i2c-$i/$1"
+                          i2c_mux_delete 0x71 $i
                       done
                       ;;
         *)            echo "z9100_platform: switch_board_qsfp_mux: invalid command !"
@@ -136,12 +140,72 @@ switch_board_qsfp() {
     esac
 }
 
+# Enable/Disable xcvr presence interrupts
+xcvr_presence_interrupts() {
+    case $1 in
+        "enable")
+                      for ((i=14;i<=16;i++));
+                      do
+                          echo 0x0 > /sys/class/i2c-adapter/i2c-$i/$i-003e/qsfp_abs_mask
+                      done
+                      ;;
+        "disable")
+                      for ((i=14;i<=16;i++));
+                      do
+                          echo 0xffff > /sys/class/i2c-adapter/i2c-$i/$i-003e/qsfp_abs_mask
+                      done
+                      ;;
+        *)            echo "z9100_platform: xcvr_presence_interrupts: invalid command !"
+                      ;;
+    esac
+}
+
+# Reset the mux tree
+reset_muxes() {
+    # Reset the IOM muxes and the switch card mux
+    io_rd_wr.py --set --val 0xe0 --offset 0x110
+    io_rd_wr.py --set --val 0xff --offset 0x110
+
+    # Reset the CPU Card PCA9547
+    io_rd_wr.py --set --val 0xfd --offset 0x20b
+    io_rd_wr.py --set --val 0xff --offset 0x20b
+}
+
+# Copy led_proc_init.soc file according to the HWSKU
+init_switch_port_led() {
+    T0="Force10-Z9100-C8D48"
+    T1="Force10-Z9100-C32"
+    device="/usr/share/sonic/device"
+    platform=$(/usr/local/bin/sonic-cfggen -H -v DEVICE_METADATA.localhost.platform)
+    hwsku=$(cat /etc/sonic/config_db.json | grep -A2 "DEVICE_METADATA" | grep "hwsku" | cut -d ":" -f2 | sed 's/"//g' | sed 's/,//g'| xargs )
+
+    if [ -z "$hwsku" ]; then
+          #Check minigraph for hwsku
+          cat /etc/sonic/minigraph.xml | grep $T1  > /dev/null
+          if [ $? -eq 0 ]; then
+                  hwsku=$T1
+          else
+                  hwsku=$T0
+          fi
+    fi
+
+    led_proc_init="$device/$platform/$hwsku/led_proc_init.soc"
+
+    # Remove old HWSKU LED file..
+    rm -rf $device/$platform/led_proc_init.soc
+
+    if [ -e $led_proc_init ] && [ ! -e $device/$platform/led_proc_init.soc ]; then
+      cp $led_proc_init $device/$platform
+    fi
+
+}
+
 init_devnum
 
 if [[ "$1" == "init" ]]; then
-    depmod -a
     modprobe i2c-dev
     modprobe i2c-mux-pca954x force_deselect_on_exit=1
+    modprobe dell_ich
     modprobe dell_mailbox
     modprobe dell_z9100_cpld
 
@@ -152,7 +216,18 @@ if [[ "$1" == "init" ]]; then
     switch_board_qsfp_mux "new_device"
     switch_board_sfp "new_device"
     switch_board_qsfp "new_device"
+    xcvr_presence_interrupts "enable"
+
+    #Copy led_proc_init.soc
+    init_switch_port_led
+
+    value=0x0
+    echo $value > /sys/class/i2c-adapter/i2c-14/14-003e/qsfp_lpmode
+    echo $value > /sys/class/i2c-adapter/i2c-15/15-003e/qsfp_lpmode
+    echo $value > /sys/class/i2c-adapter/i2c-16/16-003e/qsfp_lpmode
+
 elif [[ "$1" == "deinit" ]]; then
+    xcvr_presence_interrupts "disable"
     switch_board_sfp "delete_device"
     switch_board_cpld "delete_device"
     switch_board_mux "delete_device"
@@ -165,6 +240,7 @@ elif [[ "$1" == "deinit" ]]; then
     modprobe -r dell_mailbox
     modprobe -r i2c-mux-pca954x
     modprobe -r i2c-dev
+    modprobe -r dell_ich
 else
      echo "z9100_platform : Invalid option !"
 fi

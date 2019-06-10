@@ -1,13 +1,13 @@
 FROM docker-config-engine
 
+ARG docker_container_name
+RUN [ -f /etc/rsyslog.conf ] && sed -ri "s/%syslogtag%/$docker_container_name#%syslogtag%/;" /etc/rsyslog.conf
+
 # Make apt-get non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Update apt's cache of available packages
 RUN apt-get update
-
-# Install radvd Debian package
-RUN apt-get -y install radvd
 
 {% if docker_router_advertiser_debs.strip() -%}
 # Copy built Debian packages
@@ -27,6 +27,6 @@ RUN rm -rf /debs
 
 COPY ["start.sh", "/usr/bin/"]
 COPY ["docker-router-advertiser.supervisord.conf", "/etc/supervisor/conf.d/"]
-COPY ["radvd.conf.j2", "/usr/share/sonic/templates/"]
+COPY ["radvd.conf.j2", "wait_for_intf.sh.j2", "/usr/share/sonic/templates/"]
 
 ENTRYPOINT ["/usr/bin/supervisord"]

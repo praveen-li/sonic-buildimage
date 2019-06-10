@@ -986,7 +986,7 @@ function _i2c_qsfp_eeprom_get {
     phy_port=$(_port_logic2phy $QSFP_PORT)
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_QSFP_PORT_NUM} ${MAX_QSFP_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_QSFP_PORT_NUM}" "${MAX_QSFP_PORT_NUM}"
 
     _qsfp_eeprom_var_set ${phy_port}
 
@@ -1035,7 +1035,7 @@ function _i2c_qsfp_eeprom_init {
 function _i2c_sfp_eeprom_get {
 
     # input parameter validation
-    _util_input_check ${SFP_PORT} ${MIN_SFP_PORT_NUM} ${MAX_SFP_PORT_NUM}
+    _util_input_check "${SFP_PORT}" "${MIN_SFP_PORT_NUM}" "${MAX_SFP_PORT_NUM}"
     _util_get_sfp_pres
 
     if [ $status = 0 ]; then
@@ -1150,7 +1150,7 @@ function _i2c_psu_deinit {
 function _i2c_qsfp_status_get {
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_QSFP_PORT_NUM} ${MAX_QSFP_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_QSFP_PORT_NUM}" "${MAX_QSFP_PORT_NUM}"
 
     local stat
     _util_get_qsfp_abs
@@ -1164,7 +1164,7 @@ function _i2c_qsfp_type_get {
     phy_port=$(_port_logic2phy ${QSFP_PORT})
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_QSFP_PORT_NUM} ${MAX_QSFP_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_QSFP_PORT_NUM}" "${MAX_QSFP_PORT_NUM}"
 
     #_qsfp_eeprom_var_set ${QSFP_PORT}
     _qsfp_eeprom_var_set ${phy_port}
@@ -1184,7 +1184,7 @@ function _i2c_qsfp_type_get {
 function _i2c_sfp_status_get {
 
     # input parameter validation
-    _util_input_check ${SFP_PORT} ${MIN_SFP_PORT_NUM} ${MAX_SFP_PORT_NUM}
+    _util_input_check "${SFP_PORT}" "${MIN_SFP_PORT_NUM}" "${MAX_SFP_PORT_NUM}"
 
     local stat
     _util_get_sfp_pres
@@ -1201,7 +1201,7 @@ function _i2c_sfp_status_get {
 function _i2c_sfp_type_get {
 
     # input parameter validation
-    _util_input_check ${SFP_PORT} ${MIN_SFP_PORT_NUM} ${MAX_SFP_PORT_NUM}
+    _util_input_check "${SFP_PORT}" "${MIN_SFP_PORT_NUM}" "${MAX_SFP_PORT_NUM}"
 
     _sfp_eeprom_var_set ${SFP_PORT}
 

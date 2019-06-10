@@ -1,5 +1,5 @@
-MLNX_SDK_BASE_URL = https://github.com/Mellanox/SAI-Implementation/raw/56130a854a3b0f4e46d6d84749a5d758e7d1f297/sdk
-MLNX_SDK_VERSION = 4.2.7303
+MLNX_SDK_BASE_URL = https://github.com/Mellanox/SAI-Implementation/raw/6ea244309b944af3bb34a9b99ad6ed60c5dc9937/sdk
+MLNX_SDK_VERSION = 4.3.0136
 MLNX_SDK_RDEBS += $(APPLIBS) $(IPROUTE2_MLNX) $(SX_ACL_RM) $(SX_COMPLIB) \
 		  $(SX_EXAMPLES) $(SX_GEN_UTILS) $(SX_SCEW) $(SX_SDN_HAL) \
 		  $(SXD_LIBS) $(TESTX)
@@ -12,6 +12,7 @@ MLNX_SDK_DEBS += $(APPLIBS_DEV) $(IPROUTE2_MLNX_DEV) $(SX_ACL_RM_DEV) \
 
 APPLIBS = applibs_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(APPLIBS)_DEPENDS += $(SX_COMPLIB) $(SX_GEN_UTILS) $(SXD_LIBS) $(LIBNL3) $(LIBNL_GENL3)
+$(APPLIBS)_RDEPENDS += $(SX_COMPLIB) $(SX_GEN_UTILS) $(SXD_LIBS) $(LIBNL3) $(LIBNL_GENL3)
 APPLIBS_DEV = applibs-dev_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(eval $(call add_derived_package,$(APPLIBS),$(APPLIBS_DEV)))
 IPROUTE2_MLNX = iproute2_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
@@ -22,10 +23,12 @@ SX_COMPLIB_DEV = sx-complib-dev_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(eval $(call add_derived_package,$(SX_COMPLIB),$(SX_COMPLIB_DEV)))
 SX_EXAMPLES = sx-examples_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(SX_EXAMPLES)_DEPENDS += $(APPLIBS) $(SX_SCEW) $(SXD_LIBS)
+$(SX_EXAMPLES)_RDEPENDS += $(APPLIBS) $(SX_SCEW) $(SXD_LIBS)
 SX_EXAMPLES_DEV = sx-examples-dev_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(eval $(call add_derived_package,$(SX_EXAMPLES),$(SX_EXAMPLES_DEV)))
 SX_GEN_UTILS = sx-gen-utils_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(SX_GEN_UTILS)_DEPENDS += $(SX_COMPLIB)
+$(SX_GEN_UTILS)_RDEPENDS += $(SX_COMPLIB)
 SX_GEN_UTILS_DEV = sx-gen-utils-dev_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(eval $(call add_derived_package,$(SX_GEN_UTILS),$(SX_GEN_UTILS_DEV)))
 SX_SCEW = sx-scew_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
@@ -37,6 +40,7 @@ $(eval $(call add_derived_package,$(SXD_LIBS),$(SXD_LIBS_DEV)))
 #packages that are required for runtime only
 PYTHON_SDK_API = python-sdk-api_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(PYTHON_SDK_API)_DEPENDS += $(APPLIBS) $(SXD_LIBS)
+$(PYTHON_SDK_API)_RDEPENDS += $(APPLIBS) $(SXD_LIBS)
 SX_KERNEL = sx-kernel_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 SX_KERNEL_DEV = sx-kernel-dev_1.mlnx.$(MLNX_SDK_VERSION)_amd64.deb
 $(eval $(call add_derived_package,$(SX_KERNEL),$(SX_KERNEL_DEV)))
@@ -51,3 +55,4 @@ $(eval $(foreach deb,$(MLNX_SDK_RDEBS),$(call make_url,$(deb))))
 $(eval $(foreach deb,$(PYTHON_SDK_API) $(SX_KERNEL) $(SX_KERNEL_DEV),$(call make_url,$(deb))))
 
 SONIC_ONLINE_DEBS += $(MLNX_SDK_RDEBS) $(PYTHON_SDK_API) $(SX_KERNEL)
+

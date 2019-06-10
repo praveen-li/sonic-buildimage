@@ -49,3 +49,5 @@ if [ -e /usr/share/sonic/platform/fancontrol ]; then
 fi
 
 supervisorctl start ledd
+
+supervisorctl start xcvrd

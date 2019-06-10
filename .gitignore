@@ -8,6 +8,7 @@ fs.*
 target/
 *.deb
 *.changes
+*.buildinfo
 
 # Subdirectories in src
 src/hiredis/*
@@ -28,8 +29,13 @@ src/lldpd/*
 !src/lldpd/patch/
 src/mpdecimal/*
 !src/mpdecimal/Makefile
+src/python-click/*
+!src/python-click/Makefile
 src/python3/*
 !src/python3/Makefile
+src/radvd/*
+!src/radvd/Makefile
+!src/radvd/patch/
 src/redis/*
 !src/redis/Makefile
 src/snmpd/*
@@ -58,6 +64,7 @@ dockers/docker-snmp-sv2/Dockerfile
 dockers/docker-teamd/Dockerfile
 dockers/docker-sonic-mgmt/Dockerfile
 dockers/docker-sonic-telemetry/Dockerfile
+platform/*/docker-saiserver-*/Dockerfile
 platform/*/docker-syncd-*/Dockerfile
 platform/*/docker-syncd-*-rpc/Dockerfile
 platform/vs/docker-sonic-vs/Dockerfile

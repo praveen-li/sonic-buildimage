@@ -87,12 +87,22 @@ class TestCfgGenCaseInsensitive(TestCase):
     def test_minigraph_portchannels(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v PORTCHANNEL'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "{'PortChannel01': {'members': ['Ethernet4']}}")
+        self.assertEqual(output.strip(), "{'PortChannel01': {'admin_status': 'up', 'min_links': '1', 'members': ['Ethernet4'], 'mtu': '9100'}}")
+
+    def test_minigraph_console_port(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v CONSOLE_PORT'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'1': {'baud_rate': '9600', 'remote_device': 'managed_device', 'flow_control': 1}}")
 
     def test_minigraph_deployment_id(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "DEVICE_METADATA[\'localhost\'][\'deployment_id\']"'
         output = self.run_script(argument)
         self.assertEqual(output.strip(), "1")
+
+    def test_minigraph_neighbor_metadata(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "DEVICE_NEIGHBOR_METADATA"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{'switch-01t1': {'lo_addr': '10.1.0.186/32', 'mgmt_addr': '10.7.0.196/26', 'hwsku': 'Force10-S6000', 'type': 'LeafRouter', 'deployment_id': '2'}}")
 
     def test_metadata_everflow(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "MIRROR_SESSION"'

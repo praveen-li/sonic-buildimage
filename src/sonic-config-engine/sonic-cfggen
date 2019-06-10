@@ -31,9 +31,17 @@ from portconfig import get_port_config
 from sonic_platform import get_machine_info
 from sonic_platform import get_platform_info
 from sonic_platform import get_system_mac
+from config_samples import generate_sample_config
+from config_samples import get_available_config
 from swsssdk import ConfigDBConnector
 from collections import OrderedDict
 from natsort import natsorted
+
+def sort_by_port_index(value):
+    if not value:
+        return
+    if isinstance(value, list):
+        value.sort(key = lambda k: int(k[8:]))
 
 def is_ipv4(value):
     if not value:
@@ -243,6 +251,7 @@ def main():
     group.add_argument("--check-config", help="check passed config -- to be used with -j or -m or -d", action='store_true')
     group.add_argument("--write-to-db", help="write config into configdb", action='store_true')
     group.add_argument("--print-data", help="print all data", action='store_true')
+    group.add_argument("--preset", help="generate sample configuration from a preset template", choices=get_available_config())
     args = parser.parse_args()
 
     platform = get_platform_info(get_machine_info())
@@ -308,6 +317,7 @@ def main():
         loader = jinja2.FileSystemLoader(paths)
 
         env = jinja2.Environment(loader=loader, trim_blocks=True)
+        env.filters['sort_by_port_index'] = sort_by_port_index
         env.filters['ipv4'] = is_ipv4
         env.filters['ipv6'] = is_ipv6
         env.filters['unique_name'] = unique_name
@@ -334,6 +344,10 @@ def main():
             sys.exit(1)
 
     if args.print_data:
+        print(json.dumps(FormatConverter.to_serialized(data), indent=4, cls=minigraph_encoder))
+
+    if args.preset != None:
+        data = generate_sample_config(data, args.preset)
         print(json.dumps(FormatConverter.to_serialized(data), indent=4, cls=minigraph_encoder))
 
 

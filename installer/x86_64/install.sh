@@ -22,16 +22,6 @@ _trap_push true
 
 # Main
 set -e
-
-# set fixed parameters
-uefi_esp_gpt_uuid="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-grub_boot_gpt_uuid="21686148-6449-6E6F-744E-656564454649"
-onie_boot_gpt_uuid="7412F7D5-A156-4B13-81DC-867174929325"
-
-uefi_esp_partition="EFI System"
-grub_boot_partition="GRUB-BOOT"
-onie_boot_partition="ONIE-BOOT"
-
 cd $(dirname $0)
 
 if [ -d "/etc/sonic" ]; then
@@ -74,11 +64,6 @@ fi
 
 echo "onie_platform: $onie_platform"
 
-# default console settings
-CONSOLE_PORT=0x3f8
-CONSOLE_DEV=0
-CONSOLE_SPEED=9600
-
 # Get platform specific linux kernel command line arguments
 ONIE_PLATFORM_EXTRA_CMDLINE_LINUX=""
 
@@ -86,6 +71,36 @@ ONIE_PLATFORM_EXTRA_CMDLINE_LINUX=""
 VAR_LOG_SIZE=4096
 
 [ -r platforms/$onie_platform ] && . platforms/$onie_platform
+
+# Pick up console port and speed from install enviroment if not defined yet.
+# Console port and speed setting in cmdline is like "console=ttyS0,9600n",
+# so we can use pattern 'console=ttyS[0-9]+,[0-9]+' to match it.
+# If failed to get the speed and ttyS from cmdline then set them to default: ttyS0 and 9600
+if [ -z "$CONSOLE_PORT" ]; then
+    console_ttys=$(cat /proc/cmdline | grep -Eo 'console=ttyS[0-9]+' | cut -d "=" -f2)
+    if [ -z "$console_ttys" -o "$console_ttys" = "ttyS0" ]; then
+        CONSOLE_PORT=0x3f8
+        CONSOLE_DEV=0
+    elif [ "$console_ttys" = "ttyS1" ]; then
+        CONSOLE_PORT=0x2f8
+        CONSOLE_DEV=1
+    elif [ "$console_ttys" = "ttyS2" ]; then
+        CONSOLE_PORT=0x3e8
+        CONSOLE_DEV=2
+    elif [ "$console_ttys" = "ttyS3" ]; then
+        CONSOLE_PORT=0x2e8
+        CONSOLE_DEV=3
+    fi
+fi
+
+if [ -z "$CONSOLE_SPEED" ]; then
+    speed=$(cat /proc/cmdline | grep -Eo 'console=ttyS[0-9]+,[0-9]+' | cut -d "," -f2)
+    if [ -z "$speed" ]; then
+        CONSOLE_SPEED=9600
+    else
+        CONSOLE_SPEED=$speed
+    fi
+fi
 
 # Install demo on same block device as ONIE
 if [ "$install_env" != "build" ]; then
@@ -147,7 +162,7 @@ if [ "$install_env" = "onie" ]; then
 fi
 
 # Creates a new partition for the DEMO OS.
-#
+# 
 # arg $1 -- base block device
 #
 # Returns the created partition number in $demo_part
@@ -156,47 +171,13 @@ demo_part=""
 legacy_volume_label="ACS-OS"
 create_demo_gpt_partition()
 {
-
     blk_dev="$1"
-    # Start: Delete all partitions except ONIE-BOOT, GRUB-BOOT and DIAG
-    echo "Try to delete partitions, skip ONIE-BOOT, GRUB-BOOT, EFI System and DIAG."
-    # loop through all existing partitions
-    sgdisk -p $blk_dev | sed -e '1,/Start (sector)/d' | awk '{print $7" "$8}'| while read partition_name; do
-        case $partition_name in
-            *DIAG*)
-                echo "Skipping Partition $partition_name"
-                ;;
-            $uefi_esp_partition|$grub_boot_partition|$onie_boot_partition)
-                echo "Skipping Partition $partition_name"
-                ;;
-            *)
-                # Double check guid to avoid wrong partition deletion. Guid Check
-                # is needed, if Partition name are changed in future such as from
-                # ONIE-BOOT to 'ONIE BOOT'.
-                partition_num="$(sgdisk -p $blk_dev | grep $partition_name | awk '{print $1}')"
-                part_guid="$(sgdisk -i $partition_num /dev/sda | grep 'Partition GUID code:' | sed -e 's/Partition GUID code: \(.*\) (.*$/\1/')"
-                case $part_guid in
-                    $uefi_esp_gpt_uuid|$grub_boot_gpt_uuid|$onie_boot_gpt_uuid)
-                        echo "Skipping $partition_name with $part_guid"
-                    ;;
-                    *)
-                        echo "Deleting Partition $partition_name"
-                        sgdisk -d $partition_num $blk_dev || {
-                            echo "Unable to delete partition $partition_name on $blk_dev"
-                            exit 1
-                        }
-                        partprobe $blk_dev
-                        ;;
-                 esac
-        esac
-    done
-    # End: Delete Partitions #
 
     # Create a temp fifo and store string in variable
     tmpfifo=$(mktemp -u)
     trap_push "rm $tmpfifo || true"
     mkfifo -m 600 "$tmpfifo"
-
+    
     # See if demo partition already exists
     demo_part=$(sgdisk -p $blk_dev | grep -e "$demo_volume_label" -e "$legacy_volume_label" | awk '{print $1}')
     if [ -n "$demo_part" ] ; then
@@ -457,7 +438,7 @@ if [ "$install_env" = "onie" ]; then
         echo "Error: Unable to mount $demo_dev on $demo_mnt"
         exit 1
     }
-
+    
 elif [ "$install_env" = "sonic" ]; then
     demo_mnt="/host"
     eval running_sonic_revision=$(cat /etc/sonic/sonic_version.yml | grep build_version | cut -f2 -d" ")
@@ -614,11 +595,12 @@ menuentry '$demo_grub_entry' {
         if [ x$grub_platform = xxen ]; then insmod xzio; insmod lzopio; fi
         insmod part_msdos
         insmod ext2
-        linux   /$image_dir/boot/vmlinuz-3.16.0-8-amd64 root=$grub_cfg_root rw $GRUB_CMDLINE_LINUX  \
+        linux   /$image_dir/boot/vmlinuz-4.9.0-8-amd64 root=$grub_cfg_root rw $GRUB_CMDLINE_LINUX  \
+                net.ifnames=0 biosdevname=0 \
                 loop=$image_dir/$FILESYSTEM_SQUASHFS loopfstype=squashfs                       \
                 apparmor=1 security=apparmor varlog_size=$VAR_LOG_SIZE usbcore.autosuspend=-1 $ONIE_PLATFORM_EXTRA_CMDLINE_LINUX
         echo    'Loading $demo_volume_label $demo_type initial ramdisk ...'
-        initrd  /$image_dir/boot/initrd.img-3.16.0-8-amd64
+        initrd  /$image_dir/boot/initrd.img-4.9.0-8-amd64
 }
 EOF
 

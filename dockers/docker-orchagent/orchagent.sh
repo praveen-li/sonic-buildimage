@@ -6,7 +6,7 @@ export platform=`sonic-cfggen -y /etc/sonic/sonic_version.yml -v asic_type`
 
 MAC_ADDRESS=`ip link show eth0 | grep ether | awk '{print $2}'`
 
-# Create a folder for SsWW record files
+# Create a folder for SwSS record files
 mkdir -p /var/log/swss
 ORCHAGENT_ARGS="-d /var/log/swss "
 
@@ -19,6 +19,15 @@ if [ "$platform" == "broadcom" ]; then
 elif [ "$platform" == "cavium" ]; then
     ORCHAGENT_ARGS+="-m $MAC_ADDRESS"
 elif [ "$platform" == "nephos" ]; then
+    ORCHAGENT_ARGS+="-m $MAC_ADDRESS"
+elif [ "$platform" == "centec" ]; then
+    last_byte=$(python -c "print '$MAC_ADDRESS'[-2:]")
+    aligned_last_byte=$(python -c "print format(int(int('$last_byte', 16) + 1), '02x')")  # put mask and take away the 0x prefix
+    ALIGNED_MAC_ADDRESS=$(python -c "print '$MAC_ADDRESS'[:-2] + '$aligned_last_byte'")          # put aligned byte into the end of MAC
+    ORCHAGENT_ARGS+="-m $ALIGNED_MAC_ADDRESS"
+elif [ "$platform" == "barefoot" ]; then
+    ORCHAGENT_ARGS+="-m $MAC_ADDRESS"
+elif [ "$platform" == "vs" ]; then
     ORCHAGENT_ARGS+="-m $MAC_ADDRESS"
 fi
 

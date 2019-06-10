@@ -18,7 +18,7 @@
 # trun on for more debug output
 #DEBUG="on"
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 TRUE=200
 FALSE=404
 
@@ -47,16 +47,16 @@ COLOR_END="\e[0m"        ### END ###
 
 NUM_I801_DEVICE=0
 
-# MAIN MUX PCA9548#0 0x75
+# MAIN MUX PCA9548#0 0x73
 NUM_MUX_9548_0_CH0=$(( ${NUM_I801_DEVICE} + 1 )) # ucd9090 0x34
-NUM_MUX_9548_0_CH1=$(( ${NUM_I801_DEVICE} + 2 )) # PCA9539 0x77 for fp LED & HW ID
-NUM_MUX_9548_0_CH7=$(( ${NUM_I801_DEVICE} + 8 )) # W83795 0x2E
+NUM_MUX_9548_0_CH1=$(( ${NUM_I801_DEVICE} + 2 )) # PCA9539 0x76 for fp LED & HW ID
+NUM_MUX_9548_0_CH7=$(( ${NUM_I801_DEVICE} + 8 )) # W83795 0x2F
 
 # FRU MUX PCA9545#1 0x72
-NUM_MUX_9545_1_CH0=$(( ${NUM_I801_DEVICE} + 9 )) # PSU1 0x50
-NUM_MUX_9545_1_CH1=$(( ${NUM_I801_DEVICE} + 10 )) # PSU2 0x50
+NUM_MUX_9545_1_CH0=$(( ${NUM_I801_DEVICE} + 9 )) # PSU2 0x50
+NUM_MUX_9545_1_CH1=$(( ${NUM_I801_DEVICE} + 10 )) # PSU1 0x50
 NUM_MUX_9545_1_CH2=$(( ${NUM_I801_DEVICE} + 11 )) # FAN board IO exander 0x20
-NUM_MUX_9545_1_CH3=$(( ${NUM_I801_DEVICE} + 12 )) # TMP75#0 0x48 TMP75#1 0x49
+NUM_MUX_9545_1_CH3=$(( ${NUM_I801_DEVICE} + 12 )) # TMP75#0 0x4C TMP75#1 0x49
 
 # HOST MUX PCA9548#2 0X70
 NUM_MUX_9548_2_CH0=$(( ${NUM_I801_DEVICE} + 13 )) # PCA9548#3 0x71 
@@ -85,6 +85,7 @@ I2C_BUS_PSU1_EEPROM=${NUM_MUX_9545_1_CH1}
 I2C_BUS_PSU2_EEPROM=${NUM_MUX_9545_1_CH0}
 
 PATH_SYS_I2C_DEVICES="/sys/bus/i2c/devices"
+PATH_SYS_GPIO="/sys/class/gpio"
 PATH_HWMON_ROOT_DEVICES="/sys/class/hwmon"
 PATH_HWMON_W83795_DEVICE="${PATH_HWMON_ROOT_DEVICES}/hwmon5" 
 PATH_I801_DEVICE="${PATH_SYS_I2C_DEVICES}/i2c-${NUM_I801_DEVICE}"
@@ -184,10 +185,14 @@ ZQSFP_PORT16_ABS_GPIO_IDX=224 # 224~239
 MIN_PORT_NUM=1
 MAX_PORT_NUM=32
 
+#GPIO Offset
+GPIO_OFFSET=0
+
 # Help usage function
 function _help {
     echo "========================================================="
     echo "# Description: Help Function"
+    echo "# Version    : ${VERSION}"
     echo "========================================================="
     echo "----------------------------------------------------"
     echo "EX       : ${0} help"
@@ -297,7 +302,9 @@ function _i2c_init {
     modprobe eeprom_mb
     modprobe gpio-pca953x
     _i2c_io_exp_init
+    rmmod gpio_ich
     _i2c_gpio_init
+    modprobe gpio_ich
     _i2c_sensors_init
     _i2c_psu_init
     
@@ -355,12 +362,14 @@ function _i2c_sensors_init {
     else
         echo "${dev_path} already exist"
     fi
+    sleep 0.5
     dev_path="${PATH_SYS_I2C_DEVICES}/${NUM_MUX_9545_1_CH3}-$(printf "%04x" ${I2C_ADDR_TMP75_FRONT})"
     if ! [ -L ${dev_path} ]; then
         echo "tmp75 ${I2C_ADDR_TMP75_FRONT}" > ${PATH_MUX_9545_1_CH3}/new_device    #hwmon2
     else
         echo "${dev_path} already exist"
     fi
+    sleep 0.5
     ####BMC board thermal
     dev_path="${PATH_SYS_I2C_DEVICES}/${NUM_MUX_9548_0_CH7}-$(printf "%04x" ${I2C_ADDR_TMP75_BB})"
     if ! [ -L ${dev_path} ]; then
@@ -368,6 +377,7 @@ function _i2c_sensors_init {
     else
         echo "${dev_path} already exist"
     fi
+    sleep 0.5
     ####CPU board thermal
     dev_path="${PATH_SYS_I2C_DEVICES}/${I2C_BUS_MAIN}-$(printf "%04x" ${I2C_ADDR_TMP75_CB})"
     if ! [ -L ${dev_path} ]; then
@@ -375,6 +385,7 @@ function _i2c_sensors_init {
     else
         echo "${dev_path} already exist"
     fi
+    sleep 0.5
     # add w83795 to sysfs
     dev_path="${PATH_SYS_I2C_DEVICES}/${NUM_MUX_9548_0_CH7}-$(printf "%04x" ${I2C_ADDR_W83795})"
     if ! [ -L ${dev_path} ]; then
@@ -382,6 +393,7 @@ function _i2c_sensors_init {
     else
         echo "${dev_path} already exist"
     fi
+    sleep 0.5
 
     # probe jc42 kernel module
     modprobe jc42
@@ -541,7 +553,7 @@ function _i2c_io_exp_init {
     # all input expect HWM_RST_L (0.2) 
     _util_i2cset -y -r ${I2C_BUS_MAIN} ${I2C_ADDR_MUX_9539_1} ${REG_PORT0_DIR} 0xFB
     # port1 not used
-    _util_i2cset -y -r ${I2C_BUS_MAIN} ${I2C_ADDR_MUX_9539_1} ${REG_PORT1_DIR} 0x00
+    _util_i2cset -y -r ${I2C_BUS_MAIN} ${I2C_ADDR_MUX_9539_1} ${REG_PORT1_DIR} 0xFF
     _util_i2cset -y -r ${I2C_BUS_MAIN} ${I2C_ADDR_MUX_9539_1} ${REG_PORT0_POL} 0x00 
     _util_i2cset -y -r ${I2C_BUS_MAIN} ${I2C_ADDR_MUX_9539_1} ${REG_PORT1_POL} 0x00 
 
@@ -649,6 +661,20 @@ function _i2c_io_exp_init {
 
 }
 
+# To set the global variable GPIO_OFFSET
+function _set_gpio_offset {
+    GPIO_OFFSET=0
+    for d in `ls /sys/class/gpio/ | grep gpiochip`
+    do   
+        gpiochip_no=${d##gpiochip}
+        if [ $gpiochip_no -gt 255 ]; then 
+            GPIO_OFFSET=256
+            break
+        fi   
+    done 
+    #echo "set GPIO_OFFSET=${GPIO_OFFSET}"
+}
+
 #GPIO Init
 function _i2c_gpio_init {
     local i=0
@@ -658,6 +684,9 @@ function _i2c_gpio_init {
 
     #ABS Port 0-15
     echo "pca9535 ${I2C_ADDR_MUX_9535_3}" > ${PATH_MUX_9548_2_CH4}/new_device
+    _set_gpio_offset
+    start=$[ ${start}+${GPIO_OFFSET} ]
+    end=$[ ${end}+${GPIO_OFFSET} ]
     start=$[ ${end}-${ch_num}+1]
     for (( i=$start; i<=$end; i++ ))   
     do        
@@ -746,14 +775,14 @@ function _i2c_gpio_deinit {
 function _i2c_led_fan_tray_status_set {
     echo "FAN Tray Status Setup"
     #FAN Status get
-    FAN1_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan1_alarm`
-    FAN2_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan2_alarm`
-    FAN3_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan3_alarm`
-    FAN4_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan4_alarm`
-    FAN5_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan5_alarm`
-    FAN6_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan6_alarm`
-    FAN7_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan7_alarm`
-    FAN8_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan8_alarm`
+    FAN1_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan8_alarm`
+    FAN2_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan7_alarm`
+    FAN3_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan6_alarm`
+    FAN4_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan5_alarm`
+    FAN5_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan4_alarm`
+    FAN6_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan3_alarm`
+    FAN7_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan2_alarm`
+    FAN8_ALARM=`cat ${PATH_HWMON_W83795_DEVICE}/device/fan1_alarm`
 
     # check if io expander for fan tray exist 
     result=`i2cget -y ${I2C_BUS_FANTRAY_LED} ${I2C_ADDR_MUX_9535_11} ${REG_PORT0_IN} 2>/dev/null`
@@ -765,7 +794,7 @@ function _i2c_led_fan_tray_status_set {
 
     if [ "${FAN1_ALARM}" == "0" ] && [ "${FAN2_ALARM}" == "0" ]; then
         FAN_TRAY=1
-	echo "FAN_TRAY${FAN_TRAY}..."
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="on"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -775,8 +804,8 @@ function _i2c_led_fan_tray_status_set {
         echo "${COLOR_LED} ${ONOFF_LED}"
         _i2c_fan_tray_led
     else
-	FAN_TRAY=1
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=1
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="off"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -788,8 +817,8 @@ function _i2c_led_fan_tray_status_set {
     fi
 
     if [ "${FAN3_ALARM}" == "0" ] && [ "${FAN4_ALARM}" == "0" ]; then
-	FAN_TRAY=2
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=2
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="on"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -799,8 +828,8 @@ function _i2c_led_fan_tray_status_set {
         echo "${COLOR_LED} ${ONOFF_LED}"
         _i2c_fan_tray_led
     else
-	FAN_TRAY=2
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=2
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="off"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -812,8 +841,8 @@ function _i2c_led_fan_tray_status_set {
     fi
 
     if [ "${FAN5_ALARM}" == "0" ] && [ "${FAN6_ALARM}" == "0" ]; then
-	FAN_TRAY=3
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=3
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="on"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -823,8 +852,8 @@ function _i2c_led_fan_tray_status_set {
         echo "${COLOR_LED} ${ONOFF_LED}"
         _i2c_fan_tray_led
     else
-	FAN_TRAY=3
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=3
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="off"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -836,8 +865,8 @@ function _i2c_led_fan_tray_status_set {
     fi
 
     if [ "${FAN7_ALARM}" == "0" ] && [ "${FAN8_ALARM}" == "0" ]; then
-	FAN_TRAY=4
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=4
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="on"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -847,8 +876,8 @@ function _i2c_led_fan_tray_status_set {
         echo "${COLOR_LED} ${ONOFF_LED}"
         _i2c_fan_tray_led
     else
-	FAN_TRAY=4
-	echo "FAN_TRAY${FAN_TRAY}..."
+        FAN_TRAY=4
+        echo "FAN_TRAY${FAN_TRAY}..."
         COLOR_LED="green"
         ONOFF_LED="off"
         echo "${COLOR_LED} ${ONOFF_LED}"
@@ -1035,25 +1064,30 @@ function _qsfp_port_i2c_var_set {
         1|2|3|4|5|6|7|8)
             i2cbus=${NUM_MUX_9548_2_CH4}
             eeprombusbase=${NUM_MUX_9548_3_CH0}
-            gpioBase=${ZQSFP_PORT0_ABS_GPIO_IDX}
+            gpioBase=$((${GPIO_OFFSET}+${ZQSFP_PORT0_ABS_GPIO_IDX}))
+            #gpioBase=${ZQSFP_PORT0_ABS_GPIO_IDX}
         ;;
         9|10|11|12|13|14|15|16)
             i2cbus=${NUM_MUX_9548_2_CH4}
             eeprombusbase=${NUM_MUX_9548_4_CH0}
-            gpioBase=${ZQSFP_PORT0_ABS_GPIO_IDX}
+            gpioBase=$((${GPIO_OFFSET}+${ZQSFP_PORT0_ABS_GPIO_IDX}))
+            #gpioBase=${ZQSFP_PORT0_ABS_GPIO_IDX}
         ;;
         17|18|19|20|21|22|23|24)
             i2cbus=${NUM_MUX_9548_2_CH4}
             eeprombusbase=${NUM_MUX_9548_5_CH0}
-            gpioBase=${ZQSFP_PORT16_ABS_GPIO_IDX}
+            gpioBase=$((${GPIO_OFFSET}+${ZQSFP_PORT16_ABS_GPIO_IDX}))
+            #gpioBase=${ZQSFP_PORT16_ABS_GPIO_IDX}
         ;;
         25|26|27|28|29|30|31|32)
             i2cbus=${NUM_MUX_9548_2_CH4}
             eeprombusbase=${NUM_MUX_9548_6_CH0}
-            gpioBase=${ZQSFP_PORT16_ABS_GPIO_IDX}
+            gpioBase=$((${GPIO_OFFSET}+${ZQSFP_PORT16_ABS_GPIO_IDX}))
+            #gpioBase=${ZQSFP_PORT16_ABS_GPIO_IDX}
         ;;
         *)
             echo "Please input 1~32"
+            exit
         ;;
     esac
 }
@@ -1073,7 +1107,7 @@ function _qsfp_eeprom_var_set {
 function _i2c_qsfp_eeprom_get {
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_PORT_NUM} ${MAX_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_PORT_NUM}" "${MAX_PORT_NUM}"
 
     _util_get_qsfp_abs
 
@@ -1174,7 +1208,7 @@ function _i2c_cb_eeprom_init {
 function _i2c_qsfp_status_get {
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_PORT_NUM} ${MAX_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_PORT_NUM}" "${MAX_PORT_NUM}"
 
     local stat
     _util_get_qsfp_abs
@@ -1185,7 +1219,7 @@ function _i2c_qsfp_status_get {
 function _i2c_qsfp_type_get {
 
     # input parameter validation
-    _util_input_check ${QSFP_PORT} ${MIN_PORT_NUM} ${MAX_PORT_NUM}
+    _util_input_check "${QSFP_PORT}" "${MIN_PORT_NUM}" "${MAX_PORT_NUM}"
 
     _qsfp_port_i2c_var_set ${QSFP_PORT}
 
@@ -1556,24 +1590,24 @@ function _util_gpio_export {
     local active_low=$3    
     local value=$4
 
-    if [ -z "${gpio_n}" ]; then        
-        echo "[gpio_init]  gpio_n(${gpio_n}) is not provided"        
-        return    
+    if [ -z "${gpio_n}" ]; then
+        echo "[gpio_init]  gpio_n(${gpio_n}) is not provided"
+        return
     fi
-    if [[ ${gpio_n} < 0 || ${gpio_n} > 255 ]]; then        
-        echo "[gpio_init]  gpio_n(${gpio_n}) is invalid value"        
+    if [[ ${gpio_n} < 0 || ${gpio_n} > $(( 255+${GPIO_OFFSET} )) ]]; then
+        echo "[gpio_init]  gpio_n(${gpio_n}) is invalid value"
         return    
     fi
 
-    #export gpio     
-    echo ${gpio_n} > /sys/class/gpio/export     
-    #set gpio direction    
-    echo ${direction} > /sys/class/gpio/gpio${gpio_n}/direction    
-    #set gpio active_low    
-    echo ${active_low} > /sys/class/gpio/gpio${gpio_n}/active_low    
-    #set value     
-    if [ ! -z "${value}" ]; then        
-        echo ${value} > /sys/class/gpio/gpio${gpio_n}/value    
+    #export gpio
+    echo ${gpio_n} > /sys/class/gpio/export
+    #set gpio direction
+    echo ${direction} > /sys/class/gpio/gpio${gpio_n}/direction
+    #set gpio active_low
+    echo ${active_low} > /sys/class/gpio/gpio${gpio_n}/active_low
+    #set value
+    if [ ! -z "${value}" ]; then
+        echo ${value} > /sys/class/gpio/gpio${gpio_n}/value
     fi
 }
 
@@ -1596,6 +1630,7 @@ function _main {
     tart_time_str=`date`
     start_time_sec=$(date +%s)
 
+    _set_gpio_offset
     if [ "${EXEC_FUNC}" == "help" ]; then
         _help
     elif [ "${EXEC_FUNC}" == "i2c_init" ]; then

@@ -65,6 +65,7 @@ RUN apt-get update && apt-get install -y \
         libjson0-dev \
         libsystemd-dev \
         python-ipaddr \
+        install-info \
 # For libnl3 (local) build
         cdbs \
 # For SAI meta build
@@ -116,6 +117,11 @@ RUN apt-get update && apt-get install -y \
 # For mellanox sai build
         libtool-bin \
         libxml2-dev \
+# For BFN sdk build
+        libusb-1.0-0-dev \
+        libcurl3-nss-dev \
+        libunwind8-dev \
+        telnet \
 # For build image
         cpio \
         squashfs-tools \
@@ -195,8 +201,6 @@ RUN apt-get update && apt-get install -y \
         python-netaddr \
         python-ipaddr \
         python-yaml \
-# For sonic utilities
-        python3-netaddr \
 # For lockfile
         procmail \
 # For gtest
@@ -216,6 +220,16 @@ RUN apt-get update && apt-get install -y \
         lynx \
         texlive-latex-extra \
         texlive-latex-recommended \
+# For python-click build
+        python-sphinx \
+        python-docutils \
+        python3-all \
+        python3-setuptools \
+        python3-sphinx \
+        python3-docutils \
+        python3-requests \
+        python3-pytest \
+        python3-colorama \
 # For bash
         texi2html \
 # For ntp
@@ -224,7 +238,13 @@ RUN apt-get update && apt-get install -y \
         pps-tools \
         dh-apparmor \
         libevent-core-2.0-5 \
-        libevent-pthreads-2.0-5
+        libevent-pthreads-2.0-5 \
+# For initramfs
+        bash-completion \
+# For sonic vs image build
+        dosfstools \
+        qemu-kvm \
+        libvirt-bin
 
 # For linux build
 RUN apt-get -y build-dep linux
@@ -254,10 +274,13 @@ RUN pip install --force-reinstall --upgrade jinja2>=2.10
 RUN pip install j2cli
 
 # For sonic utilities testing
-RUN pip install click-default-group click natsort tabulate netifaces==0.10.6
+RUN pip install click-default-group click natsort tabulate netifaces==0.10.7 fastentrypoints
 
 # For supervisor build
 RUN pip install meld3 mock
+
+# For vs image build
+RUN pip install pexpect==4.6.0
 
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
@@ -292,4 +315,4 @@ RUN add-apt-repository \
            stable"
 RUN apt-get update
 RUN apt-get install -y docker-ce=17.03.2~ce-0~debian-jessie
-RUN echo "DOCKER_OPTS=\"--experimental\"" >> /etc/default/docker
+RUN echo "DOCKER_OPTS=\"--experimental --storage-driver=vfs\"" >> /etc/default/docker

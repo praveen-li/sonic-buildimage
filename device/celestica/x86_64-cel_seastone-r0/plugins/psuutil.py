@@ -28,6 +28,8 @@ class PsuUtil(PsuBase):
             {'base': self.get_gpio_base()},
             {'abs':PSU1_ABS_PIN, 'power':PSU1_POWER_PIN},
             {'abs':PSU2_ABS_PIN, 'power':PSU2_POWER_PIN}
+            {'abs':27, 'power':22},
+            {'abs':28, 'power':25}
         ]
 
     def get_gpio_base(self):

@@ -1,6 +1,6 @@
 # FRRouting (frr) package
 
-FRR_VERSION = 3.0.3
+FRR_VERSION = 4.0
 export FRR_VERSION
 
 FRR = frr_$(FRR_VERSION)-1~sonic.debian8+1_amd64.deb
