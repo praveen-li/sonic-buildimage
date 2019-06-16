@@ -105,14 +105,6 @@ ifeq ($(SONIC_PROFILING_ON),y)
 DEB_BUILD_OPTIONS_GENERIC := "nostrip noopt"
 endif
 
-ifeq ($(SONIC_DEBUGGING_ON),y)
-DEB_BUILD_OPTIONS_GENERIC := "nostrip"
-endif
-
-ifeq ($(SONIC_PROFILING_ON),y)
-DEB_BUILD_OPTIONS_GENERIC := "nostrip noopt"
-endif
-
 ifeq ($(SONIC_BUILD_JOBS),)
 override SONIC_BUILD_JOBS := $(SONIC_CONFIG_BUILD_JOBS)
 endif
