@@ -151,9 +151,6 @@ start() {
 {%- if docker_container_name != "database" %}
         -v /usr/share/sonic/device/$PLATFORM/$HWSKU:/usr/share/sonic/hwsku:ro \
 {%- endif %}
-{%- if docker_image_name == "docker-fpm-frr" %}
-        -v /etc/sonic/frr:/etc/frr:rw \
-{%- endif %}
         --tmpfs /tmp \
         --tmpfs /var/tmp \
         --name={{docker_container_name}} {{docker_image_name}}:latest || {
@@ -171,12 +168,13 @@ wait() {
 }
 
 stop() {
-{%- if docker_container_name == "syncd" %}
+# TBD, assuming the syncd would remove DMA when stop syncd so no need below any longer
+# {%- if docker_container_name == "syncd" %}
     # When stopping the syncd service, we don't allow any traffic going through ASIC
     # This is to prevent some potential reboot hang issue
-    bcmcmd "port xe enable=false stp=disable"
-    bcmcmd "port ce enable=false stp=disable"
-{%- endif %}
+#    bcmcmd "port xe enable=false stp=disable"
+#    bcmcmd "port ce enable=false stp=disable"
+# {%- endif %}
     docker stop {{docker_container_name}}
 }
 

@@ -7,7 +7,6 @@ case $reason in
             hostname -F /etc/hostname
             sed -i "/\s$current_host_name$/d" /etc/hosts
             echo "127.0.0.1 $new_host_name" >> /etc/hosts
-
         fi
         ;;
 esac
