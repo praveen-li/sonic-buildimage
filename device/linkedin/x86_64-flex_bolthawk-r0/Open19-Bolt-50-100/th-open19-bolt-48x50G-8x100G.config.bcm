@@ -7,8 +7,8 @@ pbmp_oversubscribe=0x1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 # Enable ALPM with all UFT memory
 l2_mem_entries=8192
 l3_mem_entries=8192
-l3_alpm_enable = 2
-ipv6_lpm_128b_enable =1
+l3_alpm_enable=2
+ipv6_lpm_128b_enable=1
 
 mmu_lossless=0
 serdes_firmware_mode_xe=0x2

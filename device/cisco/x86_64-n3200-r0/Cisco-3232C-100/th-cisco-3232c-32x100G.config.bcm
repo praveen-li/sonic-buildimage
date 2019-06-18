@@ -17,8 +17,6 @@ l2xmsg_hostbuf_size=16384
 
 #
 bcm_num_cos=8
-##Create egress port scheduling hierarchy
-cosq_create_gport_tree=1
 
 parity_enable=1
 parity_correction=1
@@ -27,8 +25,6 @@ mem_cache_enable=1
 #for TH
 phy_an_c73=2
 phy_an_fec=1
-
-#Enable BAM for 25/50G autoneg, phy_an_c73=1
 
 #Enable fast-to-slow cut-thru mode
 asf_mem_profile=2
