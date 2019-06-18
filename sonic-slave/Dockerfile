@@ -232,13 +232,6 @@ RUN apt-get update && apt-get install -y \
         python3-colorama \
 # For bash
         texi2html \
-# For ntp
-        autogen \
-        libopts25-dev \
-        pps-tools \
-        dh-apparmor \
-        libevent-core-2.0-5 \
-        libevent-pthreads-2.0-5 \
 # For initramfs
         bash-completion \
 # For sonic vs image build
