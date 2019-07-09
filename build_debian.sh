@@ -30,7 +30,7 @@ set -x -e
 
 ## docker engine version (with platform)
 DOCKER_VERSION=5:18.09.2~3-0~debian-stretch
-LINUX_KERNEL_VERSION=4.9.0-8
+LINUX_KERNEL_VERSION=4.9.0-9
 
 ## Working directory to prepare the file system
 FILESYSTEM_ROOT=./fsroot
@@ -312,6 +312,10 @@ check system $HOST
   if memory usage > 50% for 5 times within 10 cycles then alert
   if cpu usage (user) > 90% for 5 times within 10 cycles then alert
   if cpu usage (system) > 90% for 5 times within 10 cycles then alert
+check process rsyslog with pidfile /var/run/rsyslogd.pid
+  start program = "/bin/systemctl start rsyslog.service"
+  stop program = "/bin/systemctl stop rsyslog.service"
+  if totalmem > 800 MB for 5 times within 10 cycles then restart
 EOF
 
 ## Config sysctl
@@ -321,6 +325,7 @@ set /files/etc/sysctl.conf/kernel.core_pattern '|/usr/bin/coredump-compress %e %
 
 set /files/etc/sysctl.conf/kernel.softlockup_panic 1
 set /files/etc/sysctl.conf/kernel.panic 10
+set /files/etc/sysctl.conf/vm.panic_on_oom 2
 set /files/etc/sysctl.conf/fs.suid_dumpable 2
 
 set /files/etc/sysctl.conf/net.ipv4.conf.default.forwarding 1
