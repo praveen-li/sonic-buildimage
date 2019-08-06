@@ -65,9 +65,9 @@ class board(UrlList):
         return (True, 0)
 
     def serial_number_str(self, e):
-	serial_key = [k for k,v in d.iteritems() if 'pcba serial number' in k.lower()]
+	serial_key = [v for k,v in d.iteritems() if 'system serial number' in k.lower()]
         if serial_key:
-		return e[serial_key][0]
+		return serial_key[0]
 	else:
 		LogHelper(SYSLOG_IDENTIFIER).log_error("serial_key is not available in the API")
 		raise IndexError("serial_key is not available in the API")
