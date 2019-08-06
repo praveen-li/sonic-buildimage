@@ -65,6 +65,16 @@ class TestCfgGen(TestCase):
         output = self.run_script(argument)
         self.assertEqual(output.strip(), 'value1')
 
+    def test_additional_json_data_level1_key(self):
+        argument = '-a \'{"k1":{"k11":"v11","k12":"v12"}, "k2":{"k22":"v22"}}\' --var-json k1'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), '{\n    "k11": "v11", \n    "k12": "v12"\n}')
+
+    def test_additional_json_data_level2_key(self):
+        argument = '-a \'{"k1":{"k11":"v11","k12":"v12"},"k2":{"k22":"v22"}}\' --var-json k1 -K k11'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), '{\n    "k11": "v11"\n}')
+
     def test_read_yaml(self):
         argument = '-v yml_item -y ' + os.path.join(self.test_dir, 'test.yml')
         output = self.run_script(argument)
