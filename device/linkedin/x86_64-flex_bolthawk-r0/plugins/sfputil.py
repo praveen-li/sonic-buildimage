@@ -261,3 +261,6 @@ class SfpUtil(SfpUtilBase):
     # Reset the QSFP @port_num
     def reset(self, port_num):
         raise NotImplementedError
+
+    def get_transceiver_change_event(self, timeout=0):
+        raise NotImplementedError
