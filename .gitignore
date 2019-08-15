@@ -1,4 +1,5 @@
 # Build system related
+.arch
 .platform
 .screen
 
