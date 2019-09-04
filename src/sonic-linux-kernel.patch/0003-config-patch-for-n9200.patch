@@ -1,0 +1,45 @@
+From 228e06921ca80d57c340efa57eec55071694029c Mon Sep 17 00:00:00 2001
+From: Jiahua Wang <jiahwang@cisco.com>
+Date: Mon, 8 Oct 2018 15:09:50 -0700
+Subject: [PATCH 3/4] config patch for n9200
+
+Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
+---
+ patch/config-cisco-n9200.patch | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100644 patch/config-cisco-n9200.patch
+
+diff --git a/patch/config-cisco-n9200.patch b/patch/config-cisco-n9200.patch
+new file mode 100644
+index 0000000..163b7aa
+--- /dev/null
++++ b/patch/config-cisco-n9200.patch
+@@ -0,0 +1,25 @@
++From a21d85635d755de5dec505ad15618aa8822dcd32 Mon Sep 17 00:00:00 2001
++From: Jiahua Wang <jiahwang@cisco.com>
++Date: Thu, 4 Oct 2018 12:12:12 -0700
++Subject: [PATCH] Add CONFIG_SENSORS_CISCO_PMBUS=m to .config file
++
++Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
++---
++ debian/build/build_amd64_none_amd64/.config | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/debian/build/build_amd64_none_amd64/.config b/debian/build/build_amd64_none_amd64/.config
++index 9247039..674f41c 100644
++--- a/debian/build/build_amd64_none_amd64/.config
+++++ b/debian/build/build_amd64_none_amd64/.config
++@@ -3963,6 +3963,7 @@ CONFIG_SENSORS_UCD9200=m
++ CONFIG_SENSORS_DPS1900=m
++ # CONFIG_SENSORS_ZL6100 is not set
++ CONFIG_SENSORS_CISCO_N2200=m
+++CONFIG_SENSORS_CISCO_PMBUS=m
++ # CONFIG_SENSORS_SHT15 is not set
++ CONFIG_SENSORS_SHT21=m
++ # CONFIG_SENSORS_SHT3x is not set
++-- 
++2.7.4
++
+-- 
+2.7.4
+

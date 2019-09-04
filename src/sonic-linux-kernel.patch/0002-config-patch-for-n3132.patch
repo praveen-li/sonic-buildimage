@@ -1,0 +1,67 @@
+From 6bb6865ed28e0c10df04d10c8bd5690eeb8d65d9 Mon Sep 17 00:00:00 2001
+From: Jiahua Wang <jiahwang@cisco.com>
+Date: Mon, 8 Oct 2018 15:09:05 -0700
+Subject: [PATCH 2/4] config patch for n3132
+
+Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
+---
+ patch/config-cisco-n3132-gx.patch | 47 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+ create mode 100644 patch/config-cisco-n3132-gx.patch
+
+diff --git a/patch/config-cisco-n3132-gx.patch b/patch/config-cisco-n3132-gx.patch
+new file mode 100644
+index 0000000..fa5f428
+--- /dev/null
++++ b/patch/config-cisco-n3132-gx.patch
+@@ -0,0 +1,47 @@
++From 6285c209fef9faeabfc29c656abb86fb58e81374 Mon Sep 17 00:00:00 2001
++From: Jiahua Wang <jiahwang@cisco.com>
++Date: Thu, 4 Oct 2018 12:01:23 -0700
++Subject: [PATCH] - Cisco N2200 AC/DC Controllers CONFIG_SENSORS_CISCO_N2200=m
++
++- TPS40422 driver
++CONFIG_SENSORS_TPS40422=m
++
++- Unset SERIAL_8250_PNP
++CONFIG_SERIAL_8250_PNP is not set
++
++Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
++---
++ debian/build/build_amd64_none_amd64/.config | 5 +++--
++ 1 file changed, 3 insertions(+), 2 deletions(-)
++
++diff --git a/debian/build/build_amd64_none_amd64/.config b/debian/build/build_amd64_none_amd64/.config
++index 5ea7aef..9247039 100644
++--- a/debian/build/build_amd64_none_amd64/.config
+++++ b/debian/build/build_amd64_none_amd64/.config
++@@ -3459,7 +3459,7 @@ CONFIG_DEVMEM=y
++ CONFIG_SERIAL_EARLYCON=y
++ CONFIG_SERIAL_8250=y
++ # CONFIG_SERIAL_8250_DEPRECATED_OPTIONS is not set
++-CONFIG_SERIAL_8250_PNP=y
+++# CONFIG_SERIAL_8250_PNP is not set
++ CONFIG_SERIAL_8250_FINTEK=y
++ CONFIG_SERIAL_8250_CONSOLE=y
++ CONFIG_SERIAL_8250_DMA=y
++@@ -3956,12 +3956,13 @@ CONFIG_SENSORS_LM25066=m
++ # CONFIG_SENSORS_MAX34440 is not set
++ CONFIG_SENSORS_DNI_DPS460=m
++ # CONFIG_SENSORS_MAX8688 is not set
++-# CONFIG_SENSORS_TPS40422 is not set
+++CONFIG_SENSORS_TPS40422=m
++ CONFIG_SENSORS_TPS53679=m
++ CONFIG_SENSORS_UCD9000=m
++ CONFIG_SENSORS_UCD9200=m
++ CONFIG_SENSORS_DPS1900=m
++ # CONFIG_SENSORS_ZL6100 is not set
+++CONFIG_SENSORS_CISCO_N2200=m
++ # CONFIG_SENSORS_SHT15 is not set
++ CONFIG_SENSORS_SHT21=m
++ # CONFIG_SENSORS_SHT3x is not set
++-- 
++2.7.4
++
+-- 
+2.7.4
+

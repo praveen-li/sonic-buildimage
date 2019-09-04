@@ -1,0 +1,1072 @@
+From 00e6df0ef644177137b568f9e28b554fbc36202d Mon Sep 17 00:00:00 2001
+From: Jiahua Wang <jiahwang@cisco.com>
+Date: Mon, 8 Oct 2018 15:07:57 -0700
+Subject: [PATCH 1/4] sonic-linux-kernel new patch files upto cisco-4.3
+
+Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
+---
+ patch/driver-hwmon-adt7462-fix-alarm-mask.patch    |  33 ++
+ patch/driver-hwmon-pmbus-cisco-solvan-update.patch |  50 +++
+ patch/driver-hwmon-pmbus-cisco-solvan.patch        | 297 ++++++++++++++++
+ patch/driver-hwmon-pmbus-cisco_n2200-update.patch  |  45 +++
+ patch/driver-hwmon-pmbus-cisco_n2200.patch         | 375 +++++++++++++++++++++
+ patch/driver-hwmon-pmbus-tps40422.patch            | 115 +++++++
+ patch/driver-mfd-enable-dh89xxcc-gpio.patch        |  21 ++
+ patch/driver-rtc-cmos-address-space-256.patch      |  26 ++
+ ...clude-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch |  26 ++
+ 9 files changed, 988 insertions(+)
+ create mode 100644 patch/driver-hwmon-adt7462-fix-alarm-mask.patch
+ create mode 100644 patch/driver-hwmon-pmbus-cisco-solvan-update.patch
+ create mode 100644 patch/driver-hwmon-pmbus-cisco-solvan.patch
+ create mode 100755 patch/driver-hwmon-pmbus-cisco_n2200-update.patch
+ create mode 100644 patch/driver-hwmon-pmbus-cisco_n2200.patch
+ create mode 100644 patch/driver-hwmon-pmbus-tps40422.patch
+ create mode 100755 patch/driver-mfd-enable-dh89xxcc-gpio.patch
+ create mode 100644 patch/driver-rtc-cmos-address-space-256.patch
+ create mode 100644 patch/include-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch
+
+diff --git a/patch/driver-hwmon-adt7462-fix-alarm-mask.patch b/patch/driver-hwmon-adt7462-fix-alarm-mask.patch
+new file mode 100644
+index 0000000..a37c773
+--- /dev/null
++++ b/patch/driver-hwmon-adt7462-fix-alarm-mask.patch
+@@ -0,0 +1,33 @@
++Fix Back (D3) temp sensor alarm never turned on
++
++From: Zuwei Liu <zuwliu@cisco.com>
++
++The D3 temp sensor alarm (/sys/bus/i2c/devices/1-0058/temp4_alarm) can
++never be turned on even when the temp4_max is lower than the current
++temperature.
++
++This is due to the temp4 index is defined as 0x10, but the
++ADT7462_ALARM_FLAG_MASK is defined as 0x0F, so the mask for temp4 become
++0x00 (mask = attr->index & ADT7462_ALARM_FLAG_MASK), which cause the temp4
++alarm will never be set.
++
++The fix is to define the ADT7462_ALARM_FLAG_MASK to be 0x1F
++
++Signed-off-by: Zuwei Liu <zuwliu@cisco.com>
++---
++ drivers/hwmon/adt7462.c |    2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/drivers/hwmon/adt7462.c b/drivers/hwmon/adt7462.c
++index 562cc38..1aafad2 100644
++--- a/drivers/hwmon/adt7462.c
+++++ b/drivers/hwmon/adt7462.c
++@@ -131,7 +131,7 @@ static const unsigned short normal_i2c[] = { 0x58, 0x5C, I2C_CLIENT_END };
++ #define ADT7462_ALARM3				0x0200
++ #define ADT7462_ALARM4				0x0300
++ #define ADT7462_ALARM_REG_SHIFT			8
++-#define ADT7462_ALARM_FLAG_MASK			0x0F
+++#define ADT7462_ALARM_FLAG_MASK			0x1F
++ 
++ #define ADT7462_TEMP_COUNT		4
++ #define ADT7462_TEMP_REG(x)		(ADT7462_REG_TEMP_BASE_ADDR + ((x) * 2))
+diff --git a/patch/driver-hwmon-pmbus-cisco-solvan-update.patch b/patch/driver-hwmon-pmbus-cisco-solvan-update.patch
+new file mode 100644
+index 0000000..74c4dff
+--- /dev/null
++++ b/patch/driver-hwmon-pmbus-cisco-solvan-update.patch
+@@ -0,0 +1,50 @@
++From b55e68fe8dd57b9d2cffc5b21de7015b4e825a0b Mon Sep 17 00:00:00 2001
++From: vasrajan <vasrajan@cisco.com>
++Date: Mon, 7 May 2018 22:20:16 -0700
++Subject: [PATCH] Code update for PSU
++
++Signed-off-by: vasrajan <vasrajan@cisco.com>
++---
++ drivers/hwmon/pmbus/pmbus_cisco.c | 10 ++++++++++
++ 1 file changed, 10 insertions(+)
++
++diff --git a/drivers/hwmon/pmbus/pmbus_cisco.c b/drivers/hwmon/pmbus/pmbus_cisco.c
++index be2dd78..6d58ca7 100644
++--- a/drivers/hwmon/pmbus/pmbus_cisco.c
+++++ b/drivers/hwmon/pmbus/pmbus_cisco.c
++@@ -29,6 +29,7 @@
++ #include <linux/mutex.h>
++ #include <linux/i2c.h>
++ #include <linux/i2c/pmbus.h>
+++#include <linux/delay.h>
++ #include "pmbus.h"
++ 
++ /*
++@@ -64,6 +65,9 @@ static void pmbus_cisco_find_sensor_groups(struct i2c_client *client,
++ 		if (pmbus_check_byte_register(client, 0, PMBUS_STATUS_FAN_12))
++ 			info->func[0] |= PMBUS_HAVE_STATUS_FAN12;
++ 	}
+++    else /* Wait to clear device busy */
+++        msleep(100);
+++
++ 	/* Solvang PSU does not have FAN 3 or 4 */
++ #if 0
++ 	if (pmbus_check_byte_register(client, 0, PMBUS_FAN_CONFIG_34) &&
++@@ -77,8 +81,14 @@ static void pmbus_cisco_find_sensor_groups(struct i2c_client *client,
++ 		info->func[0] |= PMBUS_HAVE_TEMP;
++ 	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_2))
++ 		info->func[0] |= PMBUS_HAVE_TEMP2;
+++    else /* Wait to clear device busy */
+++        msleep(100);
+++
++ 	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_3))
++ 		info->func[0] |= PMBUS_HAVE_TEMP3;
+++    else /* Wait to clear device busy */
+++        msleep(100);
+++
++ 	if (info->func[0] & (PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP2
++ 			     | PMBUS_HAVE_TEMP3)
++ 	    && pmbus_check_byte_register(client, 0,
++-- 
++2.1.4
++
+diff --git a/patch/driver-hwmon-pmbus-cisco-solvan.patch b/patch/driver-hwmon-pmbus-cisco-solvan.patch
+new file mode 100644
+index 0000000..7f76253
+--- /dev/null
++++ b/patch/driver-hwmon-pmbus-cisco-solvan.patch
+@@ -0,0 +1,297 @@
++From bf92a84ab2654906b8151db0687e54a7dea7668c Mon Sep 17 00:00:00 2001
++From: jiahwang <jiahwang@cisco.com>
++Date: Mon, 5 Feb 2018 16:57:39 -0800
++Subject: [PATCH] Add pmbus_cisco driver for Cisco PSU including solvang and DC
++ PSU. Skip checking STATUS_CML register, otherwise some PSU may not be probed.
++ Don't add READ_VCAP to sensor group, we want hwmon/in2 under sysfs pointing
++ to VOUT regardless if the PSU has VCAP function or not.  Don't add FAN 3 and
++ FAN 4 to sensor group, solvang PSU might report the non existing function.
++
++Signed-off-by: jiahwang <jiahwang@cisco.com>
++---
++ drivers/hwmon/pmbus/Kconfig       |  10 ++
++ drivers/hwmon/pmbus/Makefile      |   1 +
++ drivers/hwmon/pmbus/pmbus_cisco.c | 243 ++++++++++++++++++++++++++++++++++++++
++ 3 files changed, 254 insertions(+)
++ create mode 100644 drivers/hwmon/pmbus/pmbus_cisco.c
++
++diff --git a/drivers/hwmon/pmbus/Kconfig b/drivers/hwmon/pmbus/Kconfig
++index cc659a1..8e28d7e 100644
++--- a/drivers/hwmon/pmbus/Kconfig
+++++ b/drivers/hwmon/pmbus/Kconfig
++@@ -151,4 +151,14 @@ config SENSORS_CISCO_N2200
++ 	  This driver can also be built as a module. If so, the module will
++ 	  be called cisco_n2200
++ 
+++config SENSORS_CISCO_PMBUS
+++	tristate "Cisco PMBUS PSU and compatibles"
+++	default n
+++	help
+++	  If you say yes here you get hardware monitoring support for Cisco PMBUS
+++	  PSU (For some NEXUS N3K/N9K switches).
+++
+++	  This driver can also be built as a module. If so, the module will
+++	  be called pmbus_cisco
+++
++ endif # PMBUS
++diff --git a/drivers/hwmon/pmbus/Makefile b/drivers/hwmon/pmbus/Makefile
++index c0c689f..8bc90ee 100644
++--- a/drivers/hwmon/pmbus/Makefile
+++++ b/drivers/hwmon/pmbus/Makefile
++@@ -16,3 +16,4 @@ obj-$(CONFIG_SENSORS_UCD9200)	+= ucd9200.o
++ obj-$(CONFIG_SENSORS_ZL6100)	+= zl6100.o
++ obj-$(CONFIG_SENSORS_DPS1900)	+= dps1900.o
++ obj-$(CONFIG_SENSORS_CISCO_N2200) += cisco_n2200.o
+++obj-$(CONFIG_SENSORS_CISCO_PMBUS) += pmbus_cisco.o
++diff --git a/drivers/hwmon/pmbus/pmbus_cisco.c b/drivers/hwmon/pmbus/pmbus_cisco.c
++new file mode 100644
++index 0000000..be2dd78
++--- /dev/null
+++++ b/drivers/hwmon/pmbus/pmbus_cisco.c
++@@ -0,0 +1,243 @@
+++/*
+++ * Hardware monitoring driver for Cisco PMBus PSU devices,
+++ * including Solvang PSU and DC PSU.
+++ *
+++ * Based on Guenter Roeck's pmbus.c.
+++ * Changes are made to skip READ_VCAP, FAN 3, FAN 4 and STATUS_CML registers
+++ * on Cisco Solvang PSU
+++ *
+++ * This program is free software; you can redistribute it and/or modify
+++ * it under the terms of the GNU General Public License as published by
+++ * the Free Software Foundation; either version 2 of the License, or
+++ * (at your option) any later version.
+++ *
+++ * This program is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+++ * GNU General Public License for more details.
+++ *
+++ * You should have received a copy of the GNU General Public License
+++ * along with this program; if not, write to the Free Software
+++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+++ */
+++
+++#include <linux/kernel.h>
+++#include <linux/module.h>
+++#include <linux/init.h>
+++#include <linux/err.h>
+++#include <linux/slab.h>
+++#include <linux/mutex.h>
+++#include <linux/i2c.h>
+++#include <linux/i2c/pmbus.h>
+++#include "pmbus.h"
+++
+++/*
+++ * Find sensor groups and status registers on each page.
+++ */
+++static void pmbus_cisco_find_sensor_groups(struct i2c_client *client,
+++				     struct pmbus_driver_info *info)
+++{
+++	int page;
+++
+++	/* Sensors detected on page 0 only */
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_VIN))
+++		info->func[0] |= PMBUS_HAVE_VIN;
+++	/*
+++	 * Not all PSU have VCAP, detecting VCAP may cause VOUT to be
+++	 * hwmon/in3 if VCAP is present, or hwmon/in2 if VCAP is absent.
+++	 */
+++#if 0
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_VCAP))
+++		info->func[0] |= PMBUS_HAVE_VCAP;
+++#endif
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_IIN))
+++		info->func[0] |= PMBUS_HAVE_IIN;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_PIN))
+++		info->func[0] |= PMBUS_HAVE_PIN;
+++	/* Don't care status */
+++	if (info->func[0]
+++	    && pmbus_check_byte_register(client, 0, PMBUS_STATUS_INPUT))
+++		info->func[0] |= PMBUS_HAVE_STATUS_INPUT;
+++	if (pmbus_check_byte_register(client, 0, PMBUS_FAN_CONFIG_12) &&
+++	    pmbus_check_word_register(client, 0, PMBUS_READ_FAN_SPEED_1)) {
+++		info->func[0] |= PMBUS_HAVE_FAN12;
+++		if (pmbus_check_byte_register(client, 0, PMBUS_STATUS_FAN_12))
+++			info->func[0] |= PMBUS_HAVE_STATUS_FAN12;
+++	}
+++	/* Solvang PSU does not have FAN 3 or 4 */
+++#if 0
+++	if (pmbus_check_byte_register(client, 0, PMBUS_FAN_CONFIG_34) &&
+++	    pmbus_check_word_register(client, 0, PMBUS_READ_FAN_SPEED_3)) {
+++		info->func[0] |= PMBUS_HAVE_FAN34;
+++		if (pmbus_check_byte_register(client, 0, PMBUS_STATUS_FAN_34))
+++			info->func[0] |= PMBUS_HAVE_STATUS_FAN34;
+++	}
+++#endif
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_1))
+++		info->func[0] |= PMBUS_HAVE_TEMP;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_2))
+++		info->func[0] |= PMBUS_HAVE_TEMP2;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_3))
+++		info->func[0] |= PMBUS_HAVE_TEMP3;
+++	if (info->func[0] & (PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP2
+++			     | PMBUS_HAVE_TEMP3)
+++	    && pmbus_check_byte_register(client, 0,
+++					 PMBUS_STATUS_TEMPERATURE))
+++			info->func[0] |= PMBUS_HAVE_STATUS_TEMP;
+++
+++	/* Sensors detected on all pages */
+++	for (page = 0; page < info->pages; page++) {
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_VOUT)) {
+++			info->func[page] |= PMBUS_HAVE_VOUT;
+++			if (pmbus_check_byte_register(client, page,
+++						      PMBUS_STATUS_VOUT))
+++				info->func[page] |= PMBUS_HAVE_STATUS_VOUT;
+++		}
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_IOUT)) {
+++			info->func[page] |= PMBUS_HAVE_IOUT;
+++			if (pmbus_check_byte_register(client, 0,
+++						      PMBUS_STATUS_IOUT))
+++				info->func[page] |= PMBUS_HAVE_STATUS_IOUT;
+++		}
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_POUT))
+++			info->func[page] |= PMBUS_HAVE_POUT;
+++	}
+++}
+++
+++
+++/*
+++ * Identify chip parameters.
+++ */
+++static int pmbus_cisco_identify(struct i2c_client *client,
+++			  struct pmbus_driver_info *info)
+++{
+++	int ret = 0;
+++
+++	if (!info->pages) {
+++		/*
+++		 * Check if the PAGE command is supported. If it is,
+++		 * keep setting the page number until it fails or until the
+++		 * maximum number of pages has been reached. Assume that
+++		 * this is the number of pages supported by the chip.
+++		 */
+++		if (pmbus_check_byte_register(client, 0, PMBUS_PAGE)) {
+++			int page;
+++
+++			for (page = 1; page < PMBUS_PAGES; page++) {
+++				if (pmbus_set_page(client, page) < 0)
+++					break;
+++			}
+++			pmbus_set_page(client, 0);
+++			info->pages = page;
+++		} else {
+++			info->pages = 1;
+++		}
+++	}
+++
+++	if (pmbus_check_byte_register(client, 0, PMBUS_VOUT_MODE)) {
+++		int vout_mode;
+++
+++		vout_mode = pmbus_read_byte_data(client, 0, PMBUS_VOUT_MODE);
+++		if (vout_mode >= 0 && vout_mode != 0xff) {
+++			switch (vout_mode >> 5) {
+++			case 0:
+++				break;
+++			case 1:
+++				info->format[PSC_VOLTAGE_OUT] = vid;
+++				break;
+++			case 2:
+++				info->format[PSC_VOLTAGE_OUT] = direct;
+++				break;
+++			default:
+++				ret = -ENODEV;
+++				goto abort;
+++			}
+++		}
+++	}
+++
+++	/*
+++	 * We should check if the COEFFICIENTS register is supported.
+++	 * If it is, and the chip is configured for direct mode, we can read
+++	 * the coefficients from the chip, one set per group of sensor
+++	 * registers.
+++	 *
+++	 * To do this, we will need access to a chip which actually supports the
+++	 * COEFFICIENTS command, since the command is too complex to implement
+++	 * without testing it. Until then, abort if a chip configured for direct
+++	 * mode was detected.
+++	 */
+++	if (info->format[PSC_VOLTAGE_OUT] == direct) {
+++		ret = -ENODEV;
+++		goto abort;
+++	}
+++
+++	/* Try to find sensor groups  */
+++	pmbus_cisco_find_sensor_groups(client, info);
+++
+++abort:
+++	return ret;
+++}
+++
+++static int pmbus_cisco_probe(struct i2c_client *client,
+++		       const struct i2c_device_id *id)
+++{
+++	struct pmbus_driver_info *info;
+++	struct device *dev = &client->dev;
+++	struct pmbus_platform_data *pdata = dev_get_platdata(dev);
+++	int ret;
+++
+++	/* Solvang PSU does not have STATUS_CML register */
+++	pdata = devm_kzalloc(&client->dev, sizeof(struct pmbus_platform_data),
+++			    GFP_KERNEL);
+++	if (!pdata)
+++		return -ENOMEM;
+++	pdata->flags |= PMBUS_SKIP_STATUS_CHECK;
+++	dev->platform_data = pdata;
+++
+++	info = devm_kzalloc(&client->dev, sizeof(struct pmbus_driver_info),
+++			    GFP_KERNEL);
+++	if (!info)
+++		return -ENOMEM;
+++
+++	info->pages = id->driver_data;
+++	info->identify = pmbus_cisco_identify;
+++
+++	ret = pmbus_do_probe(client, id, info);
+++
+++	return ret;
+++}
+++
+++static int pmbus_cisco_remove(struct i2c_client *client)
+++{
+++	struct device *dev = &client->dev;
+++
+++	dev->platform_data = NULL;
+++
+++	return pmbus_do_remove(client);
+++}
+++
+++/*
+++ * Use driver_data to set the number of pages supported by the chip.
+++ */
+++static const struct i2c_device_id pmbus_cisco_id[] = {
+++	{"pmbus_cisco", 1},
+++	{}
+++};
+++
+++MODULE_DEVICE_TABLE(i2c, pmbus_cisco_id);
+++
+++/* This is the driver that will be inserted */
+++static struct i2c_driver pmbus_cisco_driver = {
+++	.driver = {
+++		   .name = "pmbus_cisco",
+++		   },
+++	.probe = pmbus_cisco_probe,
+++	.remove = pmbus_cisco_remove,
+++	.id_table = pmbus_cisco_id,
+++};
+++
+++module_i2c_driver(pmbus_cisco_driver);
+++
+++MODULE_AUTHOR("Jiahua Wang");
+++MODULE_DESCRIPTION("Cisco PSU PMBus driver");
+++MODULE_LICENSE("GPL");
++-- 
++2.1.4
++
+diff --git a/patch/driver-hwmon-pmbus-cisco_n2200-update.patch b/patch/driver-hwmon-pmbus-cisco_n2200-update.patch
+new file mode 100755
+index 0000000..1334577
+--- /dev/null
++++ b/patch/driver-hwmon-pmbus-cisco_n2200-update.patch
+@@ -0,0 +1,45 @@
++Ignore PMBUS read for PMBUS_OT_WARN_LIMIT and PMBUS_POUT_OP_WARN_LIMIT
++
++From: Mike Tsai (Fruit Ninja) <miktsai@cisco.com>
++
++Doing SMBUS word read on these two PMBUS registers (0x51 and 0x6A) can
++cause i801 adapter to lock up on certain Cisco P/S. The i801
++controller will return DEV_ERR in SMB Host Status register and not
++able to recover.
++
++The model for the problematic power supply is:
++S/N: COUPAF1BAB. V02 China made
++
++We will ignore its values for now as a workaround. This also implies
++that sensors output will two fewer fields under which are:
++
++"max" under pout
++"crit low" from temp1
++
++HW firmware update has been submitted, but we will include the software
++workaround for the existing P/S.
++
++Signed-off-by: Mike Tsai (Fruit Ninja) <miktsai@cisco.com>
++---
++ drivers/hwmon/pmbus/cisco_n2200.c |    8 ++++++++
++ 1 file changed, 8 insertions(+)
++
++diff --git a/drivers/hwmon/pmbus/cisco_n2200.c b/drivers/hwmon/pmbus/cisco_n2200.c
++index 7a13c08..cc6c08f 100644
++--- a/drivers/hwmon/pmbus/cisco_n2200.c
+++++ b/drivers/hwmon/pmbus/cisco_n2200.c
++@@ -147,6 +147,14 @@ static int cisco_n2200_read_word_data(struct i2c_client *client,
++ 		rval = _reg2data_linear(info, ldata);
++ 		dval = _data2reg_direct(info, rval, PSC_CURRENT_OUT);
++ 		return dval;
+++	/*
+++	 * These two PMBUS registers can cause i2c bus hang intermittently
+++	 * on specific Cisco P/S (COUPAF1BAB. V02 China made).
+++	 * Ignore the values for now.
+++	 */
+++	case PMBUS_OT_WARN_LIMIT:
+++	case PMBUS_POUT_OP_WARN_LIMIT:
+++		return -1;
++ 	default:
++ 		break;
++ 	}
+diff --git a/patch/driver-hwmon-pmbus-cisco_n2200.patch b/patch/driver-hwmon-pmbus-cisco_n2200.patch
+new file mode 100644
+index 0000000..ef9034f
+--- /dev/null
++++ b/patch/driver-hwmon-pmbus-cisco_n2200.patch
+@@ -0,0 +1,375 @@
++From 5e298ebe2560efceb6a4c2fc6303324c14e478de Mon Sep 17 00:00:00 2001
++From: "Mike Tsai (Fruit Ninja)" <miktsai@cisco.com>
++Date: Fri, 3 Aug 2018 14:30:41 -0700
++Subject: [PATCH] Add Cisco N2200 PMBUS monitoring driver
++
++- this PMBUS driver will expose N3K power supply attributes to lm-sensors
++- A custom driver was needed because some of the attributes are operating in
++'direct' mode and the proper coefficients needs to be supplied. (i.e vout,
++iout)
++- The driver itself is fairly similar to the generic pmbus driver.
++
++Here is a snip of the output:
++cisco_n2200-i2c-10-5b
++Adapter: i2c-3-mux (chan_id 1)
++vin:         +119.00 V  (crit min = +75.00 V, min = +80.00 V)
++                       (max =  +0.00 V, crit max =  +0.00 V)
++vcap:         +0.00 V
++vout1:       +12.00 V  (crit min =  +0.00 V, min =  +0.00 V)
++                       (max =  +0.00 V, crit max =  +0.00 V)
++fan1:        12704 RPM
++temp1:        +25.0 C  (low  =  +0.0 C, high = +105.0 C)
++                       (crit low =  +0.0 C, crit = +115.0 C)
++temp2:        +30.0 C  (low  =  +0.0 C, high = +105.0 C)
++                       (crit low =  +0.0 C, crit = +115.0 C)
++temp3:        +30.0 C  (low  =  +0.0 C, high = +105.0 C)
++                       (crit low =  +0.0 C, crit = +115.0 C)
++pin:          85.00 W  (max = 608.00 W)
++pout1:        75.00 W  (max = 448.00 W, crit = 484.00 W)
++                       (cap =   0.00 W)
++iin:          +0.73 A  (max =  +6.00 A, crit max =  +0.00 A)
++iout1:        +6.30 A  (crit min =  +0.00 A, max = +37.50 A)
++                       (crit max = +40.50 A)
++
++Reviewed-by: Peter Lei <peterlei@cisco.com>
++Signed-off-by: Mike Tsai (Fruit Ninja) <miktsai@cisco.com>
++---
++ drivers/hwmon/pmbus/Kconfig       |  10 ++
++ drivers/hwmon/pmbus/Makefile      |   1 +
++ drivers/hwmon/pmbus/cisco_n2200.c | 296 ++++++++++++++++++++++++++++++++++++++
++ 3 files changed, 307 insertions(+)
++ create mode 100644 drivers/hwmon/pmbus/cisco_n2200.c
++
++diff --git a/drivers/hwmon/pmbus/Kconfig b/drivers/hwmon/pmbus/Kconfig
++index 33fa6d3..2fd5dca 100644
++--- a/drivers/hwmon/pmbus/Kconfig
+++++ b/drivers/hwmon/pmbus/Kconfig
++@@ -151,4 +151,14 @@ config SENSORS_DPS1900
++ 	  This driver can also be built as a module. If so, the module will
++ 	  be called dps1900.
++ 
+++config SENSORS_CISCO_N2200
+++	tristate "Cisco N2200 and compatibles"
+++	default n
+++	help
+++	  If you say yes here you get hardware monitoring support for Cisco N2200
+++	  AC/DC Controllers (For NEXUS N3K switches).
+++
+++	  This driver can also be built as a module. If so, the module will
+++	  be called cisco_n2200
+++
++ endif # PMBUS
++diff --git a/drivers/hwmon/pmbus/Makefile b/drivers/hwmon/pmbus/Makefile
++index fd68230..2e2c3e2 100644
++--- a/drivers/hwmon/pmbus/Makefile
+++++ b/drivers/hwmon/pmbus/Makefile
++@@ -16,3 +16,4 @@ obj-$(CONFIG_SENSORS_UCD9000)	+= ucd9000.o
++ obj-$(CONFIG_SENSORS_UCD9200)	+= ucd9200.o
++ obj-$(CONFIG_SENSORS_ZL6100)	+= zl6100.o
++ obj-$(CONFIG_SENSORS_DPS1900)	+= dps1900.o
+++obj-$(CONFIG_SENSORS_CISCO_N2200) += cisco_n2200.o
++diff --git a/drivers/hwmon/pmbus/cisco_n2200.c b/drivers/hwmon/pmbus/cisco_n2200.c
++new file mode 100644
++index 0000000..7a13c08
++--- /dev/null
+++++ b/drivers/hwmon/pmbus/cisco_n2200.c
++@@ -0,0 +1,296 @@
+++/*
+++ * Hardware monitoring driver for Cisco N2200 PMBus devices
+++ * (driver is replicated from standard pmbus.c)
+++ *
+++ * Copyright (c) 2014 Cisco Systems.
+++ *
+++ * This program is free software; you can redistribute it and/or modify
+++ * it under the terms of the GNU General Public License as published by
+++ * the Free Software Foundation; either version 2 of the License, or
+++ * (at your option) any later version.
+++ *
+++ * This program is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+++ * GNU General Public License for more details.
+++ *
+++ * You should have received a copy of the GNU General Public License
+++ * along with this program; if not, write to the Free Software
+++ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+++ */
+++
+++#include <linux/kernel.h>
+++#include <linux/module.h>
+++#include <linux/init.h>
+++#include <linux/err.h>
+++#include <linux/slab.h>
+++#include <linux/mutex.h>
+++#include <linux/i2c.h>
+++#include <linux/hwmon-sysfs.h>
+++#include "pmbus.h"
+++
+++/* convert 'linear' data to readable form, replicated from pmbus_core */
+++static long _reg2data_linear(const struct pmbus_driver_info *info, s16 data)
+++{
+++	s16 exponent;
+++	s32 mantissa;
+++	long val;
+++
+++	exponent = ((s16) data) >> 11;
+++	mantissa = ((s16)((data & 0x7ff) << 5)) >> 5;
+++
+++	val = mantissa;
+++	val = val * 1000L;
+++
+++	if (exponent >= 0)
+++		val <<= exponent;
+++	else
+++		val >>= -exponent;
+++
+++	return val;
+++}
+++
+++static long _reg2data_direct(const struct pmbus_driver_info *info,
+++			     long val, int class)
+++{
+++	long m, b, R;
+++
+++	m = info->m[class];
+++	b = info->b[class];
+++	R = info->R[class];
+++
+++	if (m == 0)
+++		return 0;
+++
+++	/* X = 1/m * (Y * 10^-R - b) */
+++	R = -R;
+++	/* scale result to milli-units for everything but fans */
+++	if (class != PSC_FAN) {
+++		R += 3;
+++		b *= 1000;
+++	}
+++
+++	/* scale result to micro-units for power sensors */
+++	if (class == PSC_POWER) {
+++		R += 3;
+++		b *= 1000;
+++	}
+++
+++	while (R > 0) {
+++		val *= 10;
+++		R--;
+++	}
+++	while (R < 0) {
+++		val = DIV_ROUND_CLOSEST(val, 10);
+++		R++;
+++	}
+++
+++	return (val - b) / m;
+++}
+++
+++/* convert readable data to 'direct' format, replicated from pmbus_core */
+++static u16 _data2reg_direct(const struct pmbus_driver_info *info,
+++			    long val, int class)
+++{
+++	long m, b, R;
+++
+++	m = info->m[class];
+++	b = info->b[class];
+++	R = info->R[class];
+++
+++	/* Power is in uW. Adjust R and b. */
+++	if (class == PSC_POWER) {
+++		R -= 3;
+++		b *= 1000;
+++	}
+++
+++	/* Calculate Y = (m * X + b) * 10^R */
+++	if (class != PSC_FAN) {
+++		R -= 3;		/* Adjust R and b for data in milli-units */
+++		b *= 1000;
+++	}
+++	val = val * m + b;
+++
+++	while (R > 0) {
+++		val *= 10;
+++		R--;
+++	}
+++	while (R < 0) {
+++		val = DIV_ROUND_CLOSEST(val, 10);
+++		R++;
+++	}
+++
+++	return val;
+++}
+++
+++static int cisco_n2200_read_word_data(struct i2c_client *client,
+++				      int page, int reg)
+++{
+++	int ldata;
+++	long rval;
+++	u16 dval;
+++	const struct pmbus_driver_info *info = pmbus_get_driver_info(client);
+++
+++	switch (reg) {
+++		/*
+++		 * these two values are in linear format, but the iout is in
+++		 * direct mode. pmbus_core assumes all fields in the same
+++		 * class operate in the same mode. hence wrong values are
+++		 * being reported. so we need to convert them from linear->data
+++		 * and data->direct and let pmbus_core convert from direct->data
+++		 */
+++	case PMBUS_IOUT_OC_WARN_LIMIT:
+++	case PMBUS_IOUT_OC_FAULT_LIMIT:
+++		ldata = pmbus_read_word_data(client, page, reg);
+++		if (ldata < 0)
+++			goto out;
+++		rval = _reg2data_linear(info, ldata);
+++		dval = _data2reg_direct(info, rval, PSC_CURRENT_OUT);
+++		return dval;
+++	default:
+++		break;
+++	}
+++
+++ out:
+++	return -ENODATA;
+++}
+++
+++/*
+++ * Find sensor groups and status registers on each page.
+++ */
+++static void pmbus_find_sensor_groups(struct i2c_client *client,
+++				     struct pmbus_driver_info *info)
+++{
+++	int page;
+++
+++	/* Sensors detected on page 0 only */
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_VIN))
+++		info->func[0] |= PMBUS_HAVE_VIN;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_VCAP))
+++		info->func[0] |= PMBUS_HAVE_VCAP;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_IIN))
+++		info->func[0] |= PMBUS_HAVE_IIN;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_PIN))
+++		info->func[0] |= PMBUS_HAVE_PIN;
+++	if (info->func[0]
+++	    && pmbus_check_byte_register(client, 0, PMBUS_STATUS_INPUT))
+++		info->func[0] |= PMBUS_HAVE_STATUS_INPUT;
+++	if (pmbus_check_byte_register(client, 0, PMBUS_FAN_CONFIG_12) &&
+++		pmbus_check_word_register(client, 0, PMBUS_READ_FAN_SPEED_1)) {
+++		info->func[0] |= PMBUS_HAVE_FAN12;
+++		if (pmbus_check_byte_register(client, 0, PMBUS_STATUS_FAN_12))
+++			info->func[0] |= PMBUS_HAVE_STATUS_FAN12;
+++	}
+++	if (pmbus_check_byte_register(client, 0, PMBUS_FAN_CONFIG_34) &&
+++	    pmbus_check_word_register(client, 0, PMBUS_READ_FAN_SPEED_3)) {
+++		info->func[0] |= PMBUS_HAVE_FAN34;
+++		if (pmbus_check_byte_register(client, 0, PMBUS_STATUS_FAN_34))
+++			info->func[0] |= PMBUS_HAVE_STATUS_FAN34;
+++	}
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_1))
+++		info->func[0] |= PMBUS_HAVE_TEMP;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_2))
+++		info->func[0] |= PMBUS_HAVE_TEMP2;
+++	if (pmbus_check_word_register(client, 0, PMBUS_READ_TEMPERATURE_3))
+++		info->func[0] |= PMBUS_HAVE_TEMP3;
+++	if (info->func[0] & (PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP2
+++			     | PMBUS_HAVE_TEMP3)
+++		&& pmbus_check_byte_register(client, 0,
+++		PMBUS_STATUS_TEMPERATURE))
+++		info->func[0] |= PMBUS_HAVE_STATUS_TEMP;
+++
+++	/* Sensors detected on all pages */
+++	for (page = 0; page < info->pages; page++) {
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_VOUT)) {
+++			info->func[page] |= PMBUS_HAVE_VOUT;
+++			if (pmbus_check_byte_register(client, page,
+++						      PMBUS_STATUS_VOUT))
+++				info->func[page] |= PMBUS_HAVE_STATUS_VOUT;
+++		}
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_IOUT)) {
+++			info->func[page] |= PMBUS_HAVE_IOUT;
+++			if (pmbus_check_byte_register(client, 0,
+++						      PMBUS_STATUS_IOUT))
+++				info->func[page] |= PMBUS_HAVE_STATUS_IOUT;
+++		}
+++		if (pmbus_check_word_register(client, page, PMBUS_READ_POUT))
+++			info->func[page] |= PMBUS_HAVE_POUT;
+++	}
+++}
+++
+++/*
+++ * Identify chip parameters.
+++ */
+++static int pmbus_identify(struct i2c_client *client,
+++			  struct pmbus_driver_info *info)
+++{
+++	int ret = 0;
+++
+++	/* only 1 page */
+++	info->pages = 1;
+++
+++	/* VOUT and IOUT are in direct mode */
+++	info->format[PSC_VOLTAGE_OUT] = direct;
+++	info->m[PSC_VOLTAGE_OUT] = 1;
+++	info->b[PSC_VOLTAGE_OUT] = 0;
+++	info->R[PSC_VOLTAGE_OUT] = 1;
+++
+++	info->format[PSC_CURRENT_OUT] = direct;
+++	info->m[PSC_CURRENT_OUT] = 1;
+++	info->b[PSC_CURRENT_OUT] = 0;
+++	info->R[PSC_CURRENT_OUT] = 1;
+++
+++	/* Try to find sensor groups  */
+++	pmbus_find_sensor_groups(client, info);
+++	return ret;
+++}
+++
+++static int cisco_n2200_pmbus_probe(struct i2c_client *client,
+++				   const struct i2c_device_id *id)
+++{
+++	struct pmbus_driver_info *info;
+++
+++	info = devm_kzalloc(&client->dev, sizeof(struct pmbus_driver_info),
+++			    GFP_KERNEL);
+++	if (!info)
+++		return -ENOMEM;
+++
+++	info->pages = id->driver_data;
+++	info->read_word_data = cisco_n2200_read_word_data;
+++	info->identify = pmbus_identify;
+++
+++	return pmbus_do_probe(client, id, info);
+++}
+++
+++static int cisco_n2200_do_remove(struct i2c_client *client)
+++{
+++	/* do the generic pmbus remove */
+++	pmbus_do_remove(client);
+++	return 0;
+++}
+++
+++/*
+++ * Use driver_data to set the number of pages supported by the chip.
+++ */
+++static const struct i2c_device_id cisco_n2200_id[] = {
+++	{"cisco_n2200", 0},
+++	{}
+++};
+++
+++MODULE_DEVICE_TABLE(i2c, cisco_n2200_id);
+++
+++/* This is the driver that will be inserted */
+++static struct i2c_driver cisco_n2200_pmbus_driver = {
+++	.driver = {
+++		   .name = "cisco_n2200",
+++		   },
+++	.probe = cisco_n2200_pmbus_probe,
+++	.remove = cisco_n2200_do_remove,
+++	.id_table = cisco_n2200_id,
+++};
+++
+++module_i2c_driver(cisco_n2200_pmbus_driver);
+++
+++MODULE_AUTHOR("Mike Tsai");
+++MODULE_DESCRIPTION("Cisco N2200 AC/DC Controller PMBus driver");
+++MODULE_LICENSE("GPL");
++-- 
++2.1.4
++
+diff --git a/patch/driver-hwmon-pmbus-tps40422.patch b/patch/driver-hwmon-pmbus-tps40422.patch
+new file mode 100644
+index 0000000..9b04cd0
+--- /dev/null
++++ b/patch/driver-hwmon-pmbus-tps40422.patch
+@@ -0,0 +1,115 @@
++Hardware monitoring driver for TI TPS40422
++
++From: Shuotian Cheng <shuche@microsoft.com>
++
++Get from future kernel 3.17
++---
++ drivers/hwmon/pmbus/Kconfig    |   10 ++++++
++ drivers/hwmon/pmbus/Makefile   |    1 +
++ drivers/hwmon/pmbus/tps40422.c |   64 ++++++++++++++++++++++++++++++++++++++++
++ 3 files changed, 75 insertions(+)
++ create mode 100644 drivers/hwmon/pmbus/tps40422.c
++
++diff --git a/drivers/hwmon/pmbus/Kconfig b/drivers/hwmon/pmbus/Kconfig
++index 7d3b1aa..cc659a1 100644
++--- a/drivers/hwmon/pmbus/Kconfig
+++++ b/drivers/hwmon/pmbus/Kconfig
++@@ -97,6 +97,16 @@ config SENSORS_MAX8688
++ 	  This driver can also be built as a module. If so, the module will
++ 	  be called max8688.
++ 
+++config SENSORS_TPS40422
+++        tristate "TI TPS40422"
+++        default n
+++        help
+++          If you say yes here you get hardware monitoring support for TI
+++          TPS40422.
+++
+++          This driver can also be built as a module. If so, the module will
+++          be called tps40422.
+++
++ config SENSORS_UCD9000
++ 	tristate "TI UCD90120, UCD90124, UCD9090, UCD90910"
++ 	default n
++diff --git a/drivers/hwmon/pmbus/Makefile b/drivers/hwmon/pmbus/Makefile
++index 767d086..c0c689f 100644
++--- a/drivers/hwmon/pmbus/Makefile
+++++ b/drivers/hwmon/pmbus/Makefile
++@@ -11,6 +11,7 @@ obj-$(CONFIG_SENSORS_MAX16064)	+= max16064.o
++ obj-$(CONFIG_SENSORS_MAX34440)	+= max34440.o
++ obj-$(CONFIG_SENSORS_DNI_DPS460) += dni_dps460.o
++ obj-$(CONFIG_SENSORS_MAX8688)	+= max8688.o
+++obj-$(CONFIG_SENSORS_TPS40422)  += tps40422.o
++ obj-$(CONFIG_SENSORS_UCD9000)	+= ucd9000.o
++ obj-$(CONFIG_SENSORS_UCD9200)	+= ucd9200.o
++ obj-$(CONFIG_SENSORS_ZL6100)	+= zl6100.o
++diff --git a/drivers/hwmon/pmbus/tps40422.c b/drivers/hwmon/pmbus/tps40422.c
++new file mode 100644
++index 0000000..3280382
++--- /dev/null
+++++ b/drivers/hwmon/pmbus/tps40422.c
++@@ -0,0 +1,64 @@
+++/*
+++ * Hardware monitoring driver for TI TPS40422
+++ *
+++ * Copyright (c) 2014 Nokia Solutions and Networks.
+++ *
+++ * This program is free software; you can redistribute it and/or modify
+++ * it under the terms of the GNU General Public License as published by
+++ * the Free Software Foundation; either version 2 of the License, or
+++ * (at your option) any later version.
+++ *
+++ * This program is distributed in the hope that it will be useful,
+++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+++ * GNU General Public License for more details.
+++ */
+++
+++#include <linux/kernel.h>
+++#include <linux/module.h>
+++#include <linux/init.h>
+++#include <linux/err.h>
+++#include <linux/i2c.h>
+++#include "pmbus.h"
+++
+++static struct pmbus_driver_info tps40422_info = {
+++	.pages = 2,
+++	.format[PSC_VOLTAGE_IN] = linear,
+++	.format[PSC_VOLTAGE_OUT] = linear,
+++	.format[PSC_TEMPERATURE] = linear,
+++	.func[0] = PMBUS_HAVE_VOUT | PMBUS_HAVE_TEMP2
+++		| PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_STATUS_TEMP
+++		| PMBUS_HAVE_IOUT | PMBUS_HAVE_STATUS_IOUT,
+++	.func[1] = PMBUS_HAVE_VOUT | PMBUS_HAVE_TEMP2
+++		| PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_STATUS_TEMP
+++		| PMBUS_HAVE_IOUT | PMBUS_HAVE_STATUS_IOUT,
+++};
+++
+++static int tps40422_probe(struct i2c_client *client,
+++			  const struct i2c_device_id *id)
+++{
+++	return pmbus_do_probe(client, id, &tps40422_info);
+++}
+++
+++static const struct i2c_device_id tps40422_id[] = {
+++	{"tps40422", 0},
+++	{}
+++};
+++
+++MODULE_DEVICE_TABLE(i2c, tps40422_id);
+++
+++/* This is the driver that will be inserted */
+++static struct i2c_driver tps40422_driver = {
+++	.driver = {
+++		   .name = "tps40422",
+++		   },
+++	.probe = tps40422_probe,
+++	.remove = pmbus_do_remove,
+++	.id_table = tps40422_id,
+++};
+++
+++module_i2c_driver(tps40422_driver);
+++
+++MODULE_AUTHOR("Zhu Laiwen <richard.zhu@nsn.com>");
+++MODULE_DESCRIPTION("PMBus driver for TI TPS40422");
+++MODULE_LICENSE("GPL");
+diff --git a/patch/driver-mfd-enable-dh89xxcc-gpio.patch b/patch/driver-mfd-enable-dh89xxcc-gpio.patch
+new file mode 100755
+index 0000000..4961994
+--- /dev/null
++++ b/patch/driver-mfd-enable-dh89xxcc-gpio.patch
+@@ -0,0 +1,21 @@
++lpc_ich: enable gpio for DH89xxCC PCH
++
++From: Peter Lei <peterlei@cisco.com>
++
++
++---
++ drivers/mfd/lpc_ich.c |    1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/drivers/mfd/lpc_ich.c b/drivers/mfd/lpc_ich.c
++index 7d8482f..f28b0b9 100644
++--- a/drivers/mfd/lpc_ich.c
+++++ b/drivers/mfd/lpc_ich.c
++@@ -484,6 +484,7 @@ static struct lpc_ich_info lpc_chipset_info[] = {
++ 	[LPC_DH89XXCC] = {
++ 		.name = "DH89xxCC",
++ 		.iTCO_version = 2,
+++		.gpio_version = ICH_V5_GPIO,
++ 	},
++ 	[LPC_PPT] = {
++ 		.name = "Panther Point",
+diff --git a/patch/driver-rtc-cmos-address-space-256.patch b/patch/driver-rtc-cmos-address-space-256.patch
+new file mode 100644
+index 0000000..1b1b2cb
+--- /dev/null
++++ b/patch/driver-rtc-cmos-address-space-256.patch
+@@ -0,0 +1,26 @@
++From e0bf2bbd53775cefcbf768bd48b04b21b1fa8aee Mon Sep 17 00:00:00 2001
++From: Jiahua Wang <jiahwang@cisco.com>
++Date: Thu, 4 Oct 2018 11:32:01 -0700
++Subject: [PATCH] rtc-cmos: change address_space to 256
++
++Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
++---
++ drivers/rtc/rtc-cmos.c | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/drivers/rtc/rtc-cmos.c b/drivers/rtc/rtc-cmos.c
++index c554e52..25b6bac 100644
++--- a/drivers/rtc/rtc-cmos.c
+++++ b/drivers/rtc/rtc-cmos.c
++@@ -633,7 +633,7 @@ cmos_do_probe(struct device *dev, struct resource *ports, int rtc_irq)
++ #elif defined(__i386__) || defined(__x86_64__) || defined(__arm__) \
++ 			|| defined(__sparc__) || defined(__mips__) \
++ 			|| defined(__powerpc__) || defined(CONFIG_MN10300)
++-	address_space = 128;
+++	address_space = 256;
++ #else
++ #warning Assuming 128 bytes of RTC+NVRAM address space, not 64 bytes.
++ 	address_space = 128;
++-- 
++2.7.4
++
+diff --git a/patch/include-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch b/patch/include-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch
+new file mode 100644
+index 0000000..f63c544
+--- /dev/null
++++ b/patch/include-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch
+@@ -0,0 +1,26 @@
++From 15d303a8da6f491079e929cb28700113e63200b3 Mon Sep 17 00:00:00 2001
++From: Jiahua Wang <jiahwang@cisco.com>
++Date: Thu, 4 Oct 2018 11:40:46 -0700
++Subject: [PATCH] gpio.h: Increase ARCH_NR_GPIOs to 1024
++
++Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
++---
++ include/asm-generic/gpio.h | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/include/asm-generic/gpio.h b/include/asm-generic/gpio.h
++index 8ca627d..43ad6d7 100644
++--- a/include/asm-generic/gpio.h
+++++ b/include/asm-generic/gpio.h
++@@ -29,7 +29,7 @@
++ #if defined(CONFIG_ARCH_NR_GPIO) && CONFIG_ARCH_NR_GPIO > 0
++ #define ARCH_NR_GPIOS CONFIG_ARCH_NR_GPIO
++ #else
++-#define ARCH_NR_GPIOS		512
+++#define ARCH_NR_GPIOS		1024
++ #endif
++ #endif
++ 
++-- 
++2.7.4
++
+-- 
+2.7.4
+
