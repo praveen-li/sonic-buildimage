@@ -1,4 +1,5 @@
 include $(PLATFORM_PATH)/invm-sai.mk
+include $(PLATFORM_PATH)/platform-modules-cisco.mk
 include $(PLATFORM_PATH)/platform-modules-cel.mk
 include $(PLATFORM_PATH)/platform-modules-delta.mk
 include $(PLATFORM_PATH)/docker-orchagent-invm.mk
@@ -15,7 +16,7 @@ SONIC_ALL += $(SONIC_INVM_ONE_IMAGE) \
              $(DOCKER_SYNCD_INVM_RPC)
 
 # Inject invm sai into sairedis
-$(LIBSAIREDIS)_DEPENDS += $(INVM_HSAI) $(INVM_LIBSAI) $(LIBSAITHRIFT_DEV_INVM)
+$(LIBSAIREDIS)_DEPENDS += $(INVM_HSAI) $(INVM_LIBSAI) $(INVM_CIS_DRV) $(LIBSAITHRIFT_DEV_INVM)
 
 # Runtime dependency on invm sai is set only for syncd
 $(SYNCD)_RDEPENDS += $(INVM_HSAI)
