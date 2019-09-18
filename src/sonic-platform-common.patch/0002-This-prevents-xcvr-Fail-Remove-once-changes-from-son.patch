@@ -1,0 +1,26 @@
+From f8752c119c515349b0a0153227840392a19e7207 Mon Sep 17 00:00:00 2001
+From: vasrajan <vasrajan@cisco.com>
+Date: Fri, 12 Jul 2019 18:54:38 -0700
+Subject: [PATCH 2/3] This prevents xcvr Fail - Remove once changes from sonic
+ master are ported
+
+---
+ sonic_sfp/sfputilbase.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sonic_sfp/sfputilbase.py b/sonic_sfp/sfputilbase.py
+index 3394fc2..fc1df8b 100644
+--- a/sonic_sfp/sfputilbase.py
++++ b/sonic_sfp/sfputilbase.py
+@@ -760,7 +760,7 @@ class SfpUtilBase(object):
+         transceiver_dom_info_dict = {}
+ 
+         if port_num in self.osfp_ports:
+-            pass
++            return None
+         elif port_num in self.qsfp_ports:
+             offset = 0
+             offset_xcvr = 128
+-- 
+2.7.4
+
