@@ -9,6 +9,10 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	# Build the package
 	pushd ./frr
 
+	# remove all diff and apply the patches
+	git stash
+	patch -p1  < ../patch/0001-zebra-kernel-level-graceful-restart.patch
+
 	# clean up the previous build
 	rm -rf debian
 	rm -f frr*.tar.gz
