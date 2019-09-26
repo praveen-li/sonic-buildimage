@@ -166,6 +166,7 @@ class SfpUtil(SfpUtilCisco):
 
     _port_to_eeprom_mapping = {}
 
+    port_type_done = False
     qsfp_port_list = []
     qsfp_dd_port_list = []
 
@@ -179,11 +180,13 @@ class SfpUtil(SfpUtilCisco):
 
     @property
     def qsfp_ports(self):
+        self.qsfp_find_port_type_all()
         return self.qsfp_port_list
         #return range(0, self.PORTS_IN_BLOCK + 1)
 
     @property
     def osfp_ports(self):
+        self.qsfp_find_port_type_all()
         return self.qsfp_dd_port_list
         #return range(0, self.PORTS_IN_BLOCK)
     
@@ -272,8 +275,12 @@ class SfpUtil(SfpUtilCisco):
 
     def qsfp_find_port_type_all(self):
 
+        if self.port_type_done:
+            return
+
         for p in range(0, self.QSFP_PORT_END + 1):
             self.qsfp_find_port_type(p)
+        self.port_type_done = True
 
     def sfp_tx_enable(self, port_num):
         
@@ -297,7 +304,6 @@ class SfpUtil(SfpUtilCisco):
             #    self.sfp_tx_enable(x)
 
         super(SfpUtil, self).__init__()
-        self.qsfp_find_port_type_all()
 
 
     def reset(self, port_num):
