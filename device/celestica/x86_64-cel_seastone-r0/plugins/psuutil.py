@@ -28,15 +28,14 @@ class PsuUtil(PsuBase):
             {'base': self.get_gpio_base()},
             {'abs':PSU1_ABS_PIN, 'power':PSU1_POWER_PIN},
             {'abs':PSU2_ABS_PIN, 'power':PSU2_POWER_PIN}
-            {'abs':27, 'power':22},
-            {'abs':28, 'power':25}
         ]
 
     def get_gpio_base(self):
         sys_gpio_dir = "/sys/class/gpio"
         for r in os.listdir(sys_gpio_dir):
             if "gpiochip" in r:
-                return int(r[8:],10)
+                if "i2c" in os.path.realpath(sys_gpio_dir+"/"+r):
+                    return int(r[8:],10)
         return GPIO_RESERV_BASE
 
 
