@@ -65,7 +65,7 @@ class board(UrlList):
         return (True, 0)
 
     def serial_number_str(self, e):
-	serial_key = [v for k,v in d.iteritems() if 'system serial number' in k.lower()]
+	serial_key = [v for k,v in e.iteritems() if 'system serial number' in k.lower()]
         if serial_key:
 		return serial_key[0]
 	else:
