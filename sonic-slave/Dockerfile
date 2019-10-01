@@ -127,7 +127,7 @@ RUN apt-get update && apt-get install -y \
         squashfs-tools \
         zip \
 # For broadcom sdk build
-        linux-compiler-gcc-4.8-x86 \
+        linux-compiler-gcc-4.9-x86 \
         linux-kbuild-3.16 \
 # teamd build
         libdaemon-dev \
@@ -255,7 +255,7 @@ RUN python2 -m pip install -U pip==9.0.3
 
 # For p4 build
 RUN pip install \
-        ctypesgen \
+        ctypesgen==0.r125 \
         crc16
 
 # For sonic config engine testing

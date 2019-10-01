@@ -121,6 +121,8 @@ program_console_speed()
 
 #### Begin Main Body ####
 
+logger "SONiC version ${SONIC_VERSION} starting up..."
+
 # If the machine.conf is absent, it indicates that the unit booted
 # into SONiC from another NOS. Extract the machine.conf from ONIE.
 if [ ! -e /host/machine.conf ]; then
@@ -232,6 +234,9 @@ if [ -f $FIRST_BOOT_FILE ]; then
     else
         touch /tmp/pending_config_initialization
     fi
+
+    # Notify firstboot to Platform, to use it for reboot-cause
+    touch /tmp/notify_firstboot_to_platform
 
     if [ -d /host/image-$SONIC_VERSION/platform/$platform ]; then
         dpkg -i /host/image-$SONIC_VERSION/platform/$platform/*.deb

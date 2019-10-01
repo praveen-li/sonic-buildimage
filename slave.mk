@@ -29,6 +29,7 @@ FILES_PATH = $(TARGET_PATH)/files
 PYTHON_WHEELS_PATH = $(TARGET_PATH)/python-wheels
 PROJECT_ROOT = $(shell pwd)
 DBG_IMAGE_MARK = dbg
+DBG_SRC_ARCHIVE_FILE = $(TARGET_PATH)/sonic_src.tar.gz
 
 CONFIGURED_PLATFORM := $(shell [ -f .platform ] && cat .platform || echo generic)
 PLATFORM_PATH = platform/$(CONFIGURED_PLATFORM)
@@ -580,6 +581,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
 	export swsssdk_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SWSSSDK_PY2))"
 	export platform_common_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PLATFORM_COMMON_PY2))"
 	export redis_dump_load_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(REDIS_DUMP_LOAD_PY2))"
+	export install_debug_image="$(INSTALL_DEBUG_TOOLS)"
 
 	$(foreach docker, $($*_DOCKERS),\
 		export docker_image="$(docker)"
@@ -608,9 +610,13 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
 		chmod +x sonic_debian_extension.sh,
 	)
 
-	export debug_src_archive="$(DBG_SRC_ARCHIVE)"
+	DEBUG_IMG="$(INSTALL_DEBUG_TOOLS)" \
+	DEBUG_SRC_ARCHIVE_DIRS="$(DBG_SRC_ARCHIVE)" \
+	DEBUG_SRC_ARCHIVE_FILE="$(DBG_SRC_ARCHIVE_FILE)" \
+		./dbg_files.sh
 
 	DEBUG_IMG="$(INSTALL_DEBUG_TOOLS)" \
+	DEBUG_SRC_ARCHIVE_FILE="$(DBG_SRC_ARCHIVE_FILE)" \
 	USERNAME="$(USERNAME)" \
 	PASSWORD="$(PASSWORD)" \
 		./build_debian.sh $(LOG)
