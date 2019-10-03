@@ -22,7 +22,8 @@ RUN apt-get update   && \
         ca-certificates \
         gcc             \
         make            \
-        libdpkg-perl
+        libdpkg-perl    \
+        ipmitool
 
 {% if docker_snmp_sv2_debs.strip() -%}
 # Copy locally-built Debian package dependencies
@@ -31,6 +32,15 @@ RUN apt-get update   && \
 # Install locally-built Debian packages and implicitly install their dependencies
 {{ install_debian_packages(docker_snmp_sv2_debs.split(' ')) }}
 {%- endif %}
+
+# Fix for hiredis compilation issues for ARM
+# python will throw for missing locale 
+RUN apt-get install -y locales
+RUN locale-gen "en_US.UTF-8"
+RUN dpkg-reconfigure --frontend noninteractive locales
+ENV LC_CTYPE=en_US.UTF-8
+RUN sed -i '/^#.* en_US.* /s/^#//' /etc/locale.gen
+RUN locale-gen
 
 # Install up-to-date version of pip
 RUN curl https://bootstrap.pypa.io/get-pip.py | python3.6

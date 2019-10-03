@@ -12,6 +12,7 @@ class TestJ2Files(TestCase):
         self.script_file = os.path.join(self.test_dir, '..', 'sonic-cfggen')
         self.simple_minigraph = os.path.join(self.test_dir, 'simple-sample-graph.xml')
         self.t0_minigraph = os.path.join(self.test_dir, 't0-sample-graph.xml')
+        self.t0_mvrf_minigraph = os.path.join(self.test_dir, 't0-sample-graph-mvrf.xml')
         self.pc_minigraph = os.path.join(self.test_dir, 'pc-test-graph.xml')
         self.t0_port_config = os.path.join(self.test_dir, 't0-sample-port-config.ini')
         self.t1_mlnx_minigraph = os.path.join(self.test_dir, 't1-sample-graph-mlnx.xml')
@@ -22,7 +23,7 @@ class TestJ2Files(TestCase):
     def run_script(self, argument):
         print 'CMD: sonic-cfggen ' + argument
         return subprocess.check_output(self.script_file + ' ' + argument, shell=True)
-    
+
     def run_diff(self, file1, file2):
         return subprocess.check_output('diff -u {} {} || true'.format(file1, file2), shell=True)
 
@@ -31,6 +32,10 @@ class TestJ2Files(TestCase):
         argument = '-m ' + self.t0_minigraph + ' -a \'{\"hwaddr\":\"e4:1d:2d:a5:f3:ad\"}\' -t ' + interfaces_template + ' > ' + self.output_file
         self.run_script(argument)
         self.assertTrue(filecmp.cmp(os.path.join(self.test_dir, 'sample_output', 'interfaces'), self.output_file))
+
+        argument = '-m ' + self.t0_mvrf_minigraph + ' -a \'{\"hwaddr\":\"e4:1d:2d:a5:f3:ad\"}\' -t ' + interfaces_template + ' > ' + self.output_file
+        self.run_script(argument)
+        self.assertTrue(filecmp.cmp(os.path.join(self.test_dir, 'sample_output', 'mvrf_interfaces'), self.output_file))
 
     def test_ports_json(self):
         ports_template = os.path.join(self.test_dir, '..', '..', '..', 'dockers', 'docker-orchagent', 'ports.json.j2')
@@ -78,6 +83,28 @@ class TestJ2Files(TestCase):
         self.run_script(argument)
         self.assertTrue(filecmp.cmp(os.path.join(self.test_dir, 'sample_output', 'frr.conf'), self.output_file))
 
+
+    def test_bgpd_frr(self):
+        conf_template = os.path.join(self.test_dir, '..', '..', '..', 'dockers', 'docker-fpm-frr', 'bgpd.conf.j2')
+        argument = '-m ' + self.t0_minigraph + ' -p ' + self.t0_port_config + ' -t ' + conf_template + ' > ' + self.output_file
+        self.run_script(argument)
+        original_filename = os.path.join(self.test_dir, 'sample_output', 'bgpd_frr.conf')
+        r = filecmp.cmp(original_filename, self.output_file)
+        diff_output = self.run_diff(original_filename, self.output_file) if not r else ""
+        self.assertTrue(r, "Diff:\n" + diff_output)
+
+    def test_zebra_frr(self):
+        conf_template = os.path.join(self.test_dir, '..', '..', '..', 'dockers', 'docker-fpm-frr', 'zebra.conf.j2')
+        argument = '-m ' + self.t0_minigraph + ' -p ' + self.t0_port_config + ' -t ' + conf_template + ' > ' + self.output_file
+        self.run_script(argument)
+        self.assertTrue(filecmp.cmp(os.path.join(self.test_dir, 'sample_output', 'zebra_frr.conf'), self.output_file))
+
+    def test_staticd_frr(self):
+        conf_template = os.path.join(self.test_dir, '..', '..', '..', 'dockers', 'docker-fpm-frr', 'staticd.conf.j2')
+        argument = '-m ' + self.t0_minigraph + ' -p ' + self.t0_port_config + ' -t ' + conf_template + ' > ' + self.output_file
+        self.run_script(argument)
+        self.assertTrue(filecmp.cmp(os.path.join(self.test_dir, 'sample_output', 'staticd_frr.conf'), self.output_file))
+
     def test_ipinip(self):
         ipinip_file = os.path.join(self.test_dir, '..', '..', '..', 'dockers', 'docker-orchagent', 'ipinip.json.j2')
         argument = '-m ' + self.t0_minigraph + ' -p ' + self.t0_port_config + ' -t ' + ipinip_file + ' > ' + self.output_file
@@ -86,7 +113,7 @@ class TestJ2Files(TestCase):
         sample_output_file = os.path.join(self.test_dir, 'sample_output', 'ipinip.json')
         assert filecmp.cmp(sample_output_file, self.output_file)
 
-    def test_sku_render_template(self):
+    def test_l2switch_template(self):
         argument = '-k Mellanox-SN2700 -t ' + os.path.join(self.test_dir, '../data/l2switch.j2') + ' -p ' + self.t0_port_config + ' > ' + self.output_file
         self.run_script(argument)
 
@@ -124,7 +151,7 @@ class TestJ2Files(TestCase):
 
         argument = '-m ' + self.dell6100_t0_minigraph + ' -p ' + port_config_ini_file + ' -t ' + buffers_file + ' > ' + self.output_file
         self.run_script(argument)
-        
+
         # cleanup
         buffers_config_file_new = os.path.join(dell_dir_path, 'buffers_config.j2')
         os.remove(buffers_config_file_new)

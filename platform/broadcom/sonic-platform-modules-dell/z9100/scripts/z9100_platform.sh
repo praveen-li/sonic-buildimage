@@ -200,6 +200,20 @@ init_switch_port_led() {
 
 }
 
+install_python_api_package() {
+    device="/usr/share/sonic/device"
+    platform=$(/usr/local/bin/sonic-cfggen -H -v DEVICE_METADATA.localhost.platform)
+
+    rv=$(pip install $device/$platform/sonic_platform-1.0-py2-none-any.whl)
+}
+
+remove_python_api_package() {
+    rv=$(pip show sonic-platform > /dev/null 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        rv = $(pip uninstall -y sonic-platform > /dev/null 2>/dev/null)
+    fi
+}
+
 init_devnum
 
 if [[ "$1" == "init" ]]; then
@@ -220,6 +234,7 @@ if [[ "$1" == "init" ]]; then
 
     #Copy led_proc_init.soc
     init_switch_port_led
+    install_python_api_package
 
     value=0x0
     echo $value > /sys/class/i2c-adapter/i2c-14/14-003e/qsfp_lpmode
@@ -241,6 +256,7 @@ elif [[ "$1" == "deinit" ]]; then
     modprobe -r i2c-mux-pca954x
     modprobe -r i2c-dev
     modprobe -r dell_ich
+    remove_python_api_package
 else
      echo "z9100_platform : Invalid option !"
 fi

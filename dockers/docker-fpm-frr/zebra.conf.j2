@@ -12,6 +12,16 @@ password zebra
 enable password zebra
 {% endblock sys_init %}
 !
+{% block vrf %}
+{%  if VNET is defined %}
+{%   for vnet_name, vnet_metadata in VNET.iteritems() %}
+vrf {{ vnet_name }}
+vni {{ vnet_metadata['vni'] }}
+!
+{%   endfor %}
+{%  endif %}
+{% endblock vrf %}
+!
 {% block interfaces %}
 ! Enable link-detect (default disabled)
 {% for (name, prefix) in INTERFACE|pfx_filter %}
@@ -25,15 +35,6 @@ link-detect
 !
 {% endfor %}
 {% endblock interfaces %}
-!
-{% block default_route %}
-! set static default route to mgmt gateway as a backup to learned default
-{% for (name, prefix) in MGMT_INTERFACE|pfx_filter %}
-{% if prefix | ipv4 %}
-ip route 0.0.0.0/0 {{ MGMT_INTERFACE[(name, prefix)]['gwaddr'] }} 200
-{% endif %}
-{% endfor %}
-{% endblock default_route %}
 !
 {% block source_loopback %}
 {% set lo_ipv4_addrs = [] %}

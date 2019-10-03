@@ -55,15 +55,16 @@ function wait_for_database_service()
 
 function getBootType()
 {
-    case "$(cat /proc/cmdline | grep -o 'SONIC_BOOT_TYPE=\S*' | cut -d'=' -f2)" in
-    warm*)
+    # same code snippet in files/build_templates/docker_image_ctl.j2
+    case "$(cat /proc/cmdline)" in
+    *SONIC_BOOT_TYPE=warm*)
         TYPE='warm'
         ;;
-    fastfast)
+    *SONIC_BOOT_TYPE=fastfast*)
         TYPE='fastfast'
         ;;
-    fast*)
-        TYPE='fast'
+    *SONIC_BOOT_TYPE=fast*|*fast-reboot*)
+        TYPE=$(awk '{ if ($1 <= 180) print "fast"; else print "cold" }' /proc/uptime)
         ;;
     *)
         TYPE='cold'
@@ -103,11 +104,9 @@ start() {
         if [[ x"$WARM_BOOT" != x"true" ]]; then
             if [[ x"$(/bin/systemctl is-active pmon)" == x"active" ]]; then
                 /bin/systemctl stop pmon
-                /usr/bin/hw-management.sh chipdown
-                /bin/systemctl restart pmon
-            else
-                /usr/bin/hw-management.sh chipdown
+                debug "pmon is active while syncd starting, stop it first"
             fi
+            /usr/bin/hw-management.sh chipdown
         fi
 
         if [[ x"$BOOT_TYPE" == x"fast" ]]; then
@@ -133,6 +132,11 @@ start() {
 }
 
 wait() {
+    if [[ x"$sonic_asic_platform" == x"mellanox" ]]; then
+        debug "Starting pmon service..."
+        /bin/systemctl start pmon
+        debug "Started pmon service"
+    fi
     /usr/bin/${SERVICE}.sh wait
 }
 
@@ -147,6 +151,12 @@ stop() {
         TYPE=warm
     else
         TYPE=cold
+    fi
+
+    if [[ x$sonic_asic_platform == x"mellanox" ]] && [[ x$TYPE == x"cold" ]]; then
+        debug "Stopping pmon service ahead of syncd..."
+        /bin/systemctl stop pmon
+        debug "Stopped pmon service"
     fi
 
     if [[ x$sonic_asic_platform != x"mellanox" ]] || [[ x$TYPE != x"cold" ]]; then

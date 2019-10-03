@@ -20,17 +20,39 @@ RUN apt-get update &&       \
         tcpdump             \
         # Install redis-tools dependencies
         # TODO: implicitly install dependencies
+        libatomic1          \
         libjemalloc1        \
+        liblua5.1-0         \
+        lua-bitop           \
+        lua-cjson           \
         libelf1             \
         libmnl0             \
         bridge-utils
 
+{% if ( CONFIGURED_ARCH == "armhf" or CONFIGURED_ARCH == "arm64" ) %}
+## Fix for gcc/python not found in arm docker
+RUN apt-get install -f -y python2.7 python2.7-dev
+RUN apt-get install -y gcc-6
+{% endif %}
+{% if CONFIGURED_ARCH == "armhf" %}
+RUN ln -s -f /usr/bin/gcc-6 /usr/bin/arm-linux-gnueabihf-gcc
+{% endif %}
+{% if CONFIGURED_ARCH == "arm64" %}
+RUN ln -s -f /usr/bin/gcc-6 /usr/bin/aarch64-linux-gnu-gcc
+{% endif %}
+
 RUN pip install \
         scapy==2.4.2 \
         setuptools \
-        pyroute2==0.5.3 \
+        pyroute2==0.5.3
+RUN pip install \
         netifaces==0.10.7 \
         monotonic==1.5
+
+{% if ( CONFIGURED_ARCH == "armhf" or CONFIGURED_ARCH == "arm64" ) %}
+# Remove installed gcc
+RUN apt-get remove -y gcc-6
+{% endif %}
 
 {% if docker_orchagent_debs.strip() -%}
 # Copy locally-built Debian package dependencies

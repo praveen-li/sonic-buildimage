@@ -42,24 +42,44 @@ ifeq ($(USER), root)
 $(error Add your user account to docker group and use your user account to make. root or sudo are not supported!)
 endif
 
+# Check for j2cli availability
+J2_VER := $(shell j2 --version 2>&1 | grep j2cli | awk '{printf $$2}')
+ifeq ($(J2_VER),)
+$(error Install j2cli)
+endif
+
+# Check for minimum Docker version on build host
+# Note: Using the greater of CE (17.05.0) and EE (17.06.1) versions that support ARG before FROM
+docker_min := 17.06.1
+docker_min_ver := $(shell echo "$(docker_min)" | awk -F. '{printf("%d%03d%03d\n",$$1,$$2,$$3);}' 2>/dev/null)
+docker_ver := $(shell docker info 2>/dev/null | grep -i "server version" | rev | cut -d' ' -f1 | rev | awk -F. '{printf("%d%03d%03d\n",$$1,$$2,$$3);}' 2>/dev/null)
+docker_is_valid := $(shell if [[ "$(docker_ver)" -lt $(docker_min_ver) ]] ; then echo "0"; else echo "1"; fi)
+ifeq (0,$(docker_is_valid))
+$(error SONiC requires Docker version $(docker_min) or later)
+endif
+
 # Remove lock file in case previous run was forcefully stopped
 $(shell rm -f .screen)
 
 MAKEFLAGS += -B
 
+CONFIGURED_ARCH := $(shell [ -f .arch ] && cat .arch || echo $(PLATFORM_ARCH))
+ifeq ($(CONFIGURED_ARCH),)
+    override CONFIGURED_ARCH = amd64
+endif
+ifeq ($(PLATFORM_ARCH),)
+	override PLATFORM_ARCH = $(CONFIGURED_ARCH)
+endif
+
 ifeq ($(BLDENV), stretch)
-SLAVE_BASE_TAG = $(shell sha1sum sonic-slave-stretch/Dockerfile | awk '{print substr($$1,0,11);}')
-SLAVE_TAG = $(shell cat sonic-slave-stretch/Dockerfile.user sonic-slave-stretch/Dockerfile | sha1sum | awk '{print substr($$1,0,11);}')
-SLAVE_BASE_IMAGE = sonic-slave-stretch-base
-SLAVE_IMAGE = sonic-slave-stretch-$(USER)
 SLAVE_DIR = sonic-slave-stretch
 else
-SLAVE_BASE_TAG = $(shell sha1sum sonic-slave/Dockerfile | awk '{print substr($$1,0,11);}')
-SLAVE_TAG = $(shell cat sonic-slave/Dockerfile.user sonic-slave/Dockerfile | sha1sum | awk '{print substr($$1,0,11);}')
-SLAVE_BASE_IMAGE = sonic-slave-base
-SLAVE_IMAGE = sonic-slave-$(USER)
 SLAVE_DIR = sonic-slave
 endif
+SLAVE_BASE_TAG = $(shell CONFIGURED_ARCH=$(CONFIGURED_ARCH) j2 $(SLAVE_DIR)/Dockerfile.j2 > $(SLAVE_DIR)/Dockerfile && sha1sum $(SLAVE_DIR)/Dockerfile | awk '{print substr($$1,0,11);}')
+SLAVE_TAG = $(shell cat $(SLAVE_DIR)/Dockerfile.user $(SLAVE_DIR)/Dockerfile | sha1sum | awk '{print substr($$1,0,11);}')
+SLAVE_BASE_IMAGE = $(SLAVE_DIR)-base
+SLAVE_IMAGE = $(SLAVE_BASE_IMAGE)-$(USER)
 
 OVERLAY_MODULE_CHECK := \
     lsmod | grep -q "^overlay " &>/dev/null || \
@@ -89,28 +109,55 @@ include rules/config
 ifeq ($(SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD), y)
     DOCKER_RUN += -v /var/run/docker.sock:/var/run/docker.sock
 endif
+ifneq (,$(filter $(CONFIGURED_ARCH), armhf arm64))
+    # Multiarch docker cannot start dockerd service due to iptables cannot run over different arch kernel
+    SONIC_SERVICE_DOCKERD_FOR_MULTIARCH=y
+    SONIC_NATIVE_DOCKERD_FOR_MUTLIARCH := dockerd  --experimental=true --storage-driver=vfs \
+	--data-root=/var/lib/march/docker/ --exec-root=/var/run/march/docker/ \
+	-H unix:///var/run/march/docker.sock -p /var/run/march/docker.pid
+    DOCKER_RUN += -v /var/run/march/docker.sock:/var/run/docker.sock
+    DOCKER_RUN += -v /var/run/march/docker.pid:/var/run/docker.pid
+    DOCKER_RUN += -v /var/run/march/docker:/var/run/docker
+    DOCKER_RUN += -v /var/lib/march/docker:/var/lib/docker
+    SONIC_USERFACL_DOCKERD_FOR_MUTLIARCH := setfacl -m user:$(USER):rw /var/run/march/docker.sock
+
+    #Override Native config to prevent docker service
+    SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD=y
+
+    DOCKER_MULTIARCH_CHECK := docker inspect --type image multiarch/qemu-user-static:register &> /dev/null || (echo "multiarch docker not found ..."; docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes)
+
+    DOCKER_SERVICE_MULTIARCH_CHECK := docker -H unix:///var/run/march/docker.sock info &> /dev/null || (echo "Docker march service not running..."; sudo rm -fr /var/run/march/*; (sudo $(SONIC_NATIVE_DOCKERD_FOR_MUTLIARCH) &) &>/dev/null ; sleep 1; sudo $(SONIC_USERFACL_DOCKERD_FOR_MUTLIARCH);)
+
+   # Docker service to load the compiled dockers-*.gz 
+    SONIC_NATIVE_DOCKERD_FOR_DOCKERFS := rm -fr $(PWD)/dockerfs/; mkdir -p $(PWD)/dockerfs/; sudo dockerd --storage-driver=overlay2 --iptables=false \
+	--data-root $(PWD)/dockerfs/var/lib/docker/ --exec-root=$(PWD)/dockerfs/var/run/docker/ \
+	-H unix://$(PWD)/dockerfs/var/run/docker.sock -p $(PWD)/dockerfs/var/run/docker.pid &
+    SONIC_USERFACL_DOCKERD_FOR_DOCKERFS := setfacl -m user:$(USER):rw $(PWD)/dockerfs/var/run/docker.sock
+    DOCKER_SERVICE_DOCKERFS_CHECK := (sudo docker -H unix://$(PWD)/dockerfs/var/run/docker.sock info &> /dev/null && sudo kill -9 `sudo cat $(PWD)/dockerfs/var/run/docker.pid`  && false) || (echo "Starting docker build service..."; (sudo $(SONIC_NATIVE_DOCKERD_FOR_DOCKERFS) ) &>/dev/null ; sleep 1; sudo $(SONIC_USERFACL_DOCKERD_FOR_DOCKERFS);)
+
+endif
 
 DOCKER_BASE_BUILD = docker build --no-cache \
-		    -t $(SLAVE_BASE_IMAGE) \
+		    -t $(SLAVE_BASE_IMAGE):$(SLAVE_BASE_TAG) \
 		    --build-arg http_proxy=$(http_proxy) \
 		    --build-arg https_proxy=$(https_proxy) \
-		    $(SLAVE_DIR) && \
-		    docker tag $(SLAVE_BASE_IMAGE):latest $(SLAVE_BASE_IMAGE):$(SLAVE_BASE_TAG)
+		    $(SLAVE_DIR)
 
 DOCKER_BUILD = docker build --no-cache \
 	       --build-arg user=$(USER) \
 	       --build-arg uid=$(shell id -u) \
 	       --build-arg guid=$(shell id -g) \
 	       --build-arg hostname=$(shell echo $$HOSTNAME) \
-	       -t $(SLAVE_IMAGE) \
+               --build-arg slave_base_tag_ref=$(SLAVE_BASE_TAG) \
+	       -t $(SLAVE_IMAGE):$(SLAVE_TAG) \
 	       -f $(SLAVE_DIR)/Dockerfile.user \
-	       $(SLAVE_DIR) && \
-	       docker tag $(SLAVE_IMAGE):latest $(SLAVE_IMAGE):$(SLAVE_TAG)
+	       $(SLAVE_DIR)
 
 SONIC_BUILD_INSTRUCTION :=  make \
                            -f slave.mk \
                            BLDENV=$(BLDENV) \
                            PLATFORM=$(PLATFORM) \
+                           PLATFORM_ARCH=$(PLATFORM_ARCH) \
                            BUILD_NUMBER=$(BUILD_NUMBER) \
                            BUILD_TIMESTAMP=$(BUILD_TIMESTAMP) \
                            ENABLE_DHCP_GRAPH_SERVICE=$(ENABLE_DHCP_GRAPH_SERVICE) \
@@ -135,7 +182,13 @@ SONIC_BUILD_INSTRUCTION :=  make \
 .DEFAULT_GOAL :=  all
 
 %::
+ifneq (,$(filter $(CONFIGURED_ARCH), armhf arm64))
+	@$(DOCKER_MULTIARCH_CHECK)
+	@$(DOCKER_SERVICE_MULTIARCH_CHECK)
+	@$(DOCKER_SERVICE_DOCKERFS_CHECK)
+endif
 	@$(OVERLAY_MODULE_CHECK)
+	
 	@docker inspect --type image $(SLAVE_BASE_IMAGE):$(SLAVE_BASE_TAG) &> /dev/null || \
 	    { echo Image $(SLAVE_BASE_IMAGE):$(SLAVE_BASE_TAG) not found. Building... ; \
 	    $(DOCKER_BASE_BUILD) ; }
@@ -174,18 +227,24 @@ init :
 	@git submodule update --init --recursive
 	@git submodule foreach --recursive '[ -f .git ] && echo "gitdir: $$(realpath --relative-to=. $$(cut -d" " -f2 .git))" > .git'
 
+.ONESHELL : reset
 reset :
 	@echo && echo -n "Warning! All local changes will be lost. Proceed? [y/N]: "
-	@read ans && \
-	    if [ $$ans == y ]; then \
-	        echo "Resetting local repository. Please wait..."; \
-	        $(DOCKER_RUN) $(SLAVE_IMAGE):$(SLAVE_TAG) sudo rm -rf fsroot; \
-	        git clean -xfdf; \
-	        git reset --hard; \
-	        git submodule foreach --recursive git clean -xfdf; \
-	        git submodule foreach --recursive git reset --hard; \
-	        git submodule update --init --recursive; \
-			echo "Reset complete!"; \
-	    else \
-	        echo "Reset aborted"; \
-	    fi
+	@read ans && (
+	    if [ $$ans == y ]; then
+	        echo "Resetting local repository. Please wait...";
+	        $(DOCKER_RUN) $(SLAVE_IMAGE):$(SLAVE_TAG) sudo rm -rf fsroot;
+	        if [[ "$(CONFIGURED_ARCH)" == "armhf" || "$(CONFIGURED_ARCH)" ==  "arm64" ]]; then
+	            echo "Stopping march $(CONFIGURED_ARCH) docker"
+	            sudo kill -9 `sudo cat /var/run/march/docker.pid` || true
+	            sudo rm -f /var/run/march/docker.pid || true
+	        fi
+	        git clean -xfdf;
+	        git reset --hard;
+	        git submodule foreach --recursive git clean -xfdf;
+	        git submodule foreach --recursive git reset --hard;
+	        git submodule update --init --recursive;
+	        echo "Reset complete!";
+	    else
+	        echo "Reset aborted";
+	    fi )

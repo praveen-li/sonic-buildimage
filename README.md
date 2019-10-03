@@ -42,7 +42,19 @@ Following is the instruction on how to build an [(ONIE)](https://github.com/open
 # Hardware
 Any server can be a build image server. We are using a server with 1T hard disk. The OS is Ubuntu 16.04.
 
-# Prerequisites
+## Prerequisites
+
+Install pip and jinja in host build machine, execute below commands if j2/j2cli is not available:
+
+    sudo apt-get install -y python-pip
+    sudo python2 -m pip install -U pip==9.0.3
+    sudo pip install --force-reinstall --upgrade jinja2>=2.10
+    sudo pip install j2cli
+
+Configure your system to allow running the 'docker' command without 'sudo':
+    Add current user to the docker group
+	 `sudo gpasswd -a ${USER} docker`
+    Log out and log back in so that your group membership is re-evaluated
 
 ## SAI Version 
 Please refer to [SONiC roadmap](https://github.com/Azure/SONiC/wiki/Sonic-Roadmap-Planning) on the SAI version for each SONiC release. 
@@ -73,6 +85,38 @@ To build SONiC installer image and docker images, run the following commands:
 
     # Build SONiC image
     make all
+
+## Usage for ARM Architecture
+To build Arm32 bit for (ARMHF) plaform
+    ARM build has dependency in docker version 18,
+    if docker version is 19, downgrade to 18 as below
+    sudo apt-get install --allow-downgrades  -y docker-ce=5:18.09.0~3-0~ubuntu-xenial
+    sudo apt-get install --allow-downgrades  -y docker-ce-cli=5:18.09.0~3-0~ubuntu-xenial
+
+    # Execute make configure once to configure ASIC and ARCH
+
+    make configure PLATFORM=[ASIC_VENDOR] PLATFORM_ARCH=armhf
+
+    make target/sonic-[ASIC_VENDER]-armhf.bin
+
+    # example:
+
+    make configure PLATFORM=marvell-armhf PLATFORM_ARCH=armhf
+
+    make target/sonic-marvell-armhf.bin
+
+
+
+To build Arm64 bit for plaform
+
+    # Execute make configure once to configure ASIC and ARCH
+
+    make configure PLATFORM=[ASIC_VENDOR] PLATFORM_ARCH=arm64
+
+    # example:
+
+    make configure PLATFORM=marvell-arm64 PLATFORM_ARCH=arm64
+
 
  **NOTE**:
 
@@ -123,6 +167,9 @@ Every target has a clean target, so in order to clean swss, execute:
 
 It is recommended to use clean targets to clean all packages that are built together, like dev packages for instance. In order to be more familiar with build process and make some changes to it, it is recommended to read this short [Documentation](README.buildsystem.md).
 
+## Build debug dockers and debug SONiC installer image:
+SONiC build system supports building dockers and ONE-image with debug tools and debug symbols, to help with live & core debugging. For details refer to [(SONiC Buildimage Guide)](https://github.com/Azure/sonic-buildimage/blob/master/README.buildsystem.md).
+
 ## Notes:
 - If you are running make for the first time, a sonic-slave-${USER} docker image will be built automatically.
 This may take a while, but it is a one-time action, so please be patient.
@@ -135,10 +182,7 @@ This may take a while, but it is a one-time action, so please be patient.
   - docker-base.gz: base docker image where other docker images are built from, only used in build process (gzip tar archive)
   - docker-database.gz: docker image for in-memory key-value store, used as inter-process communication (gzip tar archive)
   - docker-fpm.gz: docker image for quagga with fpm module enabled (gzip tar archive)
-  - docker-orchagent-brcm.gz: docker image for SWitch State Service (SWSS) on Broadcom platform (gzip tar archive)
-  - docker-orchagent-cavm.gz: docker image for SWitch State Service (SWSS) on Cavium platform (gzip tar archive)
-  - docker-orchagent-mlnx.gz: docker image for SWitch State Service (SWSS) on Mellanox platform (gzip tar archive)
-  - docker-orchagent-nephos.gz: docker image for SWitch State Service (SWSS) on Nephos platform (gzip tar archive)
+  - docker-orchagent.gz: docker image for SWitch State Service (SWSS) (gzip tar archive)
   - docker-syncd-brcm.gz: docker image for the daemon to sync database and Broadcom switch ASIC (gzip tar archive)
   - docker-syncd-cavm.gz: docker image for the daemon to sync database and Cavium switch ASIC (gzip tar archive)
   - docker-syncd-mlnx.gz: docker image for the daemon to sync database and Mellanox switch ASIC (gzip tar archive)

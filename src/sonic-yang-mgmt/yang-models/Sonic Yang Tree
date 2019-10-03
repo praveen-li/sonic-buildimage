@@ -1,0 +1,101 @@
+module: sonic-acl
+  +--rw sonic-acl
+     +--rw ACL_RULE
+     |  +--rw ACL_RULE_LIST* [ACL_TABLE_NAME RULE_NAME]
+     |     +--rw ACL_TABLE_NAME             -> /sonic-acl/ACL_TABLE/ACL_TABLE_LIST/ACL_TABLE_NAME
+     |     +--rw RULE_NAME                  string
+     |     +--rw PACKET_ACTION?             head:packet_action
+     |     +--rw IP_TYPE?                   head:ip_type
+     |     +--rw PRIORITY?                  uint32
+     |     +--rw (ip_prefix)?
+     |     |  +--:(ip4_prefix)
+     |     |  |  +--rw SRC_IP?              inet:ipv4-prefix
+     |     |  |  +--rw DST_IP?              inet:ipv4-prefix
+     |     |  +--:(ip6_prefix)
+     |     |     +--rw SRC_IPV6?            inet:ipv6-prefix
+     |     |     +--rw DST_IPV6?            inet:ipv6-prefix
+     |     +--rw IN_PORTS*                  uint16
+     |     +--rw OUT_PORTS*                 uint16
+     |     +--rw (src_port)?
+     |     |  +--:(l4_src_port)
+     |     |  |  +--rw L4_SRC_PORT?         uint16
+     |     |  +--:(l4_src_port_range)
+     |     |     +--rw L4_SRC_PORT_RANGE?   string
+     |     +--rw (dst_port)?
+     |     |  +--:(l4_dst_port)
+     |     |  |  +--rw L4_DST_PORT?         uint16
+     |     |  +--:(l4_dst_port_range)
+     |     |     +--rw L4_DST_PORT_RANGE?   string
+     |     +--rw ETHER_TYPE?                string
+     |     +--rw IP_PROTOCOL?               uint8
+     |     +--rw TCP_FLAGS?                 string
+     |     +--rw DSCP?                      uint8
+     |     +--rw TC?                        uint8
+     |     +--rw (icmp)?
+     |     |  +--:(icmp4)
+     |     |  |  +--rw ICMP_TYPE?           uint8
+     |     |  |  +--rw ICMP_CODE?           uint8
+     |     |  +--:(icmp6)
+     |     |     +--rw ICMPV6_TYPE?         uint8
+     |     |     +--rw ICMPV6_CODE?         uint8
+     |     +--rw INNER_ETHER_TYPE?          string
+     |     +--rw INNER_IP_PROTOCOL?         uint8
+     |     +--rw INNER_L4_SRC_PORT?         uint16
+     |     +--rw INNER_L4_DST_PORT?         uint16
+     +--rw ACL_TABLE
+        +--rw ACL_TABLE_LIST* [ACL_TABLE_NAME]
+           +--rw ACL_TABLE_NAME    string
+           +--rw policy_desc?      string
+           +--rw type?             head:acl_table_type
+           +--rw stage?            enumeration
+           +--rw ports*            union
+module: sonic-interface
+  +--rw sonic-interface
+     +--rw INTERFACE
+        +--rw INTERFACE_LIST* [interface ip-prefix]
+           +--rw interface    -> /port:sonic-port/PORT/PORT_LIST/port_name
+           +--rw ip-prefix    inet:ip-prefix
+           +--rw scope?       enumeration
+           +--rw family?      head:ip-family
+module: sonic-port
+  +--rw sonic-port
+     +--rw PORT
+        +--rw PORT_LIST* [port_name]
+           +--rw port_name       string
+           +--rw alias?          string
+           +--rw lanes?          string
+           +--rw description?    string
+           +--rw speed?          uint32
+           +--rw mtu?            uint16
+           +--rw admin_status    head:admin_status
+module: sonic-portchannel
+  +--rw sonic-portchannel
+     +--rw PORTCHANNEL
+        +--rw PORTCHANNEL_LIST* [portchannel_name]
+           +--rw portchannel_name    string
+           +--rw members*            -> /port:sonic-port/PORT/PORT_LIST/port_name
+           +--rw min_links?          uint8
+           +--rw description?        string
+           +--rw mtu?                uint16
+           +--rw admin_status        head:admin_status
+module: sonic-vlan
+  +--rw sonic-vlan
+     +--rw VLAN_INTERFACE
+     |  +--rw VLAN_INTERFACE_LIST* [vlanid ip-prefix]
+     |     +--rw vlanid       -> ../../../VLAN/VLAN_LIST/vlanid
+     |     +--rw ip-prefix    inet:ip-prefix
+     |     +--rw scope?       enumeration
+     |     +--rw family?      head:ip-family
+     +--rw VLAN
+     |  +--rw VLAN_LIST* [vlanid]
+     |     +--rw vlanid          uint16
+     |     +--rw description?    string
+     |     +--rw dhcp_servers*   inet:ip-address
+     |     +--rw mtu?            uint16
+     |     +--rw admin_status    head:admin_status
+     |     +--rw members*        -> /port:sonic-port/PORT/PORT_LIST/port_name
+     +--rw VLAN_MEMBER
+        +--rw VLAN_MEMBER_LIST* [vlanid port]
+           +--rw vlanid          -> ../../../VLAN/VLAN_LIST/vlanid
+           +--rw port            -> /port:sonic-port/PORT/PORT_LIST/port_name
+           +--rw tagging_mode    head:vlan_tagging_mode

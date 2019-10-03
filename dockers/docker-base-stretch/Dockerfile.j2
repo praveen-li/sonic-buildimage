@@ -1,5 +1,11 @@
 {% from "dockers/dockerfile-macros.j2" import install_debian_packages, install_python_wheels, copy_files %}
+{% if CONFIGURED_ARCH == "armhf" %}
+FROM multiarch/debian-debootstrap:armhf-stretch
+{% elif CONFIGURED_ARCH == "arm64" %}
+FROM multiarch/debian-debootstrap:arm64-stretch
+{% else %}
 FROM debian:stretch
+{% endif %}
 
 # Clean documentation in FROM image
 RUN find /usr/share/doc -depth \( -type f -o -type l \) ! -name copyright | xargs rm || true
@@ -20,7 +26,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Configure data sources for apt/dpkg
 COPY ["dpkg_01_drop", "/etc/dpkg/dpkg.cfg.d/01_drop"]
+{% if CONFIGURED_ARCH == "armhf" %}
+COPY ["sources.list.armhf", "/etc/apt/sources.list"]
+{% elif CONFIGURED_ARCH == "arm64" %}
+COPY ["sources.list.arm64", "/etc/apt/sources.list"]
+{% else %}
 COPY ["sources.list", "/etc/apt/sources.list"]
+{% endif %}
 COPY ["no_install_recommend_suggest", "/etc/apt/apt.conf.d"]
 
 # Update apt cache and
@@ -37,6 +49,13 @@ RUN apt-get update &&        \
         python-pkg-resources \
         python-meld3
 
+{% if CONFIGURED_ARCH == "armhf" %}
+# ip and ifconfig utility missing in docker for armhf
+RUN apt-get -y install       \
+        iproute2             \
+        net-tools
+{% endif %}
+
 RUN mkdir -p /etc/supervisor /var/log/supervisor
 
 RUN apt-get -y purge   \
@@ -51,13 +70,6 @@ RUN apt-get -y purge   \
 
 # Install built Debian packages and implicitly install their dependencies
 {{ install_debian_packages(docker_base_stretch_debs.split(' ')) }}
-{%- endif %}
-
-{% if docker_base_stretch_dbgs.strip() -%}
-# Install common debug-packages
-RUN apt-get -y install docker_base_stretch_dbgs.split(' ') | join(' ')
-{% else %}
-RUN ln /usr/bin/vim.tiny /usr/bin/vim
 {%- endif %}
 
 # Clean up apt

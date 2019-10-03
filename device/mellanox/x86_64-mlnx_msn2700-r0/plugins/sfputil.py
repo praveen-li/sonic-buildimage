@@ -7,8 +7,19 @@ try:
     import time
     import subprocess
     from sonic_sfp.sfputilbase import *
+    import syslog
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
+
+# sfp supports dom
+XCVR_DOM_CAPABILITY_DOM_SUPPORT_BIT = 0x40
+
+# sfp module threshold offset and width
+SFP_MODULE_THRESHOLD_OFFSET = 0
+SFP_MODULE_THRESHOLD_WIDTH = 56
+
+# I2C page size for sfp
+SFP_I2C_PAGE_SIZE = 256
 
 # parameters for DB connection 
 REDIS_HOSTNAME = "localhost"
@@ -18,6 +29,12 @@ REDIS_TIMEOUT_USECS = 0
 # parameters for SFP presence
 SFP_STATUS_INSERTED = '1'
 
+# system level event/error
+EVENT_ON_ALL_SFP = '-1'
+SYSTEM_NOT_READY = 'system_not_ready'
+SYSTEM_READY = 'system_become_ready'
+SYSTEM_FAIL = 'system_fail'
+
 GET_HWSKU_CMD = "sonic-cfggen -d -v DEVICE_METADATA.localhost.hwsku"
 
 # Ethernet<n> <=> sfp<n+SFP_PORT_NAME_OFFSET>
@@ -26,8 +43,18 @@ SFP_PORT_NAME_CONVENTION = "sfp{}"
 
 # magic code defnition for port number, qsfp port position of each hwsku
 # port_position_tuple = (PORT_START, QSFP_PORT_START, PORT_END, PORT_IN_BLOCK, EEPROM_OFFSET)
-hwsku_dict = {'ACS-MSN2700': 0, "LS-SN2700":0, 'ACS-MSN2740': 0, 'ACS-MSN2100': 1, 'ACS-MSN2410': 2, 'ACS-MSN2010': 3, 'ACS-MSN3700': 0, 'ACS-MSN3700C': 0, 'Mellanox-SN2700': 0, 'Mellanox-SN2700-D48C8': 0}
-port_position_tuple_list = [(0, 0, 31, 32, 1), (0, 0, 15, 16, 1), (0, 48, 55, 56, 1),(0, 18, 21, 22, 1)]
+hwsku_dict = {'ACS-MSN2700': 0, 'Mellanox-SN2700': 0, 'Mellanox-SN2700-D48C8': 0, "LS-SN2700":0, 'ACS-MSN2740': 0, 'ACS-MSN2100': 1, 'ACS-MSN2410': 2, 'ACS-MSN2010': 3, 'ACS-MSN3700': 0, 'ACS-MSN3700C': 0, 'ACS-MSN3800': 4}
+port_position_tuple_list = [(0, 0, 31, 32, 1), (0, 0, 15, 16, 1), (0, 48, 55, 56, 1), (0, 18, 21, 22, 1), (0, 0, 63, 64, 1)]
+
+def log_info(msg, also_print_to_console=False):
+    syslog.openlog("sfputil")
+    syslog.syslog(syslog.LOG_INFO, msg)
+    syslog.closelog()
+
+def log_err(msg, also_print_to_console=False):
+    syslog.openlog("sfputil")
+    syslog.syslog(syslog.LOG_ERR, msg)
+    syslog.closelog()
 
 class SfpUtil(SfpUtilBase):
     """Platform-specific SfpUtil class"""
@@ -74,6 +101,7 @@ class SfpUtil(SfpUtilBase):
         self.PORT_END = port_position_tuple[2]
         self.PORTS_IN_BLOCK = port_position_tuple[3]
         self.EEPROM_OFFSET = port_position_tuple[4]
+        self.mlnx_sfpd_started = False
 
         SfpUtilBase.__init__(self)
 
@@ -175,10 +203,24 @@ class SfpUtil(SfpUtilBase):
             self.db_sel_object = swsscommon.Select.OBJECT
             self.sfpd_status_tbl = swsscommon.Table(self.state_db, 'MLNX_SFPD_TASK')
 
-        # Check the liveness of mlnx-sfpd, if it failed, return false
+        # Check the liveness of mlnx-sfpd, if it failed, return system_fail event
+        # If mlnx-sfpd not started, return system_not_ready event
         keys = self.sfpd_status_tbl.getKeys()
         if 'LIVENESS' not in keys:
-            return False, phy_port_dict
+            if self.mlnx_sfpd_started:
+                log_err("mlnx-sfpd exited, return false to notify xcvrd.")
+                phy_port_dict[EVENT_ON_ALL_SFP] = SYSTEM_FAIL
+                return False, phy_port_dict
+            else:
+                log_info("mlnx-sfpd not ready, return false to notify xcvrd.")
+                phy_port_dict[EVENT_ON_ALL_SFP] = SYSTEM_NOT_READY
+                return False, phy_port_dict
+        else:
+            if not self.mlnx_sfpd_started:
+                self.mlnx_sfpd_started = True
+                log_info("mlnx-sfpd is running")
+                phy_port_dict[EVENT_ON_ALL_SFP] = SYSTEM_READY
+                return False, phy_port_dict
 
         if timeout:
             (state, c) = self.db_sel.select(timeout)
@@ -464,7 +506,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return transceiver_dom_info_dict
 
-            dom_voltage_raw = self._read_eeprom_specific_bytes_via_ethtool(port_num, (offset + QSFP_VLOT_OFFSET), QSFP_VOLT_WIDTH)
+            dom_voltage_raw = self._read_eeprom_specific_bytes_via_ethtool(port_num, (offset + QSFP_VOLT_OFFSET), QSFP_VOLT_WIDTH)
             if dom_voltage_raw is not None:
                 dom_voltage_data = sfpd_obj.parse_voltage(dom_voltage_raw, 0)
             else:
@@ -514,14 +556,19 @@ class SfpUtil(SfpUtilBase):
             transceiver_dom_info_dict['tx4bias'] = dom_channel_monitor_data['data']['TX4Bias']['value']
 
         else:
-            offset = 256
+            offset = SFP_I2C_PAGE_SIZE
 
-            eeprom_raw = ['0'] * 256
-            eeprom_raw[92:92+16] = self._read_eeprom_specific_bytes_via_ethtool(port_num, 92, 16)
+            eeprom_raw = ['0'] * SFP_I2C_PAGE_SIZE
+            eeprom_raw[XCVR_DOM_CAPABILITY_OFFSET : XCVR_DOM_CAPABILITY_OFFSET + XCVR_DOM_CAPABILITY_WIDTH] = \
+                self._read_eeprom_specific_bytes_via_ethtool(port_num, XCVR_DOM_CAPABILITY_OFFSET, XCVR_DOM_CAPABILITY_WIDTH)
             sfp_obj = sff8472InterfaceId()
             calibration_type = sfp_obj._get_calibration_type(eeprom_raw)
 
-            eeprom_domraw = self._read_eeprom_specific_bytes_via_ethtool(port_num, offset, 256)
+            dom_supported = (int(eeprom_raw[XCVR_DOM_CAPABILITY_OFFSET], 16) & XCVR_DOM_CAPABILITY_DOM_SUPPORT_BIT != 0)
+            if not dom_supported:
+                return transceiver_dom_info_dict
+
+            eeprom_domraw = self._read_eeprom_specific_bytes_via_ethtool(port_num, offset, SFP_I2C_PAGE_SIZE)
             if eeprom_domraw is None:
                 return transceiver_dom_info_dict
 
@@ -533,7 +580,7 @@ class SfpUtil(SfpUtilBase):
             dom_temperature_raw = eeprom_domraw[SFP_TEMPE_OFFSET:SFP_TEMPE_OFFSET+SFP_TEMPE_WIDTH]
             dom_temperature_data = sfpd_obj.parse_temperature(dom_temperature_raw, 0)
 
-            dom_voltage_raw = eeprom_domraw[SFP_VLOT_OFFSET:SFP_VLOT_OFFSET+SFP_VOLT_WIDTH]
+            dom_voltage_raw = eeprom_domraw[SFP_VOLT_OFFSET:SFP_VOLT_OFFSET+SFP_VOLT_WIDTH]
             dom_voltage_data = sfpd_obj.parse_voltage(dom_voltage_raw, 0)
 
             dom_channel_monitor_raw = eeprom_domraw[SFP_CHANNL_MON_OFFSET:SFP_CHANNL_MON_OFFSET+SFP_CHANNL_MON_WIDTH]
@@ -546,3 +593,71 @@ class SfpUtil(SfpUtilBase):
             transceiver_dom_info_dict['tx1power'] = dom_channel_monitor_data['data']['TXPower']['value']
 
         return transceiver_dom_info_dict
+
+    def get_transceiver_dom_threshold_info_dict(self, port_num):
+        transceiver_dom_threshold_info_dict = {}
+
+        dom_info_dict_keys = ['temphighalarm',    'temphighwarning',
+                              'templowalarm',     'templowwarning',
+                              'vcchighalarm',     'vcchighwarning',
+                              'vcclowalarm',      'vcclowwarning',
+                              'rxpowerhighalarm', 'rxpowerhighwarning',
+                              'rxpowerlowalarm',  'rxpowerlowwarning',
+                              'txpowerhighalarm', 'txpowerhighwarning',
+                              'txpowerlowalarm',  'txpowerlowwarning',
+                              'txbiashighalarm',  'txbiashighwarning',
+                              'txbiaslowalarm',   'txbiaslowwarning'
+                             ]
+        transceiver_dom_threshold_info_dict = dict.fromkeys(dom_info_dict_keys, 'N/A')
+
+        if port_num in self.qsfp_ports:
+            # current we don't support qsfp since threshold data is on page 3 and the way to read this page is under discussion.
+            return transceiver_dom_threshold_info_dict
+        else:
+            offset = SFP_I2C_PAGE_SIZE
+
+            eeprom_raw = ['0'] * SFP_I2C_PAGE_SIZE
+            eeprom_raw[XCVR_DOM_CAPABILITY_OFFSET : XCVR_DOM_CAPABILITY_OFFSET + XCVR_DOM_CAPABILITY_WIDTH] = \
+                self._read_eeprom_specific_bytes_via_ethtool(port_num, XCVR_DOM_CAPABILITY_OFFSET, XCVR_DOM_CAPABILITY_WIDTH)
+            sfp_obj = sff8472InterfaceId()
+            calibration_type = sfp_obj._get_calibration_type(eeprom_raw)
+
+            dom_supported = (int(eeprom_raw[XCVR_DOM_CAPABILITY_OFFSET], 16) & XCVR_DOM_CAPABILITY_DOM_SUPPORT_BIT != 0)
+            if not dom_supported:
+                return transceiver_dom_threshold_info_dict
+
+            sfpd_obj = sff8472Dom(None, calibration_type)
+            if sfpd_obj is None:
+                return transceiver_dom_threshold_info_dict
+
+            dom_module_threshold_raw = self._read_eeprom_specific_bytes_via_ethtool(port_num,
+                                         (offset + SFP_MODULE_THRESHOLD_OFFSET),
+                                         SFP_MODULE_THRESHOLD_WIDTH)
+            if dom_module_threshold_raw is not None:
+                dom_module_threshold_data = sfpd_obj.parse_alarm_warning_threshold(dom_module_threshold_raw, 0)
+            else:
+                return transceiver_dom_threshold_info_dict
+
+            # Threshold Data
+            transceiver_dom_threshold_info_dict['temphighalarm'] = dom_module_threshold_data['data']['TempHighAlarm']['value']
+            transceiver_dom_threshold_info_dict['templowalarm'] = dom_module_threshold_data['data']['TempLowAlarm']['value']
+            transceiver_dom_threshold_info_dict['temphighwarning'] = dom_module_threshold_data['data']['TempHighWarning']['value']
+            transceiver_dom_threshold_info_dict['templowwarning'] = dom_module_threshold_data['data']['TempLowWarning']['value']
+            transceiver_dom_threshold_info_dict['vcchighalarm'] = dom_module_threshold_data['data']['VoltageHighAlarm']['value']
+            transceiver_dom_threshold_info_dict['vcclowalarm'] = dom_module_threshold_data['data']['VoltageLowAlarm']['value']
+            transceiver_dom_threshold_info_dict['vcchighwarning'] = dom_module_threshold_data['data']['VoltageHighWarning']['value']
+            transceiver_dom_threshold_info_dict['vcclowwarning'] = dom_module_threshold_data['data']['VoltageLowWarning']['value']
+            transceiver_dom_threshold_info_dict['txbiashighalarm'] = dom_module_threshold_data['data']['BiasHighAlarm']['value']
+            transceiver_dom_threshold_info_dict['txbiaslowalarm'] = dom_module_threshold_data['data']['BiasLowAlarm']['value']
+            transceiver_dom_threshold_info_dict['txbiashighwarning'] = dom_module_threshold_data['data']['BiasHighWarning']['value']
+            transceiver_dom_threshold_info_dict['txbiaslowwarning'] = dom_module_threshold_data['data']['BiasLowWarning']['value']
+            transceiver_dom_threshold_info_dict['txpowerhighalarm'] = dom_module_threshold_data['data']['TXPowerHighAlarm']['value']
+            transceiver_dom_threshold_info_dict['txpowerlowalarm'] = dom_module_threshold_data['data']['TXPowerLowAlarm']['value']
+            transceiver_dom_threshold_info_dict['txpowerhighwarning'] = dom_module_threshold_data['data']['TXPowerHighWarning']['value']
+            transceiver_dom_threshold_info_dict['txpowerlowwarning'] = dom_module_threshold_data['data']['TXPowerLowWarning']['value']
+            transceiver_dom_threshold_info_dict['rxpowerhighalarm'] = dom_module_threshold_data['data']['RXPowerHighAlarm']['value']
+            transceiver_dom_threshold_info_dict['rxpowerlowalarm'] = dom_module_threshold_data['data']['RXPowerLowAlarm']['value']
+            transceiver_dom_threshold_info_dict['rxpowerhighwarning'] = dom_module_threshold_data['data']['RXPowerHighWarning']['value']
+            transceiver_dom_threshold_info_dict['rxpowerlowwarning'] = dom_module_threshold_data['data']['RXPowerLowWarning']['value']
+
+        return transceiver_dom_threshold_info_dict

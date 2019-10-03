@@ -10,6 +10,7 @@
 #include <linux/i2c/sff-8436.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
+#include <linux/nvram.h>
 
 #define S6000_MUX_BASE_NR   10
 #define QSFP_MODULE_BASE_NR 20
@@ -22,6 +23,8 @@
 #define QSFP_DEVICE_NUM     2
 
 #define GPIO_I2C_MUX_PIN    10
+
+#define RTC_NVRAM_REBOOT_REASON_OFFSET 0x49
 
 static void device_release(struct device *dev)
 {
@@ -544,6 +547,18 @@ static ssize_t get_psu1_status(struct device *dev, struct device_attribute *deva
         data = 1;
 
     return sprintf(buf, "%d\n", data);
+}
+
+static ssize_t get_powersupply_status(struct device *dev, struct device_attribute *devattr, char *buf)
+{
+    int data;
+    struct cpld_platform_data *pdata = dev->platform_data;
+
+    data = dell_i2c_smbus_read_byte_data(pdata[master_cpld].client, 0x3);
+    if (data < 0)
+        return sprintf(buf, "read error");
+
+    return sprintf(buf, "%x\n", data);
 }
 
 static ssize_t get_system_led(struct device *dev, struct device_attribute *devattr, char *buf)
@@ -1094,6 +1109,24 @@ static ssize_t get_slave_cpld_ver(struct device *dev,
     return sprintf(buf, "0x%x\n", data);
 }
 
+static ssize_t get_reboot_reason(struct device *dev,
+                                 struct device_attribute *devattr, char *buf)
+{
+    uint8_t data = 0;
+
+    /* Last Reboot reason in saved in RTC NVRAM offset 0x49
+     * We write the reboot reason into nvram offset,
+     * as part of platform_reboot implementation from userspace.
+
+     * COLD_RESET = 0xE # Cold Reset (value)
+     * WARM_RESET = 0x6 # Warm Reset (value)
+     */
+
+    /* Read it from this offset, and export it as last_reboot_reason */
+    data = nvram_read_byte(RTC_NVRAM_REBOOT_REASON_OFFSET);
+
+    return sprintf(buf, "0x%x\n", data);
+}
 
 static DEVICE_ATTR(qsfp_modsel, S_IRUGO, get_modsel, NULL);
 static DEVICE_ATTR(qsfp_modprs, S_IRUGO, get_modprs, NULL);
@@ -1105,6 +1138,7 @@ static DEVICE_ATTR(psu0_prs, S_IRUGO, get_psu0_prs, NULL);
 static DEVICE_ATTR(psu1_prs, S_IRUGO, get_psu1_prs, NULL);
 static DEVICE_ATTR(psu0_status, S_IRUGO, get_psu0_status, NULL);
 static DEVICE_ATTR(psu1_status, S_IRUGO, get_psu1_status, NULL);
+static DEVICE_ATTR(powersupply_status, S_IRUGO, get_powersupply_status, NULL);
 static DEVICE_ATTR(system_led, S_IRUGO | S_IWUSR, get_system_led, set_system_led);
 static DEVICE_ATTR(locator_led, S_IRUGO | S_IWUSR, get_locator_led, set_locator_led);
 static DEVICE_ATTR(power_led, S_IRUGO | S_IWUSR, get_power_led, set_power_led);
@@ -1116,6 +1150,7 @@ static DEVICE_ATTR(fan2_led, S_IRUGO | S_IWUSR, get_fan2_led, set_fan2_led);
 static DEVICE_ATTR(system_cpld_ver, S_IRUGO, get_system_cpld_ver, NULL);
 static DEVICE_ATTR(master_cpld_ver, S_IRUGO, get_master_cpld_ver, NULL);
 static DEVICE_ATTR(slave_cpld_ver,  S_IRUGO, get_slave_cpld_ver,  NULL);
+static DEVICE_ATTR(last_reboot_reason,  S_IRUGO, get_reboot_reason,  NULL);
 
 static struct attribute *s6000_cpld_attrs[] = {
     &dev_attr_qsfp_modsel.attr,
@@ -1128,6 +1163,7 @@ static struct attribute *s6000_cpld_attrs[] = {
     &dev_attr_psu1_prs.attr,
     &dev_attr_psu0_status.attr,
     &dev_attr_psu1_status.attr,
+    &dev_attr_powersupply_status.attr,
     &dev_attr_system_led.attr,
     &dev_attr_locator_led.attr,
     &dev_attr_power_led.attr,
@@ -1139,6 +1175,7 @@ static struct attribute *s6000_cpld_attrs[] = {
     &dev_attr_system_cpld_ver.attr,
     &dev_attr_master_cpld_ver.attr,
     &dev_attr_slave_cpld_ver.attr,
+    &dev_attr_last_reboot_reason.attr,
     NULL,
 };
 
