@@ -1,6 +1,6 @@
 # libteam packages
 
-LIBTEAM_VERSION = 1.26-1
+LIBTEAM_VERSION = 1.28-1
 
 export LIBTEAM_VERSION
 
@@ -19,3 +19,8 @@ $(eval $(call add_derived_package,$(LIBTEAM),$(LIBTEAMDCT)))
 LIBTEAM_UTILS = libteam-utils_$(LIBTEAM_VERSION)_amd64.deb
 $(LIBTEAM_UTILS)_DEPENDS += $(LIBTEAMDCT)
 $(eval $(call add_derived_package,$(LIBTEAM),$(LIBTEAM_UTILS)))
+
+# The .c, .cpp, .h & .hpp files under src/{$DBG_SRC_ARCHIVE list}
+# are archived into debug one image to facilitate debugging.
+#
+DBG_SRC_ARCHIVE += libteam

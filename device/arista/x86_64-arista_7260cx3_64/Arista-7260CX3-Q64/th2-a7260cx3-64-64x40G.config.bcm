@@ -939,7 +939,6 @@ portmap_9=17:40
 robust_hash_disable_egress_vlan=1
 robust_hash_disable_mpls=1
 robust_hash_disable_vlan=1
-sram_scan_enable=0
 stable_size=0x5500000
 stable_size=0x5500000
 tdma_timeout_usec=15000000
@@ -1012,3 +1011,5 @@ serdes_preemphasis_114=0x61c01
 serdes_preemphasis_115=0x61c01
 serdes_preemphasis_116=0x105004
 serdes_preemphasis_117=0x105004
+
+mmu_init_config="MSFT-TH2-Tier0"

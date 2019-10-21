@@ -68,6 +68,14 @@ function finalize_warm_boot()
     sudo config warm_restart disable
 }
 
+function stop_control_plane_assistant()
+{
+    if [[ -x ${ASSISTANT_SCRIPT} ]]; then
+        debug "Tearing down control plane assistant ..."
+        ${ASSISTANT_SCRIPT} -m reset
+    fi
+}
+
 
 wait_for_database_service
 
@@ -88,6 +96,12 @@ for i in `seq 60`; do
     fi
     sleep 5
 done
+
+stop_control_plane_assistant
+
+# Save DB after stopped control plane assistant to avoid extra entries
+debug "Save in-memory database after warm reboot ..."
+config save -y
 
 if [[ -n "${list}" ]]; then
     debug "Some components didn't finish reconcile: ${list} ..."

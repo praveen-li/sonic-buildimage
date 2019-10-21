@@ -33,6 +33,8 @@ function copy_config_files_and_directories()
             logger "Missing SONiC configuration ${file_dir} ..."
         fi
     done
+
+    sync
 }
 
 function check_system_warm_boot()
@@ -60,20 +62,23 @@ if [ -f /tmp/pending_config_migration ]; then
     copy_config_files_and_directories $copy_list
     if [ x"${WARM_BOOT}" == x"true" ]; then
         echo "Warm reboot detected..."
-    elif [ "$enabled" = "true" ]; then
-        echo "Use minigraph.xml from old system..."
-        reload_minigraph
-        sonic-cfggen -d --print-data > /etc/sonic/config_db.json
-    else
+    elif [ -r /etc/sonic/config_db.json ]; then
         echo "Use config_db.json from old system..."
         sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
 
         # Disable Linkedin ZTP process if doing config migration
         sed -i "s/ZTP_MODE=TRUE/ZTP_MODE=FALSE/g" /etc/ztp/ztp.conf
 
-        # Restore Linkedin FRR configuration
-        cp -r /etc/sonic/old_config/frr /etc/sonic/
-
+        if [[ -x /usr/bin/db_migrator.py ]]; then
+            # Migrate the DB to the latest schema version if needed
+            /usr/bin/db_migrator.py -o migrate
+        fi
+    elif [ -r /etc/sonic/minigraph.xml ]; then
+        echo "Use minigraph.xml from old system..."
+        reload_minigraph
+        sonic-cfggen -d --print-data > /etc/sonic/config_db.json
+    else
+        echo "Didn't found neither config_db.json nor minigraph.xml ..."
     fi
     rm -f /tmp/pending_config_migration
     sed -i "/enabled=/d" /etc/sonic/updategraph.conf

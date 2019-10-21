@@ -2,6 +2,7 @@
 
 SERVICE="swss"
 PEER="syncd"
+DEPENDENT="teamd radv"
 DEBUGLOG="/tmp/swss-syncd-debug.log"
 LOCKFILE="/tmp/swss-syncd-lock"
 
@@ -78,11 +79,24 @@ function clean_up_tables()
     end" 0
 }
 
-startPeerService() {
+start_peer_and_dependent_services() {
     check_warm_boot
 
     if [[ x"$WARM_BOOT" != x"true" ]]; then
         /bin/systemctl start ${PEER}
+        for dep in ${DEPENDENT}; do
+            /bin/systemctl start ${dep}
+        done
+    fi
+}
+
+stop_peer_and_dependent_services() {
+    # if warm start enabled or peer lock exists, don't stop peer service docker
+    if [[ x"$WARM_BOOT" != x"true" ]]; then
+        /bin/systemctl stop ${PEER}
+        for dep in ${DEPENDENT}; do
+            /bin/systemctl stop ${dep}
+        done
     fi
 }
 
@@ -104,7 +118,7 @@ start() {
         /usr/bin/docker exec database redis-cli -n 1 FLUSHDB
         /usr/bin/docker exec database redis-cli -n 2 FLUSHDB
         /usr/bin/docker exec database redis-cli -n 5 FLUSHDB
-        clean_up_tables 6 "'PORT_TABLE*', 'MGMT_PORT_TABLE*', 'VLAN_TABLE*', 'VLAN_MEMBER_TABLE*', 'INTERFACE_TABLE*', 'MIRROR_SESSION*', 'VRF_TABLE*', 'FDB_TABLE*'"
+        clean_up_tables 6 "'PORT_TABLE*', 'MGMT_PORT_TABLE*', 'VLAN_TABLE*', 'VLAN_MEMBER_TABLE*', 'LAG_TABLE*', 'LAG_MEMBER_TABLE*', 'INTERFACE_TABLE*', 'MIRROR_SESSION*', 'VRF_TABLE*', 'FDB_TABLE*'"
     fi
 
     # start service docker
@@ -116,7 +130,7 @@ start() {
 }
 
 wait() {
-    startPeerService
+    start_peer_and_dependent_services
     /usr/bin/${SERVICE}.sh wait
 }
 
@@ -135,10 +149,7 @@ stop() {
     # Unlock has to happen before reaching out to peer service
     unlock_service_state_change
 
-    # if warm start enabled or peer lock exists, don't stop peer service docker
-    if [[ x"$WARM_BOOT" != x"true" ]]; then
-        /bin/systemctl stop ${PEER}
-    fi
+    stop_peer_and_dependent_services
 }
 
 case "$1" in

@@ -29,7 +29,7 @@
 set -x -e
 
 ## docker engine version (with platform)
-DOCKER_VERSION=5:18.09.2~3-0~debian-stretch
+DOCKER_VERSION=5:18.09.8~3-0~debian-stretch
 LINUX_KERNEL_VERSION=4.9.0-9
 
 ## Working directory to prepare the file system
@@ -251,7 +251,10 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     python-scapy            \
     tcptraceroute           \
     mtr-tiny                \
-    locales
+    locales                 \
+    mcelog                  \
+    ndisc6                  \
+    ipmitool
 
 #Adds a locale to a debian system in non-interactive mode
 sudo sed -i '/^#.* en_US.* /s/^#//' $FILESYSTEM_ROOT/etc/locale.gen && \
@@ -286,37 +289,34 @@ sudo chmod u+s $FILESYSTEM_ROOT/bin/ping{,6}
 sudo rm -f $FILESYSTEM_ROOT/etc/ssh/ssh_host_*_key*
 sudo cp files/sshd/host-ssh-keygen.sh $FILESYSTEM_ROOT/usr/local/bin/
 sudo cp -f files/sshd/sshd.service $FILESYSTEM_ROOT/lib/systemd/system/ssh.service
-## Config sshd
-sudo augtool --autosave "set /files/etc/ssh/sshd_config/UseDNS no" -r $FILESYSTEM_ROOT
+# Config sshd
+# 1. Set 'UseDNS' to 'no'
+# 2. Configure sshd to close all SSH connetions after 15 minutes of inactivity
+sudo augtool -r $FILESYSTEM_ROOT <<'EOF'
+touch /files/etc/ssh/sshd_config/EmptyLineHack
+rename /files/etc/ssh/sshd_config/EmptyLineHack ""
+set /files/etc/ssh/sshd_config/UseDNS no
+ins #comment before /files/etc/ssh/sshd_config/UseDNS
+set /files/etc/ssh/sshd_config/#comment[following-sibling::*[1][self::UseDNS]] "Disable hostname lookups"
+
+rm /files/etc/ssh/sshd_config/ClientAliveInterval
+rm /files/etc/ssh/sshd_config/ClientAliveCountMax
+touch /files/etc/ssh/sshd_config/EmptyLineHack
+rename /files/etc/ssh/sshd_config/EmptyLineHack ""
+set /files/etc/ssh/sshd_config/ClientAliveInterval 900
+set /files/etc/ssh/sshd_config/ClientAliveCountMax 0
+ins #comment before /files/etc/ssh/sshd_config/ClientAliveInterval
+set /files/etc/ssh/sshd_config/#comment[following-sibling::*[1][self::ClientAliveInterval]] "Close inactive client sessions after 15 minutes"
+save
+quit
+EOF
+# Configure sshd to listen for v4 connections; disable listening for v6 connections
 sudo sed -i 's/^ListenAddress ::/#ListenAddress ::/' $FILESYSTEM_ROOT/etc/ssh/sshd_config
 sudo sed -i 's/^#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/' $FILESYSTEM_ROOT/etc/ssh/sshd_config
 
 ## Config monit
-sudo sed -i '
-    s/^# set logfile syslog/set logfile syslog/;
-    s/^\s*set logfile \/var/# set logfile \/var/;
-    s/^# set httpd port/set httpd port/;
-    s/^#    use address localhost/   use address localhost/;
-    s/^#    allow localhost/   allow localhost/;
-    s/^#    allow admin:monit/   allow admin:monit/;
-    s/^#    allow @monit/   allow @monit/;
-    s/^#    allow @users readonly/   allow @users readonly/
-    ' $FILESYSTEM_ROOT/etc/monit/monitrc
-
-sudo tee -a $FILESYSTEM_ROOT/etc/monit/monitrc > /dev/null <<'EOF'
-check filesystem root-overlay with path /
-  if space usage > 90% for 5 times within 10 cycles then alert
-check filesystem var-log with path /var/log
-  if space usage > 90% for 5 times within 10 cycles then alert
-check system $HOST
-  if memory usage > 50% for 5 times within 10 cycles then alert
-  if cpu usage (user) > 90% for 5 times within 10 cycles then alert
-  if cpu usage (system) > 90% for 5 times within 10 cycles then alert
-check process rsyslog with pidfile /var/run/rsyslogd.pid
-  start program = "/bin/systemctl start rsyslog.service"
-  stop program = "/bin/systemctl stop rsyslog.service"
-  if totalmem > 800 MB for 5 times within 10 cycles then restart
-EOF
+sudo cp files/image_config/monit/monitrc $FILESYSTEM_ROOT/etc/monit/
+sudo chmod 600 $FILESYSTEM_ROOT/etc/monit/monitrc
 
 ## Config sysctl
 sudo mkdir -p $FILESYSTEM_ROOT/var/core
@@ -370,6 +370,9 @@ set /files/etc/sysctl.conf/net.core.wmem_max 2097152
 set /files/etc/sysctl.conf/net.netfilter.nf_conntrack_checksum 0
 " -r $FILESYSTEM_ROOT
 
+# Configure mcelog to log machine checks to syslog
+sudo sed -i 's/^#syslog = yes/syslog = yes/' $FILESYSTEM_ROOT/etc/mcelog/mcelog.conf
+
 ## docker-py is needed by Ansible docker module
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT easy_install pip
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install 'docker-py==1.6.0'
@@ -409,6 +412,17 @@ build_number: ${BUILD_NUMBER:-0}
 built_by: $USER@$BUILD_HOSTNAME
 EOF
 
+## Copy over clean-up script
+sudo cp ./files/scripts/core_cleanup.py $FILESYSTEM_ROOT/usr/bin/core_cleanup.py
+
+## Copy ASIC config checksum
+python files/build_scripts/generate_asic_config_checksum.py
+if [[ ! -f './asic_config_checksum' ]]; then
+    echo 'asic_config_checksum not found'
+    exit 1
+fi
+sudo cp ./asic_config_checksum $FILESYSTEM_ROOT/etc/sonic/asic_config_checksum
+
 if [ -f sonic_debian_extension.sh ]; then
     ./sonic_debian_extension.sh $FILESYSTEM_ROOT $PLATFORM_DIR
 fi
@@ -426,6 +440,25 @@ fi
 ## Setup ebtable rules (rule file is in binary format)
 sudo sed -i 's/EBTABLES_LOAD_ON_START="no"/EBTABLES_LOAD_ON_START="yes"/g' ${FILESYSTEM_ROOT}/etc/default/ebtables
 sudo cp files/image_config/ebtables/ebtables.filter ${FILESYSTEM_ROOT}/etc
+
+## Debug Image specific changes
+## Update motd for debug image
+if [ "$DEBUG_IMG" == "y" ]
+then
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '**************' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo 'Running DEBUG image' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '**************' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '/src has the sources' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '/src is mounted in each docker' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '/debug is created for core files or temp files' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo 'Create a subdir under /debug to upload your files' >> /etc/motd"
+    sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '/debug is mounted in each docker' >> /etc/motd"
+
+    sudo mkdir -p $FILESYSTEM_ROOT/src
+    sudo cp $DEBUG_SRC_ARCHIVE_FILE $FILESYSTEM_ROOT/src/
+    sudo mkdir -p $FILESYSTEM_ROOT/debug
+
+fi
 
 ## Remove gcc and python dev pkgs
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y remove gcc libpython2.7-dev
