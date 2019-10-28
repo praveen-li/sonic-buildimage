@@ -1,0 +1,525 @@
+{
+	"WRONG_FAMILY_WITH_IP_PREFIX": {
+		"sonic-vlan:sonic-vlan": {
+			"sonic-vlan:VLAN_INTERFACE": {
+				"VLAN_INTERFACE_LIST": [{
+					"vlanid": 100,
+					"ip-prefix": "2a04:5555:66:7777::1/64",
+					"scope": "global",
+					"family": "IPv4"
+				}]
+			},
+			"sonic-vlan:VLAN": {
+				"VLAN_LIST": [{
+					"vlanid": 100,
+					"description": "server_vlan"
+				}]
+			}
+		}
+	},
+
+	"DHCP_SERVER_INCORRECT_FORMAT": {
+		"sonic-vlan:sonic-vlan": {
+			"sonic-vlan:VLAN": {
+				"VLAN_LIST": [{
+					"vlanid": 100,
+					"description": "server_vlan",
+					"dhcp_servers": [
+						"10.186.72.566"
+					],
+					"mtu": "9216",
+					"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"VLAN_HAS_NON_EXIST_PORT": {
+		"sonic-vlan:sonic-vlan": {
+			"sonic-vlan:VLAN_MEMBER": {
+				"VLAN_MEMBER_LIST": [{
+					"vlanid": 100,
+					"port": "Ethernet156",
+					"tagging_mode": "tagged"
+				}]
+			},
+			"sonic-vlan:VLAN": {
+				"VLAN_LIST": [{
+					"vlanid": 100,
+					"description": "server_vlan"
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"VLAN_MEMEBER_WITH_NON_EXIST_VLAN": {
+		"sonic-vlan:sonic-vlan": {
+			"sonic-vlan:VLAN_MEMBER": {
+				"VLAN_MEMBER_LIST": [{
+					"vlanid": 200,
+					"port": "Ethernet0",
+					"tagging_mode": "tagged"
+				}]
+			},
+			"sonic-vlan:VLAN": {
+				"VLAN_LIST": [{
+						"vlanid": 100,
+						"description": "server_vlan"
+					},
+					{
+						"vlanid": 300,
+						"description": "ipmi_vlan"
+					}
+				]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+					"port_name": "Ethernet0",
+					"alias": "eth0",
+					"description": "Ethernet0",
+					"speed": 25000,
+					"mtu": 9000,
+					"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"TAGGING_MODE_WRONG_VALUE": {
+		"sonic-vlan:sonic-vlan": {
+			"sonic-vlan:VLAN_MEMBER": {
+				"VLAN_MEMBER_LIST": [{
+					"vlanid": 100,
+					"port": "Ethernet0",
+					"tagging_mode": "non-tagged"
+				}]
+			},
+			"sonic-vlan:VLAN": {
+				"VLAN_LIST": [{
+					"vlanid": 100,
+					"description": "server_vlan"
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+					"port_name": "Ethernet0",
+					"alias": "eth0",
+					"description": "Ethernet0",
+					"speed": 25000,
+					"mtu": 9000,
+					"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"INTERFACE_IP_PREFIX_EMPTY_STRING": {
+		"sonic-interface:sonic-interface": {
+			"sonic-interface:INTERFACE": {
+				"INTERFACE_LIST": [{
+					"interface": "Ethernet8",
+					"ip-prefix": "",
+					"scope": "global",
+					"family": "IPv4"
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+					"port_name": "Ethernet8",
+					"alias": "eth8",
+					"description": "Ethernet8",
+					"speed": 25000,
+					"mtu": 9000,
+					"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"ACL_RULE_UNDEFINED_PACKET_ACTION": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"RULE_NAME": "Rule_20",
+					"PACKET_ACTION": "SEND",
+					"DST_IP": "10.186.72.0/26",
+					"SRC_IP": "10.176.0.0/15",
+					"PRIORITY": 999980,
+					"IP_TYPE": "IPV4ANY"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_TABLE_UNDEFINED_TABLE_TYPE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V6",
+					"policy_desc": "Filter IPv6",
+					"type": "LAYER3V4",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_WITH_NON_EXIST_ACL_TABLE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NOT-EXIST",
+					"RULE_NAME": "Rule_20",
+					"PACKET_ACTION": "FORWARD",
+					"DST_IP": "10.186.72.0/26",
+					"SRC_IP": "10.176.0.0/15",
+					"PRIORITY": 999980,
+					"IP_TYPE": "IPV4ANY"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv6",
+					"type": "L3",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_IP_TYPE_SRC_IPV6_MISMATCH": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"RULE_NAME": "Rule_20",
+					"PACKET_ACTION": "FORWARD",
+					"SRC_IPV6": "2001::1/64",
+					"PRIORITY": 999980,
+					"IP_TYPE": "IPV4ANY"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_ARP_TYPE_DST_IPV6_MISMATCH": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V6",
+					"RULE_NAME": "Rule_20",
+					"PACKET_ACTION": "FORWARD",
+					"DST_IPV6": "2001::2/64",
+					"PRIORITY": 999980,
+					"IP_TYPE": "ARP"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V6",
+					"policy_desc": "Filter IPv6",
+					"type": "L3V6",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_WRONG_L4_SRC_PORT_RANGE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V6",
+					"RULE_NAME": "Rule_20",
+					"PACKET_ACTION": "FORWARD",
+					"IP_TYPE": "IP",
+					"SRC_IPV6": "2a04:f547:41::/48",
+					"PRIORITY": 999980,
+					"DST_IPV6": "2a04:f547:43:320::/64",
+					"L4_SRC_PORT_RANGE": "99999-99999"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V6",
+					"policy_desc": "Filter IPv6",
+					"type": "L3V6",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_ARP_TYPE_ICMPV6_CODE_MISMATCH": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"RULE_NAME": "Rule_40",
+					"PACKET_ACTION": "FORWARD",
+					"DST_IP": "10.186.72.64/26",
+					"SRC_IP": "10.176.0.0/15",
+					"PRIORITY": 999960,
+					"ICMPV6_CODE": 5,
+					"IP_TYPE": "ARP",
+					"INNER_ETHER_TYPE": "0x88CC"
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	},
+
+	"ACL_RULE_WRONG_INNER_ETHER_TYPE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_RULE": {
+				"ACL_RULE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"RULE_NAME": "Rule_40",
+					"PACKET_ACTION": "FORWARD",
+					"DST_IP": "10.186.72.64/26",
+					"SRC_IP": "10.176.0.0/15",
+					"PRIORITY": 999960,
+					"IP_TYPE": "ARP",
+					"INNER_ETHER_TYPE": "0x080C"
+
+				}]
+			},
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3",
+					"stage": "EGRESS",
+					"ports": ["Ethernet0", "Ethernet1"]
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					},
+					{
+						"port_name": "Ethernet1",
+						"alias": "eth1",
+						"description": "Ethernet1",
+						"speed": 25000,
+						"mtu": 9000,
+						"admin_status": "up"
+					}
+				]
+			}
+		}
+	}
+}
