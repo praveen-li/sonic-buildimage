@@ -128,3 +128,6 @@ class SfpUtil(SfpUtilBase):
             x_p_fp.write("1" if lpmode else "0")
         return True
 
+    def get_transceiver_change_event(self, timeout=0):
+        raise NotImplementedError
+
