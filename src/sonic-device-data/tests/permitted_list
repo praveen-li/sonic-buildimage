@@ -140,3 +140,4 @@ xgxs_lcpll_xtal_refclk
 xgxs_pdetect
 xgxs_rx_lane_map
 xgxs_tx_lane_map
+serdes_fec_enable
