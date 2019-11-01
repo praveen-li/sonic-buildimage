@@ -25,7 +25,6 @@ mem_cache_enable=1
 #for TH
 phy_an_c73=2
 phy_an_fec=1
-serdes_fec_enable=1
 
 #Enable fast-to-slow cut-thru mode
 asf_mem_profile=2
