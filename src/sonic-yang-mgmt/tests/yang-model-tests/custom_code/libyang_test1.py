@@ -1,6 +1,8 @@
 # This script is used to
 
 import yang as ly
+import re
+import pprint
 
 from json import dump, load, dumps, loads
 from xmltodict import parse
@@ -18,14 +20,30 @@ def readJsonFile(fileName):
 
     return result
 
+prt = pprint.PrettyPrinter(indent=4)
+def prtprint(obj):
+    prt.pprint(obj)
+
+# Read given JSON file
+def readJsonFile(fileName):
+    #print(fileName)
+    try:
+        with open(fileName) as f:
+            result = load(f)
+    except Exception as e:
+        raise Exception(e)
+
+    return result
+
 class sonic_yang:
 
     def __init__(self, yangDir):
         self.yangDir = yangDir
-        self.ctx = None;
+        self.ctx = None
         self.yangFiles = list()
         self.confDbYangMap = dict()
         self.yJson = list()
+        self.root = None
 
         return
 
@@ -69,6 +87,12 @@ class sonic_yang:
             if m is not None:
                 xml = m.print_mem(ly.LYD_JSON, ly.LYP_FORMAT)
                 self.yJson.append(parse(xml))
+
+                #file = ".\\tmp\\"+f+".json"
+                file = f+".json"
+                print(file)
+                with open(file, "w") as fid:
+                    dump(self.yJson[-1], fid, indent=2)
 
         return
 
@@ -117,9 +141,22 @@ class sonic_yang:
 
         return
 
+    """
+        Load data instance for Yang models
+    """
+    def loadData(self, jIn):
+        s = ""
+        try:
+           self.root = self.ctx.parse_data_mem(jIn, ly.LYD_JSON, ly.LYD_OPT_CONFIG|ly.LYD_OPT_STRICT)
+        except Exception as e:
+            s = str(e)
+            print(s)
+
+        return s
+
 # end of class
 
-def main():
+def test_cropping():
     configFile = "sample_config_db.json"
     croppedFile = "cropped_" + configFile
 
@@ -128,6 +165,37 @@ def main():
     sy.loadJsonYangModels()
     sy.createDBTableToModuleMap()
     sy.cropConfigDB(configFile, croppedFile)
+
+    return
+
+def test_data_load():
+    data_file = "xlate_sample_config_db.json"
+    sy = sonic_yang("../../../yang-models")
+    sy.loadYangModel()
+    sy.loadJsonYangModels()
+
+    # read data json
+    jIn = readJsonFile(data_file)
+
+    print(type(jIn))
+    sy.loadData(dumps(jIn))
+
+    return
+
+def test_json_diff():
+
+    jIn  = readJsonFile('cropped_sample_config_db.json')
+    jOut = readJsonFile('rev_sample_config_db.json')
+
+    from jsondiff import diff
+    prtprint(diff(jIn, jOut, syntax='symmetric'))
+
+    return
+
+def main():
+    #test_cropping()
+    #test_data_load()
+    test_json_diff()
 
 if __name__ == "__main__":
     main()
