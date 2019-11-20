@@ -38,11 +38,11 @@ module sonic-vlan {
 
 			list VLAN_INTERFACE_LIST {
 
-				key "vlanid ip-prefix";
+				key "vlan ip-prefix";
 
-				leaf vlanid {
+				leaf vlan {
 					type leafref {
-						path ../../../VLAN/VLAN_LIST/vlanid;
+						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan";
 					}
 				}
 
@@ -81,7 +81,13 @@ module sonic-vlan {
 
 			list VLAN_LIST {
 
-				key "vlanid";
+				key "vlan";
+
+				leaf vlan {
+					type string {
+						pattern '([0-9]{1,3}|[0-3][0-9]{4}|[4][0][0-8][0-9]|[4][0][9][0-4])';
+					}
+				}
 
 				leaf vlanid {
 					type uint16 {
@@ -128,11 +134,11 @@ module sonic-vlan {
 
 			list VLAN_MEMBER_LIST {
 
-				key "vlanid port";
+				key "vlan port";
 
-				leaf vlanid {
+				leaf vlan {
 					type leafref {
-						path ../../../VLAN/VLAN_LIST/vlanid;
+						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan";
 					}
 				}
 

@@ -42,9 +42,9 @@ module sonic-head {
             enum NON_IP;
             enum IPV4;
             enum IPV6;
-            enum IPV4ANY;
+            enum IPv4ANY;
             enum NON_IPv4;
-            enum IPV6ANY;
+            enum IPv6ANY;
             enum NON_IPv6;
             enum ARP;
         }
