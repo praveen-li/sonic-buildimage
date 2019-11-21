@@ -7,8 +7,14 @@ try:
     import time
     from sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_eeprom import eeprom_dts
+    import sys
+
 #    import syslog
-#    import os
+    import os
+    path = os.path.abspath(__file__)
+    sys.path.append(os.path.dirname(path))
+    from qsfpdd import qsfpddDom
+
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
 
@@ -133,6 +139,36 @@ class SfpUtilCisco(SfpUtilBase):
 
         return True, {}
 
+    def reset_page(self, port_num, page):
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (port_num + self.EEPROM_OFFSET, page))
+        sysfs_eeprom_file = "/sys/bus/i2c/devices/%d-0050/eeprom" % (port_num + self.EEPROM_OFFSET)
+
+        with open(sysfs_eeprom_file, mode="rb", buffering=0) as sysfs_eeprom :
+            sysfs_eeprom.seek(128)
+            raw = sysfs_eeprom.read(128)
+
+
+    def get_eeprom_dict(self, port_num):
+
+        # Ensure page zero is set
+        if port_num in self.osfp_ports:
+            self.reset_page(port_num, 0)
+
+        sfp_data = super(SfpUtilCisco, self).get_eeprom_dict(port_num)
+
+        if sfp_data is None:
+            return sfp_data
+
+        if port_num in self.osfp_ports:
+            sfpd_obj = qsfpddDom(port_num, sfp_data)
+            if sfpd_obj is not None:
+                sfp_data['dom'] = sfpd_obj.get_data_pretty()
+
+        return sfp_data
+
+
+
+
 # sfputil.py
 #
 # Platform-specific SFP transceiver interface for SONiC
@@ -240,7 +276,7 @@ class SfpUtil(SfpUtilCisco):
             print "Failed to open", self.XCVR_PRESENCE_FILE
         '''
 
-    def qsfp_find_port_type(self, p):
+    def qsfp_find_port_type(self, p, offset=0):
 
         if (p < self.QSFP_PORT_START) or (p > self.QSFP_PORT_END):
             sfp_log("Port:%d out of qsfp range" % p)
@@ -256,19 +292,19 @@ class SfpUtil(SfpUtilCisco):
         if eeprom_ifraw is None:
             return
 
-        qsfp_off_128 = int(eeprom_ifraw[128], 16)
+        qsfp_off_id = int(eeprom_ifraw[offset], 16)
         
-        if qsfp_off_128 == 0x18:
+        if qsfp_off_id == 0x18:
             
             if p not in self.qsfp_dd_port_list:
-                #sfp_log("port:%d %x" % (p, qsfp_off_128))
+                #sfp_log("port:%d %x offset %d" % (p, qsfp_off_id, offset))
                 self.qsfp_dd_port_list.append(p)
             if p in self.qsfp_port_list:
                 self.qsfp_port_list.remove(p)
         else:
 
             if p not in self.qsfp_port_list:
-                #sfp_log("port:%d %x" % (p, qsfp_off_128))
+                #sfp_log("port:%d %x offset %d" % (p, qsfp_off_id, offset))
                 self.qsfp_port_list.append(p)
             if p in self.qsfp_dd_port_list:
                 self.qsfp_dd_port_list.remove(p)
@@ -345,11 +381,13 @@ class SfpUtil(SfpUtilCisco):
         #status, p_dict = True, {'13': '1', '15': '1' , '16':'0' , '25':'1', '32':'1', '-1':"1"}
         #status, p_dict = True, {'13': '1', '15': '1' , '16':'0' , '25':'1', '32':'1'}
 
+        #Wait before reading data
+        time.sleep(.1)
         if (status == True) and (p_dict is not None) and p_dict:
             for port, event in p_dict.iteritems():
                 if event == '1':
                     sfp_log("Port:%s event:%s" % (port, event))
-                    self.qsfp_find_port_type(int(port))
+                    self.qsfp_find_port_type(int(port), 128)
                     if int(port) >= self.SFP_PORT_START and int(port) <= self.SFP_PORT_END:
                         self.sfp_tx_enable(int(port))
 
@@ -358,5 +396,6 @@ class SfpUtil(SfpUtilCisco):
         sfp_log("qsfp dd:%s" % str(self.qsfp_dd_port_list))
         
         return status, p_dict
+
 
 
