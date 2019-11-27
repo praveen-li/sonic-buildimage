@@ -47,6 +47,7 @@ module sonic-interface {
 				}
 
 				leaf ip-prefix {
+                    /* TODO: this should be custom, not inet:ip-prefix.*/
 					type inet:ip-prefix;
 				}
 

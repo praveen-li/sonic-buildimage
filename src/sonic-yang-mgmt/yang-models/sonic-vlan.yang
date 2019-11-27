@@ -38,11 +38,11 @@ module sonic-vlan {
 
 			list VLAN_INTERFACE_LIST {
 
-				key "vlan ip-prefix";
+				key "vlan_name ip-prefix";
 
-				leaf vlan {
+				leaf vlan_name {
 					type leafref {
-						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan";
+						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan_name";
 					}
 				}
 
@@ -81,11 +81,11 @@ module sonic-vlan {
 
 			list VLAN_LIST {
 
-				key "vlan";
+				key "vlan_name";
 
-				leaf vlan {
+				leaf vlan_name {
 					type string {
-						pattern '([0-9]{1,3}|[0-3][0-9]{4}|[4][0][0-8][0-9]|[4][0][9][0-4])';
+						pattern 'Vlan([0-9]{1,3}|[0-3][0-9]{4}|[4][0][0-8][0-9]|[4][0][9][0-4])';
 					}
 				}
 
@@ -120,7 +120,7 @@ module sonic-vlan {
 					/* leaf-list members are unique by default */
 
 					type leafref {
-						path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+						path "/port:sonic-port/port:PORT/port:PORT_LIST/port:port_name";
 					}
 				}
 			}
@@ -134,11 +134,11 @@ module sonic-vlan {
 
 			list VLAN_MEMBER_LIST {
 
-				key "vlan port";
+				key "vlan_name port";
 
-				leaf vlan {
+				leaf vlan_name {
 					type leafref {
-						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan";
+						path "/vlan:sonic-vlan/vlan:VLAN/vlan:VLAN_LIST/vlan:vlan_name";
 					}
 				}
 
