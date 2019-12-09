@@ -1,7 +1,7 @@
-From 228e06921ca80d57c340efa57eec55071694029c Mon Sep 17 00:00:00 2001
+From f407c23800eaecfbd8939b1e0faa4e2fc218dda9 Mon Sep 17 00:00:00 2001
 From: Jiahua Wang <jiahwang@cisco.com>
 Date: Mon, 8 Oct 2018 15:09:50 -0700
-Subject: [PATCH 3/4] config patch for n9200
+Subject: [PATCH 2/4] config patch for n9200
 
 Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
 ---

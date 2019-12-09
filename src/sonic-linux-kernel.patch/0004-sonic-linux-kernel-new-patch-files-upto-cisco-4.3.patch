@@ -1,7 +1,7 @@
-From 00e6df0ef644177137b568f9e28b554fbc36202d Mon Sep 17 00:00:00 2001
+From e390f2717f9f2c9805a59869389163c8e7fff70a Mon Sep 17 00:00:00 2001
 From: Jiahua Wang <jiahwang@cisco.com>
 Date: Mon, 8 Oct 2018 15:07:57 -0700
-Subject: [PATCH 1/4] sonic-linux-kernel new patch files upto cisco-4.3
+Subject: [PATCH 4/4] sonic-linux-kernel new patch files upto cisco-4.3
 
 Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
 ---

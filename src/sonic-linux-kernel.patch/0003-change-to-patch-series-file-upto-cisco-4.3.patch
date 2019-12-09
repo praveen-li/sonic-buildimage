@@ -1,7 +1,7 @@
-From b0ad8bcf0a33190c2e3e807c8b27d4d6aabb9c63 Mon Sep 17 00:00:00 2001
+From c7b16cd58bab2f361fc1b10c96a3efa805f270f1 Mon Sep 17 00:00:00 2001
 From: Jiahua Wang <jiahwang@cisco.com>
 Date: Mon, 8 Oct 2018 15:10:54 -0700
-Subject: [PATCH 4/4] change to patch/series file upto cisco-4.3
+Subject: [PATCH 3/4] change to patch/series file upto cisco-4.3
 
 Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Jiahua Wang <jiahwang@cisco.com>
  1 file changed, 10 insertions(+)
 
 diff --git a/patch/series b/patch/series
-index 3608593..c7d29a0 100644
+index cdfd018..22e1027 100644
 --- a/patch/series
 +++ b/patch/series
 @@ -66,3 +66,13 @@ linux-4.13-thermal-intel_pch_thermal-Fix-enable-check-on.patch
