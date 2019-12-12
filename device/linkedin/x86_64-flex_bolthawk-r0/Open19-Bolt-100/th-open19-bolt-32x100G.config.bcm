@@ -128,7 +128,7 @@ xgxs_tx_lane_map_47=0x0123
 xgxs_rx_lane_map_51=0x3210
 xgxs_tx_lane_map_51=0x0123
 
-xgxs_rx_lane_map_55=0x3120
+xgxs_rx_lane_map_55=0x3210
 xgxs_tx_lane_map_55=0x0123
 
 xgxs_rx_lane_map_59=0x3210

@@ -355,13 +355,13 @@ xgxs_rx_lane_map_54=0x3210
 xgxs_tx_lane_map_54=0x0123
 
 
-xgxs_rx_lane_map_55=0x3120
+xgxs_rx_lane_map_55=0x3210
 xgxs_tx_lane_map_55=0x0123
-xgxs_rx_lane_map_56=0x3120
+xgxs_rx_lane_map_56=0x3210
 xgxs_tx_lane_map_56=0x0123
-xgxs_rx_lane_map_57=0x3120
+xgxs_rx_lane_map_57=0x3210
 xgxs_tx_lane_map_57=0x0123
-xgxs_rx_lane_map_58=0x3120
+xgxs_rx_lane_map_58=0x3210
 xgxs_tx_lane_map_58=0x0123
 
 
