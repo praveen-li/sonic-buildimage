@@ -68,6 +68,7 @@ module: sonic-port
            +--rw speed?          uint32
            +--rw mtu?            uint16
            +--rw admin_status    head:admin_status
+           +--rw fec?            string
 module: sonic-portchannel
   +--rw sonic-portchannel
      +--rw PORTCHANNEL
@@ -81,21 +82,22 @@ module: sonic-portchannel
 module: sonic-vlan
   +--rw sonic-vlan
      +--rw VLAN_INTERFACE
-     |  +--rw VLAN_INTERFACE_LIST* [vlanid ip-prefix]
-     |     +--rw vlanid       -> ../../../VLAN/VLAN_LIST/vlanid
+     |  +--rw VLAN_INTERFACE_LIST* [vlan_name ip-prefix]
+     |     +--rw vlan_name    -> /sonic-vlan/VLAN/VLAN_LIST/vlan_name
      |     +--rw ip-prefix    inet:ip-prefix
      |     +--rw scope?       enumeration
      |     +--rw family?      head:ip-family
      +--rw VLAN
-     |  +--rw VLAN_LIST* [vlanid]
-     |     +--rw vlanid          uint16
+     |  +--rw VLAN_LIST* [vlan_name]
+     |     +--rw vlan_name       string
+     |     +--rw vlanid?         uint16
      |     +--rw description?    string
      |     +--rw dhcp_servers*   inet:ip-address
      |     +--rw mtu?            uint16
      |     +--rw admin_status    head:admin_status
      |     +--rw members*        -> /port:sonic-port/PORT/PORT_LIST/port_name
      +--rw VLAN_MEMBER
-        +--rw VLAN_MEMBER_LIST* [vlanid port]
-           +--rw vlanid          -> ../../../VLAN/VLAN_LIST/vlanid
+        +--rw VLAN_MEMBER_LIST* [vlan_name port]
+           +--rw vlan_name       -> /sonic-vlan/VLAN/VLAN_LIST/vlan_name
            +--rw port            -> /port:sonic-port/PORT/PORT_LIST/port_name
            +--rw tagging_mode    head:vlan_tagging_mode
