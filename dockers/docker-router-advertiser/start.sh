@@ -4,14 +4,10 @@ rm -f /var/run/rsyslogd.pid
 
 supervisorctl start rsyslogd
 
-# We don't start radvd in our deployment
-echo "Not starting router advertiser process on LI deployment."
-exit 0
-
-# Router advertiser should only run on ToR (T0) devices
+# Router advertiser should only run on MgmtToR devices at LI
 DEVICE_ROLE=$(sonic-cfggen -d -v "DEVICE_METADATA.localhost.type")
-if [ "$DEVICE_ROLE" != "ToRRouter" ]; then
-    echo "Device role is not ToRRouter. Not starting router advertiser process."
+if [ "$DEVICE_ROLE" != "MgmtToRRouter" ]; then
+    echo "Device role is not MgmtToRRouter. Not starting router advertiser process."
     exit 0
 fi
 
