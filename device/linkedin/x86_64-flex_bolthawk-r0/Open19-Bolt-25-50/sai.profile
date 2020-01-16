@@ -1,1 +1,1 @@
-SAI_INIT_CONFIG_FILE=/usr/share/sonic/hwsku/th-open19-bolt-96x25G-16x50G.config.bcm
+SAI_INIT_CONFIG_FILE=/usr/share/sonic/platform/th-open19-bolt-flex-all.config.bcm

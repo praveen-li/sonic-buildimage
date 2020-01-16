@@ -209,3 +209,4 @@ sai_preinit_cmd_file
 sai_preinit_warmboot_cmd_file
 sai_postinit_cmd_file
 sai_postinit_warmboot_cmd_file
+oversubscribe_mixed_sister_25_50_enable
