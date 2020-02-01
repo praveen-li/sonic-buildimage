@@ -7,6 +7,7 @@ nodes:
     sku: "innovium.77700_A"
     buffer_management_mode: "api_driven"
     max_lossless_tc: "2"
+    forward_profile: "IFCS_FORWARD_PROFILE_ID_PROFILE_E"
     wred_cr_ip_proto_list: "17"
     netdev:
     - auto_create: "no"
