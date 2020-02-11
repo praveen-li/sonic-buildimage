@@ -93,6 +93,7 @@ def
     {%- endfor %}
 {%- endif %}
 
+{%- if PORT_ACTIVE is not defined %}
 {%- set PORT_ACTIVE  = [] %}
 {%- if DEVICE_NEIGHBOR is not defined %}
     {%- set PORT_ACTIVE = PORT_ALL %}
@@ -100,6 +101,7 @@ def
     {%- for port in DEVICE_NEIGHBOR.keys() %}
         {%- if PORT_ACTIVE.append(port) %}{%- endif %}
     {%- endfor %}
+{%- endif %}
 {%- endif %}
 
 {%- set port_names_list_active  = [] %}

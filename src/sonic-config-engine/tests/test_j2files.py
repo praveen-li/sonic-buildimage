@@ -111,7 +111,12 @@ class TestJ2Files(TestCase):
         os.remove(qos_config_file_new)
 
         sample_output_file = os.path.join(self.test_dir, 'sample_output', 'qos-dell6100.json')
-        assert filecmp.cmp(sample_output_file, self.output_file)
+        with open(sample_output_file) as sample_file:
+            sample_json = json.load(sample_file)
+        with open(self.output_file) as output_file:
+            output_json = json.load(output_file)
+
+        assert sample_json == output_json
 
     def test_buffers_dell6100_render_template(self):
         dell_dir_path = os.path.join(self.test_dir, '..', '..', '..', 'device', 'dell', 'x86_64-dell_s6100_c2538-r0', 'Force10-S6100')

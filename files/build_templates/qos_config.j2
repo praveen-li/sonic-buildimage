@@ -10,7 +10,7 @@
 {%- endfor %}
 {%- set port_names_all = port_names_list_all | join(',') -%}
 
-
+{%- if PORT_ACTIVE is not defined %}
 {%- set PORT_ACTIVE = [] %}
 {%- if DEVICE_NEIGHBOR is not defined %}
     {%- set PORT_ACTIVE = PORT_ALL %}
@@ -19,6 +19,8 @@
         {%- if PORT_ACTIVE.append(port) %}{%- endif %}
     {%- endfor %}
 {%- endif %}
+{%- endif %}
+
 {%- if PORT_ACTIVE | sort_by_port_index %}{% endif %}
 
 {%- set port_names_list_active = [] %}
@@ -30,6 +32,9 @@
 
 {%- set pfc_to_pg_map_supported_asics = ['mellanox', 'barefoot', 'marvell'] -%}
 
+{% if PFC_QUEUES is not defined %}
+{%- set PFC_QUEUES = [3, 4] %}
+{% endif %}
 
 {
 {% if generate_tc_to_pg_map is defined %}
@@ -72,6 +77,9 @@
             "7": "7"
         }
     },
+{% if generate_dscp_to_pg_map is defined %}
+    {{- generate_dscp_to_pg_map() }}
+{% else %}
     "DSCP_TO_TC_MAP": {
         "AZURE": {
             "0" : "1",
@@ -140,6 +148,10 @@
             "63": "1"
         }
     },
+{% endif %}
+{% if generate_scheduler_list is defined %}
+{{- generate_scheduler_list() }}
+{% else %}
     "SCHEDULER": {
         "scheduler.0": {
             "type"  : "DWRR",
@@ -150,11 +162,13 @@
             "weight": "15"
         }
     },
+{% endif %}
 {% if asic_type in pfc_to_pg_map_supported_asics  %}
     "PFC_PRIORITY_TO_PRIORITY_GROUP_MAP": {
         "AZURE": {
-            "3": "3",
-            "4": "4"
+{% for queue in PFC_QUEUES %}
+            "{{ queue }}": "{{ queue }}"{% if not loop.last %},{% endif %},
+{% endfor %}
         }
     },
 {% endif %}
@@ -172,11 +186,14 @@
 {% if asic_type in pfc_to_pg_map_supported_asics %}
             "pfc_to_pg_map"   : "[PFC_PRIORITY_TO_PRIORITY_GROUP_MAP|AZURE]",
 {% endif %}
-            "pfc_enable"      : "3,4"
+            "pfc_enable"      : "{{ PFC_QUEUES|join(',') }}"
         }{% if not loop.last %},{% endif %}
 
 {% endfor %}
     },
+{% if generate_wred_profile is defined %}
+{{- generate_wred_profile() }}
+{% else %}
     "WRED_PROFILE": {
         "AZURE_LOSSLESS" : {
             "wred_green_enable"      : "true",
@@ -194,44 +211,24 @@
             "red_drop_probability"   : "5"
         }
     },
+{% endif %}
     "QUEUE": {
 {% for port in PORT_ACTIVE %}
-        "{{ port }}|3": {
+{% set port_last = loop.last %}
+{% for queue in range (0, 7) %}
+{% if queue in PFC_QUEUES %}
+        "{{ port }}|{{ queue }}": {
             "scheduler"   : "[SCHEDULER|scheduler.1]",
             "wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|4": {
-            "scheduler"   : "[SCHEDULER|scheduler.1]",
-            "wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|0": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|1": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|2": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|5": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        },
-{% endfor %}
-{% for port in PORT_ACTIVE %}
-        "{{ port }}|6": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        }{% if not loop.last %},{% endif %}
+        }{% if not port_last or not loop.last %},{% endif %}
 
+{% else %}
+        "{{ port }}|{{ queue }}": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        }{% if not port_last or not loop.last %},{% endif %}
+
+{% endif %}
+{% endfor %}
 {% endfor %}
     }
 }

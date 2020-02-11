@@ -1,0 +1,6 @@
+{%- set default_topo = 't0' %}
+{%- set PORT_ACTIVE = [] %}
+{%- for port_idx in range(0, 96) %}
+{%- if PORT_ACTIVE.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- endfor %}
+{%- include 'buffers_config.j2' %}
