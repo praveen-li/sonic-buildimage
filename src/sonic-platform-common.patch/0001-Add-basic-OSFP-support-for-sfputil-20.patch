@@ -1,0 +1,519 @@
+From aac7b5fb2c387ce8dac5c653066be89ff503dfd8 Mon Sep 17 00:00:00 2001
+From: zzhiyuan <carl.zy.zhao@gmail.com>
+Date: Thu, 14 Feb 2019 10:41:07 -0800
+Subject: [PATCH 1/4] Add basic OSFP support for sfputil (#20)
+
+Enable decode of QSFP-DD/OSFP transceivers, and vendor information.
+---
+ sonic_sfp/inf8628.py     | 149 +++++++++++++++++++++++++++++++++++++++++++++++
+ sonic_sfp/sff8024.py     |  36 ++++++++++++
+ sonic_sfp/sff8436.py     |  19 +-----
+ sonic_sfp/sff8472.py     |  15 +----
+ sonic_sfp/sfputilbase.py | 144 ++++++++++++++++++++++++++++++++-------------
+ 5 files changed, 291 insertions(+), 72 deletions(-)
+ create mode 100644 sonic_sfp/inf8628.py
+ create mode 100644 sonic_sfp/sff8024.py
+
+diff --git a/sonic_sfp/inf8628.py b/sonic_sfp/inf8628.py
+new file mode 100644
+index 0000000..3a0eeaf
+--- /dev/null
++++ b/sonic_sfp/inf8628.py
+@@ -0,0 +1,149 @@
++#! /usr/bin/env python
++#----------------------------------------------------------------------------
++# QSFP-DD 8X Transceiver (QSFP Double Density)
++#----------------------------------------------------------------------------
++
++from __future__ import print_function
++
++try:
++    from sff8024 import type_of_transceiver
++    from sffbase import sffbase
++except ImportError as e:
++    raise ImportError ("%s - required module not found" % e)
++
++class inf8628InterfaceId(sffbase):
++
++    def decode_revision_compliance(self, eeprom_data, offset, size):
++        return '%c.%c' % (eeprom_data[offset][0], eeprom_data[offset][1])
++
++    def decode_module_state(self, eeprom_data, offset, size):
++        module_state_byte = eeprom_data[offset]
++        module_state = int(module_state_byte, 16) & 14
++        if module_state == 2:
++            return 'Low Power State'
++        elif module_state == 4:
++            return 'Power Up State'
++        elif module_state == 6:
++            return 'Ready State'
++        elif module_state == 8:
++            return 'Power Down State'
++        elif module_state == 10:
++            return 'Fault State'
++        return 'Unknown State %s' % module_state
++
++    version = '1.0'
++
++    interface_id = {
++            'Identifier':
++                {'offset': 0,
++                 'size': 1,
++                 'type': 'enum',
++                 'decode': type_of_transceiver},
++            'Revision Compliance':
++                {'offset': 1,
++                 'type': 'func',
++                 'decode': {'func': decode_revision_compliance}},
++            'Module State':
++                {'offset': 3,
++                 'type': 'func',
++                 'decode': {'func': decode_module_state}},
++            'Interrupt Asserted':
++                {'offset': 3,
++                 'bit': 0,
++                 'type': 'bitvalue'},
++            'Vendor Name':
++                {'offset': 129,
++                 'size': 16,
++                 'type': 'str'},
++            'Vendor Part Number':
++                {'offset': 148,
++                 'size': 16,
++                 'type': 'str'},
++            'Vendor Revision':
++                {'offset': 164,
++                 'size': 2,
++                 'type': 'str'},
++            'Vendor Serial Number':
++                {'offset': 166,
++                 'size': 16,
++                 'type': 'str'},
++            }
++
++    sfp_type = {
++        'type':
++            {'offset': 0,
++             'size': 1,
++             'type': 'enum',
++             'decode': type_of_transceiver}
++        }
++
++    vendor_name = {
++        'Vendor Name':
++            {'offset': 0,
++             'size': 16,
++             'type': 'str'}
++        }
++
++    vendor_pn = {
++        'Vendor PN':
++            {'offset': 0,
++             'size': 16,
++             'type': 'str'}
++        }
++
++    vendor_rev = {
++        'Vendor Rev':
++            {'offset': 0,
++             'size': 2,
++             'type': 'str'}
++        }
++
++    vendor_sn = {
++        'Vendor SN':
++            {'offset': 0,
++             'size': 16,
++             'type': 'str'}
++        }
++
++    def __init__(self, eeprom_raw_data=None):
++        self.interface_data = None
++        start_pos = 0
++
++        if eeprom_raw_data is not None:
++            self.interface_data = sffbase.parse(self,
++                            self.interface_id,
++                            eeprom_raw_data,
++                            start_pos)
++
++    def parse(self, eeprom_raw_data, start_pos):
++        return sffbase.parse(self, self.interface_id, eeprom_raw_data, start_pos)
++
++    def parse_sfp_type(self, type_raw_data, start_pos):
++        return sffbase.parse(self, self.sfp_type, type_raw_data, start_pos)
++
++    def parse_vendor_name(self, name_raw_data, start_pos):
++        return sffbase.parse(self, self.vendor_name, name_raw_data, start_pos)
++
++    def parse_vendor_rev(self, rev_raw_data, start_pos):
++        return sffbase.parse(self, self.vendor_rev, rev_raw_data, start_pos)
++
++    def parse_vendor_pn(self, pn_raw_data, start_pos):
++        return sffbase.parse(self, self.vendor_pn, pn_raw_data, start_pos)
++
++    def parse_vendor_sn(self, sn_raw_data, start_pos):
++        return sffbase.parse(self, self.vendor_sn, sn_raw_data, start_pos)
++
++    def dump_pretty(self):
++        if self.interface_data is None:
++            print('Object not initialized, nothing to print')
++            return
++        sffbase.dump_pretty(self, self.interface_data)
++
++    def get_calibration_type(self):
++        return self.calibration_type
++
++    def get_data(self):
++        return self.interface_data
++
++    def get_data_pretty(self):
++        return sffbase.get_data_pretty(self, self.interface_data)
+diff --git a/sonic_sfp/sff8024.py b/sonic_sfp/sff8024.py
+new file mode 100644
+index 0000000..1bcfe19
+--- /dev/null
++++ b/sonic_sfp/sff8024.py
+@@ -0,0 +1,36 @@
++#! /usr/bin/env python
++#----------------------------------------------------------------------------
++# SFF-8024 Rev 4.5
++#----------------------------------------------------------------------------
++
++from __future__ import print_function
++
++type_of_transceiver = {
++    '00': 'Unknown or unspecified',
++    '01': 'GBIC',
++    '02': 'Module/connector soldered to motherboard',
++    '03': 'SFP/SFP+/SFP28',
++    '04': '300 pin XBI',
++    '05': 'XENPAK',
++    '06': 'XFP',
++    '07': 'XFF',
++    '08': 'XFP-E',
++    '09': 'XPAK',
++    '0a': 'X2',
++    '0b': 'DWDM-SFP/SFP+',
++    '0c': 'QSFP',
++    '0d': 'QSFP+ or later',
++    '0e': 'CXP or later',
++    '0f': 'Shielded Mini Multilane HD 4X',
++    '10': 'Shielded Mini Multilane HD 8X',
++    '11': 'QSFP28 or later',
++    '12': 'CXP2 (aka CXP28) or later',
++    '13': 'CDFP (Style 1/Style2)',
++    '14': 'Shielded Mini Multilane HD 4X Fanout Cable',
++    '15': 'Shielded Mini Multilane HD 8X Fanout Cable',
++    '16': 'CDFP (Style 3)',
++    '17': 'microQSFP',
++    '18': 'QSFP-DD Double Density 8X Pluggable Transceiver',
++    '19': 'OSFP 8X Pluggable Transceiver',
++    '1a': 'SFP-DD Double Density 2X Pluggable Transceiver'
++}
+diff --git a/sonic_sfp/sff8436.py b/sonic_sfp/sff8436.py
+index 63ca3a4..777cfa1 100644
+--- a/sonic_sfp/sff8436.py
++++ b/sonic_sfp/sff8436.py
+@@ -15,6 +15,7 @@ try:
+     import getopt
+     import types
+     from math import log10
++    from sff8024 import type_of_transceiver
+     from sffbase import sffbase
+ except ImportError as e:
+     raise ImportError (str(e) + "- required module not found")
+@@ -185,24 +186,6 @@ class sff8436InterfaceId(sffbase):
+                         {'offset': 9,
+                          'bit': 0}}}}
+ 
+-    type_of_transceiver = {
+-            '00':'Unknown or unspecified',
+-            '01':'GBIC',
+-            '02': 'Module/connector soldered to motherboard',
+-            '03': 'SFP',
+-            '04': '300 pin XBI',
+-            '05': 'XENPAK',
+-            '06': 'XFP',
+-            '07': 'XFF',
+-            '08': 'XFP-E',
+-            '09': 'XPAK',
+-            '0a': 'X2',
+-            '0b': 'DWDM-SFP',
+-            '0c': 'QSFP',
+-            '0d': 'QSFP+',
+-            '11': 'QSFP28'
+-            }
+-
+     ext_type_of_transceiver = {
+             '00': 'Power Class 1(1.5W max)',
+             '04': 'Power Class 1(1.5W max), CDR present in Tx',
+diff --git a/sonic_sfp/sff8472.py b/sonic_sfp/sff8472.py
+index 1539fc9..4a4c91f 100644
+--- a/sonic_sfp/sff8472.py
++++ b/sonic_sfp/sff8472.py
+@@ -17,6 +17,7 @@ try:
+     import getopt
+     import types
+     from math import log10
++    from sff8024 import type_of_transceiver
+     from sffbase import sffbase
+ except ImportError as e:
+     raise ImportError (str(e) + "- required module not found")
+@@ -258,20 +259,6 @@ class sff8472InterfaceId(sffbase):
+                             {'offset': 10,
+                             'bit': 0}}}}
+ 
+-    type_of_transceiver = {'00':'Unknown',
+-                   '01':'GBIC',
+-                   '02': 'Module soldered to motherboard',
+-                   '03': 'SFP or SFP Plus',
+-                   '04': '300 pin XBI',
+-                   '05': 'XENPAK',
+-                   '06': 'XFP',
+-                   '07': 'XFF',
+-                   '08': 'XFP-E',
+-                   '09': 'XPAK',
+-                   '0a': 'X2',
+-                   '0b': 'DWDM-SFP',
+-                   '0d': 'QSFP'}
+-
+     exttypeoftransceiver = {'00': 'GBIC def not specified',
+                 '01':'GBIC is compliant with MOD_DEF 1',
+                 '02':'GBIC is compliant with MOD_DEF 2',
+diff --git a/sonic_sfp/sfputilbase.py b/sonic_sfp/sfputilbase.py
+index bff54c2..3394fc2 100644
+--- a/sonic_sfp/sfputilbase.py
++++ b/sonic_sfp/sfputilbase.py
+@@ -16,6 +16,7 @@ try:
+     from sff8472 import sff8472Dom
+     from sff8436 import sff8436InterfaceId
+     from sff8436 import sff8436Dom
++    from inf8628 import inf8628InterfaceId
+ except ImportError as e:
+     raise ImportError("%s - required module not found" % str(e))
+ 
+@@ -27,6 +28,7 @@ XCVR_VENDOR_NAME_WIDTH = 16
+ XCVR_VENDOR_PN_OFFSET = 40
+ XCVR_VENDOR_PN_WIDTH = 16
+ XCVR_HW_REV_OFFSET = 56
++XCVR_HW_REV_WIDTH_OSFP = 2
+ XCVR_HW_REV_WIDTH_QSFP = 2
+ XCVR_HW_REV_WIDTH_SFP = 4
+ XCVR_VENDOR_SN_OFFSET = 68
+@@ -34,6 +36,13 @@ XCVR_VENDOR_SN_WIDTH = 16
+ XCVR_DOM_CAPABILITY_OFFSET = 92
+ XCVR_DOM_CAPABILITY_WIDTH = 1
+ 
++# definitions of the offset for values in OSFP info eeprom
++OSFP_TYPE_OFFSET = 0
++OSFP_VENDOR_NAME_OFFSET = 129
++OSFP_VENDOR_PN_OFFSET = 148
++OSFP_HW_REV_OFFSET = 164
++OSFP_VENDOR_SN_OFFSET = 166
++
+ #definitions of the offset and width for values in DOM info eeprom
+ QSFP_DOM_REV_OFFSET = 1
+ QSFP_DOM_REV_WIDTH = 1
+@@ -124,9 +133,14 @@ class SfpUtilBase(object):
+ 
+     @abc.abstractproperty
+     def qsfp_ports(self):
+-        """ Ending index of physical port range """
++        """ QSFP Ports """
+         pass
+ 
++    @property
++    def osfp_ports(self):
++        """ OSFP/QSFP-DD Ports """
++        return []
++
+     @abc.abstractproperty
+     def port_to_eeprom_mapping(self):
+         """ Dictionary where key = physical port index (integer),
+@@ -573,11 +587,13 @@ class SfpUtilBase(object):
+             if s > self.port_end:
+                 break
+ 
+-    def get_eeprom_raw(self, port_num):
++    def get_eeprom_raw(self, port_num, num_bytes=256):
+         # Read interface id EEPROM at addr 0x50
+-        return self._read_eeprom_devid(port_num, self.IDENTITY_EEPROM_ADDR, 0)
++        return self._read_eeprom_devid(port_num, self.IDENTITY_EEPROM_ADDR, 0, num_bytes)
+ 
+     def get_eeprom_dom_raw(self, port_num):
++        if port_num in self.osfp_ports:
++            return None
+         if port_num in self.qsfp_ports:
+             # QSFP DOM EEPROM is also at addr 0x50 and thus also stored in eeprom_ifraw
+             return None
+@@ -599,7 +615,12 @@ class SfpUtilBase(object):
+         if eeprom_ifraw is None:
+             return None
+ 
+-        if port_num in self.qsfp_ports:
++        if port_num in self.osfp_ports:
++            sfpi_obj = inf8628InterfaceId(eeprom_ifraw)
++            if sfpi_obj is not None:
++                sfp_data['interface'] = sfpi_obj.get_data_pretty()
++            return sfp_data
++        elif port_num in self.qsfp_ports:
+             sfpi_obj = sff8436InterfaceId(eeprom_ifraw)
+             if sfpi_obj is not None:
+                 sfp_data['interface'] = sfpi_obj.get_data_pretty()
+@@ -609,24 +630,28 @@ class SfpUtilBase(object):
+             sfpd_obj = sff8436Dom(eeprom_ifraw)
+             if sfpd_obj is not None:
+                 sfp_data['dom'] = sfpd_obj.get_data_pretty()
++
+             return sfp_data
++        else:
++            sfpi_obj = sff8472InterfaceId(eeprom_ifraw)
++            if sfpi_obj is not None:
++                sfp_data['interface'] = sfpi_obj.get_data_pretty()
++                cal_type = sfpi_obj.get_calibration_type()
+ 
+-        sfpi_obj = sff8472InterfaceId(eeprom_ifraw)
+-        if sfpi_obj is not None:
+-            sfp_data['interface'] = sfpi_obj.get_data_pretty()
+-            cal_type = sfpi_obj.get_calibration_type()
++            if eeprom_domraw is not None:
++                sfpd_obj = sff8472Dom(eeprom_domraw, cal_type)
++                if sfpd_obj is not None:
++                    sfp_data['dom'] = sfpd_obj.get_data_pretty()
+ 
+-        if eeprom_domraw is not None:
+-            sfpd_obj = sff8472Dom(eeprom_domraw, cal_type)
+-            if sfpd_obj is not None:
+-                sfp_data['dom'] = sfpd_obj.get_data_pretty()
+-
+-        return sfp_data
++            return sfp_data
+ 
+     # Read out SFP type, vendor name, PN, REV, SN from eeprom.
+     def get_transceiver_info_dict(self, port_num):
+         transceiver_info_dict = {}
+ 
++        if port_num in self.osfp_ports:
++            offset = 0
++            vendor_rev_width = XCVR_HW_REV_WIDTH_OSFP
+         if port_num in self.qsfp_ports:
+             offset = 128
+             vendor_rev_width = XCVR_HW_REV_WIDTH_QSFP
+@@ -645,40 +670,77 @@ class SfpUtilBase(object):
+             print("Error: reading sysfs file %s" % file_path)
+             return None
+ 
+-        sfpi_obj = sff8436InterfaceId()
++        if port_num in self.osfp_ports:
++            sfpi_obj = inf8628InterfaceId()
++        elif port_num in self.qsfp_ports:
++            sfpi_obj = sff8436InterfaceId()
++        else:
++            sfpi_obj = sff8472InterfaceId()
++
+         if sfpi_obj is None:
+             print("Error: sfp_object open failed")
+             return None
+ 
+-        sfp_type_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_TYPE_OFFSET), XCVR_TYPE_WIDTH)
+-        if sfp_type_raw is not None:
+-            sfp_type_data = sfpi_obj.parse_sfp_type(sfp_type_raw, 0)
+-        else:
+-            return None
++        if port_num in self.osfp_ports:
++            sfp_type_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + OSFP_TYPE_OFFSET), XCVR_TYPE_WIDTH)
++            if sfp_type_raw is not None:
++                sfp_type_data = sfpi_obj.parse_sfp_type(sfp_type_raw, 0)
++            else:
++                return None
+ 
+-        sfp_vendor_name_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_NAME_OFFSET), XCVR_VENDOR_NAME_WIDTH)
+-        if sfp_vendor_name_raw is not None:
+-            sfp_vendor_name_data = sfpi_obj.parse_vendor_name(sfp_vendor_name_raw, 0)
+-        else:
+-            return None
++            sfp_vendor_name_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + OSFP_VENDOR_NAME_OFFSET), XCVR_VENDOR_NAME_WIDTH)
++            if sfp_vendor_name_raw is not None:
++                sfp_vendor_name_data = sfpi_obj.parse_vendor_name(sfp_vendor_name_raw, 0)
++            else:
++                return None
+ 
+-        sfp_vendor_pn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_PN_OFFSET), XCVR_VENDOR_PN_WIDTH)
+-        if sfp_vendor_pn_raw is not None:
+-            sfp_vendor_pn_data = sfpi_obj.parse_vendor_pn(sfp_vendor_pn_raw, 0)
+-        else:
+-            return None
++            sfp_vendor_pn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + OSFP_VENDOR_PN_OFFSET), XCVR_VENDOR_PN_WIDTH)
++            if sfp_vendor_pn_raw is not None:
++                sfp_vendor_pn_data = sfpi_obj.parse_vendor_pn(sfp_vendor_pn_raw, 0)
++            else:
++                return None
+ 
+-        sfp_vendor_rev_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_HW_REV_OFFSET), vendor_rev_width)
+-        if sfp_vendor_rev_raw is not None:
+-            sfp_vendor_rev_data = sfpi_obj.parse_vendor_rev(sfp_vendor_rev_raw, 0)
+-        else:
+-            return None
++            sfp_vendor_rev_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + OSFP_HW_REV_OFFSET), vendor_rev_width)
++            if sfp_vendor_rev_raw is not None:
++                sfp_vendor_rev_data = sfpi_obj.parse_vendor_rev(sfp_vendor_rev_raw, 0)
++            else:
++                return None
+ 
+-        sfp_vendor_sn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_SN_OFFSET), XCVR_VENDOR_SN_WIDTH)
+-        if sfp_vendor_sn_raw is not None:
+-            sfp_vendor_sn_data = sfpi_obj.parse_vendor_sn(sfp_vendor_sn_raw, 0)
++            sfp_vendor_sn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + OSFP_VENDOR_SN_OFFSET), XCVR_VENDOR_SN_WIDTH)
++            if sfp_vendor_sn_raw is not None:
++                sfp_vendor_sn_data = sfpi_obj.parse_vendor_sn(sfp_vendor_sn_raw, 0)
++            else:
++                return None
+         else:
+-            return None
++            sfp_type_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_TYPE_OFFSET), XCVR_TYPE_WIDTH)
++            if sfp_type_raw is not None:
++                sfp_type_data = sfpi_obj.parse_sfp_type(sfp_type_raw, 0)
++            else:
++                return None
++
++            sfp_vendor_name_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_NAME_OFFSET), XCVR_VENDOR_NAME_WIDTH)
++            if sfp_vendor_name_raw is not None:
++                sfp_vendor_name_data = sfpi_obj.parse_vendor_name(sfp_vendor_name_raw, 0)
++            else:
++                return None
++
++            sfp_vendor_pn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_PN_OFFSET), XCVR_VENDOR_PN_WIDTH)
++            if sfp_vendor_pn_raw is not None:
++                sfp_vendor_pn_data = sfpi_obj.parse_vendor_pn(sfp_vendor_pn_raw, 0)
++            else:
++                return None
++
++            sfp_vendor_rev_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_HW_REV_OFFSET), vendor_rev_width)
++            if sfp_vendor_rev_raw is not None:
++                sfp_vendor_rev_data = sfpi_obj.parse_vendor_rev(sfp_vendor_rev_raw, 0)
++            else:
++                return None
++
++            sfp_vendor_sn_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + XCVR_VENDOR_SN_OFFSET), XCVR_VENDOR_SN_WIDTH)
++            if sfp_vendor_sn_raw is not None:
++                sfp_vendor_sn_data = sfpi_obj.parse_vendor_sn(sfp_vendor_sn_raw, 0)
++            else:
++                return None
+ 
+         try:
+             sysfsfile_eeprom.close()
+@@ -697,7 +759,9 @@ class SfpUtilBase(object):
+     def get_transceiver_dom_info_dict(self, port_num):
+         transceiver_dom_info_dict = {}
+ 
+-        if port_num in self.qsfp_ports:
++        if port_num in self.osfp_ports:
++            pass
++        elif port_num in self.qsfp_ports:
+             offset = 0
+             offset_xcvr = 128
+             file_path = self._get_port_eeprom_path(port_num, self.IDENTITY_EEPROM_ADDR)
+-- 
+2.7.4
+

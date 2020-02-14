@@ -1,0 +1,3 @@
+0001-Add-basic-OSFP-support-for-sfputil-20.patch
+0002-Undo-SFP-QSFP-type-string-modification-from-OSFP-com.patch
+0003-Port-from-master-to-prevent-xcvrd-crash-due-to-missi.patch
