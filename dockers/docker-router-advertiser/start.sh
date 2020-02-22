@@ -4,13 +4,7 @@ rm -f /var/run/rsyslogd.pid
 
 supervisorctl start rsyslogd
 
-# Router advertiser should only run on MgmtToR devices at LI
-DEVICE_ROLE=$(sonic-cfggen -d -v "DEVICE_METADATA.localhost.type")
-if [ "$DEVICE_ROLE" != "MgmtToRRouter" ]; then
-    echo "Device role is not MgmtToRRouter. Not starting router advertiser process."
-    exit 0
-fi
-
+# LinkedIn: It is up to NASA to config the radvd.conf and decide starting RA or not
 # Generate /etc/radvd.conf config file
 sonic-cfggen -d -t /usr/share/sonic/templates/radvd.conf.j2 > /etc/radvd.conf
 
