@@ -5,6 +5,7 @@
 
 
 import os.path
+import logging
 
 try:
     from sonic_psu.psu_base import PsuBase
@@ -33,7 +34,7 @@ class PsuUtil(PsuBase):
             with open(attr_path, 'r') as fd:
                 retval = fd.read()
         except Exception as error:
-            logging.error("Unable to open ", attr_path, " file !")
+            logging.error("Unable to open %s file !", attr_path)
 
         retval = retval.rstrip('\r\n')
         return retval

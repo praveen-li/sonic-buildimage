@@ -11,6 +11,11 @@ target/
 *.buildinfo
 
 # Subdirectories in src
+src/dhcpmon/debian/*
+!src/dhcpmon/debian/changelog 
+!src/dhcpmon/debian/compat 
+!src/dhcpmon/debian/control
+!src/dhcpmon/debian/rules 
 src/hiredis/*
 !src/hiredis/Makefile
 src/igb/*
@@ -27,6 +32,9 @@ src/libteam/*
 src/lldpd/*
 !src/lldpd/Makefile
 !src/lldpd/patch/
+src/monit/*
+!src/monit/Makefile
+!src/monit/patch/
 src/mpdecimal/*
 !src/mpdecimal/Makefile
 src/python-click/*
