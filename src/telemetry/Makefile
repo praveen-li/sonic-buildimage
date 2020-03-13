@@ -2,11 +2,13 @@ export GOPATH=/tmp/go
 
 INSTALL := /usr/bin/install
 
-all: sonic-telemetry
+all: telemetry
 
-sonic-telemetry:
-	/usr/local/go/bin/go get -v github.com/zhenggen-xu/sonic-telemetry/telemetry
-	/usr/local/go/bin/go get -v github.com/zhenggen-xu/sonic-telemetry/dialout/dialout_client_cli
+telemetry:
+	mkdir -p ${GOPATH}/src/github.com/Azure/
+	cp -a sonic-telemetry ${GOPATH}/src/github.com/Azure/
+	/usr/local/go/bin/go get -v github.com/Azure/sonic-telemetry/telemetry
+	/usr/local/go/bin/go get -v github.com/Azure/sonic-telemetry/dialout/dialout_client_cli
 	rm -f -r node_exporter-0.18.1*
 	wget https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
 	tar -xvf node_exporter-0.18.1.linux-amd64.tar.gz
