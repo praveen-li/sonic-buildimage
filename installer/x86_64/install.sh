@@ -179,6 +179,18 @@ fi
 demo_part=""
 # TODO: remove reference to "ACS-OS" after all baseimages are upgraded
 legacy_volume_label="ACS-OS"
+# List other legacy partions, which must be cleaned always from boot options
+# and from disk. Note: similar to legacy_volume_label and demo_volume_label,
+# spaces are not allowed in below volume labels too.
+other_legacy_volume_labels="
+ICOS
+"
+# add other volume labels in legacy_volume_label
+for i in $other_legacy_volume_labels
+do
+    legacy_volume_label=$legacy_volume_label"\|"$i
+done
+
 create_demo_gpt_partition()
 {
 
@@ -345,6 +357,9 @@ create_demo_msdos_partition()
 # Returns the created partition number in $demo_part
 create_demo_uefi_partition()
 {
+    echo "create_demo_uefi_partition(): efibootmgr"
+    efibootmgr
+
     create_demo_gpt_partition "$1"
 
     # erase any related EFI BootOrder variables from NVRAM.
@@ -460,6 +475,9 @@ demo_install_uefi_grub()
         echo "ERROR: efibootmgr failed to create new boot variable on: $blk_dev"
         exit 1
     }
+
+    echo "demo_install_uefi_grub(): efibootmgr"
+    efibootmgr
 
 }
 
