@@ -28,6 +28,6 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	popd
 
 	# Move the newly-built .deb packages to the destination directory
-	mv $(DERIVED_TARGETS) $* $(DEST)/
+	mv $* $(DEST)/
 
 $(addprefix $(DEST)/, $(DERIVED_TARGETS)): $(DEST)/% : $(DEST)/$(MAIN_TARGET)
