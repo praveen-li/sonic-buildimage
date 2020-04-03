@@ -186,6 +186,15 @@ stop() {
 #    bcmcmd "port xe enable=false stp=disable"
 #    bcmcmd "port ce enable=false stp=disable"
 # {%- endif %}
+
+{%- if docker_container_name == "bgp" %}
+    # Before stopping the BGP docker, kill watchfrr, zebra and bgpd to help the bgp graceful restart procedure
+    echo "Stopping bgp ..."
+    docker exec -i bgp pkill -9 watchfrr || [ $? == 1 ]
+    docker exec -i bgp pkill -9 zebra
+    docker exec -i bgp pkill -9 bgpd || [ $? == 1 ]
+{%- endif %}
+
     docker stop {{docker_container_name}}
 }
 
