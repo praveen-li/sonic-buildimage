@@ -2,6 +2,8 @@ FROM debian:jessie
 
 MAINTAINER johnar@microsoft.com
 
+COPY ["no-check-valid-until", "/etc/apt/apt.conf.d/"]
+
 ## Remove retired jessie-updates repo
 RUN sed -i '/deb http:\/\/deb.debian.org\/debian jessie-updates main/d' /etc/apt/sources.list
 
@@ -237,13 +239,15 @@ RUN apt-get update && apt-get install -y \
 # For sonic vs image build
         dosfstools \
         qemu-kvm \
-        libvirt-bin
+        libvirt-bin \
+# For DHCP Monitor tool
+        libevent-dev
 
 # For linux build
 RUN apt-get -y build-dep linux
 
 # For gobgp build
-RUN export VERSION=1.11.2 \
+RUN export VERSION=1.12.17 \
  && wget https://storage.googleapis.com/golang/go$VERSION.linux-amd64.tar.gz \
  && tar -C /usr/local -xzf go$VERSION.linux-amd64.tar.gz \
  && echo 'export GOROOT=/usr/local/go' >> /etc/bash.bashrc \

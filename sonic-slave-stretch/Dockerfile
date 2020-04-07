@@ -2,6 +2,8 @@ FROM debian:stretch
 
 MAINTAINER gulv@microsoft.com
 
+COPY ["no-check-valid-until", "/etc/apt/apt.conf.d/"]
+
 RUN echo "deb http://debian-archive.trafficmanager.net/debian/ stretch main contrib non-free" >> /etc/apt/sources.list && \
         echo "deb-src http://debian-archive.trafficmanager.net/debian/ stretch main contrib non-free" >> /etc/apt/sources.list && \
         echo "deb http://debian-archive.trafficmanager.net/debian-security/ stretch/updates main contrib non-free" >> /etc/apt/sources.list && \
@@ -208,7 +210,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get -y build-dep linux
 
 # For gobgp build
-RUN export VERSION=1.8.3 \
+RUN export VERSION=1.12.17 \
  && wget https://storage.googleapis.com/golang/go$VERSION.linux-amd64.tar.gz \
  && tar -C /usr/local -xzf go$VERSION.linux-amd64.tar.gz \
  && echo 'export GOROOT=/usr/local/go' >> /etc/bash.bashrc \
