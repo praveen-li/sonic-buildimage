@@ -3,12 +3,14 @@ import syslog
 
 from json import dump
 from glob import glob
-from datetime import datetime
+from _sonic_yang_ext import sonic_yang_ext_mixin
 
 """
 Yang schema and data tree python APIs based on libyang python
+Here, sonic_yang_ext_mixin extends funtionality of sonic_yang,
+i.e. it is mixin not parent class.
 """
-class sonic_yang:
+class sonic_yang(sonic_yang_ext_mixin):
 
     def __init__(self, yang_dir, debug=False):
         self.yang_dir = yang_dir
@@ -57,11 +59,6 @@ class sonic_yang:
     def fail(self, e):
         print(e)
         raise e
-
-    """
-    import all function from extension file
-    """
-    from _sonic_yang_ext import *
 
     """
     load_schema_module(): load a Yang model file
