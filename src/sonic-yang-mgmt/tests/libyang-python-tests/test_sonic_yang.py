@@ -1,11 +1,8 @@
 import sys
 import os
 import pytest
-import yang as ly
 import sonic_yang as sy
 import json
-import getopt
-import subprocess
 import glob
 import logging
 from ijson import items as ijson_itmes
@@ -31,7 +28,6 @@ class Test_SonicYang(object):
     @pytest.fixture(autouse=True, scope='class')
     def yang_s(self, data):
         yang_dir = str(data['yang_dir'])
-        data_file = str(data['data_file'])
         yang_s = sy.sonic_yang(yang_dir)
         return yang_s
 
@@ -62,7 +58,7 @@ class Test_SonicYang(object):
             raise(e)
         return jInput
 
-    def setup_class(cls):
+    def setup_class(self):
         pass
 
     def load_yang_model_file(self, yang_s, yang_dir, yang_file, module_name):
@@ -133,14 +129,14 @@ class Test_SonicYang(object):
                  assert dnode is not None
                  assert dnode.path() == xpath
             else:
-                 assert dnode == None
+                 assert dnode is None
 
     #test add node
     def test_add_node(self, data, yang_s):
         for node in data['new_nodes']:
             xpath = str(node['xpath'])
             value = node['value']
-            status = yang_s.add_node(xpath, str(value))
+            yang_s.add_node(xpath, str(value))
 
             node = yang_s.find_data_node(xpath)
             assert node is not None
@@ -158,7 +154,6 @@ class Test_SonicYang(object):
     #test delete data node
     def test_delete_node(self, data, yang_s):
         for node in data['delete_nodes']:
-            expected = node['valid']
             xpath = str(node['xpath'])
             yang_s._delete_node(xpath)
 
@@ -284,5 +279,5 @@ class Test_SonicYang(object):
 
         return
 
-    def teardown_class(cls):
+    def teardown_class(self):
         pass

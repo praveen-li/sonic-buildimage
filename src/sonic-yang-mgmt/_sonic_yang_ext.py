@@ -3,13 +3,10 @@
 
 import yang as ly
 import re
-import pprint
 import syslog
 
-from json import dump, load, dumps, loads
+from json import dump, dumps, loads
 from xmltodict import parse
-from os import listdir, walk, path
-from os.path import isfile, join, splitext
 from glob import glob
 
 # class sonic_yang methods, use mixin to extend sonic_yang
@@ -168,7 +165,7 @@ class sonic_yang_ext_mixin:
     """
     def fillLeafDict(self, leafs, leafDict, isleafList=False):
 
-        if leafs == None:
+        if leafs is None:
             return
 
         # fill default values
@@ -645,16 +642,16 @@ class sonic_yang_ext_mixin:
                     nodeP = self.find_parent_node(xpath)
                     xpathP = nodeP.path()
                     if self._delete_node(xpath=xpathP, node=nodeP) == False:
-                        raise('_delete_node failed')
+                        raise Exception('_delete_node failed')
                     else:
                         return True
 
             # delete non key element
             if self._delete_node(xpath=xpath, node=node) == False:
-                raise('_delete_node failed')
+                raise Exception('_delete_node failed')
         except Exception as e:
             print(e)
-            raise('Failed to delete node {}'.format(xpath))
+            raise Exception('Failed to delete node {}'.format(xpath))
 
         return True
 
