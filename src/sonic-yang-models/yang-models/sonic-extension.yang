@@ -5,7 +5,7 @@ module sonic-extension {
     namespace "http://github.com/Azure/sonic-extension";
     prefix sonic-extension;
 
-    description "Head yang Module for SONiC OS";
+    description "Extension yang Module for SONiC OS";
 
     revision 2019-07-01 {
         description "First Revision";

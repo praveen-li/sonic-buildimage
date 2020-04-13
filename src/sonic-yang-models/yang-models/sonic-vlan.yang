@@ -11,8 +11,8 @@ module sonic-vlan {
 		prefix inet;
 	}
 
-	import sonic-head {
-		prefix head;
+	import sonic-types {
+		prefix stypes;
 		revision-date 2019-07-01;
 	}
 
@@ -85,8 +85,8 @@ module sonic-vlan {
 
 				leaf ip-prefix {
 					type union {
-						type head:sonic-ip4-prefix;
-						type head:sonic-ip6-prefix;
+						type stypes:sonic-ip4-prefix;
+						type stypes:sonic-ip6-prefix;
 					}
 				}
 
@@ -107,7 +107,7 @@ module sonic-vlan {
 
 					must "(contains(../ip-prefix, ':') and current()='IPv6') or
 						(contains(../ip-prefix, '.') and current()='IPv4')";
-					type head:ip-family;
+					type stypes:ip-family;
 				}
 			}
 			/* end of VLAN_INTERFACE_LIST */
@@ -155,7 +155,7 @@ module sonic-vlan {
 				}
 
 				leaf admin_status {
-					type head:admin_status;
+					type stypes:admin_status;
 				}
 
 				leaf-list members {
@@ -197,7 +197,7 @@ module sonic-vlan {
 
 				leaf tagging_mode {
 					mandatory true;
-					type head:vlan_tagging_mode;
+					type stypes:vlan_tagging_mode;
 				}
 			}
             /* end of list VLAN_MEMBER_LIST */

@@ -100,7 +100,7 @@ setup(
     setup_requires=setup_requirements,
     version='1.0',
     data_files=[
-        ('yang-models', ['./yang-models/sonic-head.yang',
+        ('yang-models', ['./yang-models/sonic-types.yang',
                          './yang-models/sonic-extension.yang',
                          './yang-models/sonic-acl.yang',
                          './yang-models/sonic-interface.yang',

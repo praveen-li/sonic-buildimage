@@ -1,11 +1,11 @@
-module sonic-head {
+module sonic-types {
 
     yang-version 1.1;
 
     namespace "http://github.com/Azure/sonic-head";
-    prefix sonic-head;
+    prefix sonic-types;
 
-    description "Head yang Module for SONiC OS";
+    description "SONiC type for yang Models of SONiC OS";
 
     revision 2019-07-01 {
         description "First Revision";

@@ -13,8 +13,8 @@ module sonic-acl {
 		prefix inet;
 	}
 
-	import sonic-head {
-		prefix head;
+	import sonic-types {
+		prefix stypes;
 		revision-date 2019-07-01;
 	}
 
@@ -66,11 +66,11 @@ module sonic-acl {
 				}
 
 				leaf PACKET_ACTION {
-					type head:packet_action;
+					type stypes:packet_action;
 				}
 
 				leaf IP_TYPE {
-					type head:ip_type;
+					type stypes:ip_type;
 				}
 
 				leaf PRIORITY {
@@ -252,7 +252,7 @@ module sonic-acl {
 				}
 
 				leaf type {
-					type head:acl_table_type;
+					type stypes:acl_table_type;
 				}
 
 				leaf stage {
