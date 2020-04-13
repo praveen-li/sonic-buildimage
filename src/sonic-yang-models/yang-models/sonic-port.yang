@@ -23,10 +23,6 @@ module sonic-port{
 		revision-date 2019-07-01;
 	}
 
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
 	description "PORT yang Module for SONiC OS";
 
 	revision 2019-07-01 {

@@ -28,10 +28,6 @@ module sonic-interface {
 		revision-date 2019-07-01;
 	}
 
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
 	description "INTERFACE yang Module for SONiC OS";
 
 	revision 2019-07-01 {
