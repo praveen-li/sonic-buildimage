@@ -17,10 +17,6 @@ module sonic-loopback-interface {
         revision-date 2019-07-01;
     }
 
-    organization "Linkedin Corporation";
-
-    contact "lnos_coders@linkedin.com";
-
     description
         "SONIC LOOPBACK INTERFACE";
 

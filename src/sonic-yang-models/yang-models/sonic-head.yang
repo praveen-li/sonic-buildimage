@@ -5,10 +5,6 @@ module sonic-head {
     namespace "http://github.com/Azure/sonic-head";
     prefix sonic-head;
 
-    organization "Linkedin Corporation";
-
-    contact "lnos_coders@linkedin.com";
-
     description "Head yang Module for SONiC OS";
 
     revision 2019-07-01 {
@@ -92,10 +88,5 @@ module sonic-head {
             enum untagged;
             enum priority_tagged;
         }
-    }
-
-    extension key-regex-configdb-to-yang {
-        description "Key regex used to convert config DB keys to YANG Config";
-        argument "value";
     }
 }
