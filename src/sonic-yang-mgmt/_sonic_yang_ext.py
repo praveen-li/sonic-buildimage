@@ -74,16 +74,19 @@ class sonic_yang_ext_mixin:
         for j in self.yJson:
             # get module name
             moduleName = j['module']['@name']
-            # topLevelContainer does not exist in sonic-head and sonic-extension.
-            if "sonic-head" in moduleName or "sonic-extension" in moduleName:
-                continue;
-            # get all top level container
-            topLevelContainer = j['module']['container']
+            # get top level container
+            topLevelContainer = j['module'].get('container')
+            # if top level container is none, this is common yang files, which may
+            # have definitions. Store module.
             if topLevelContainer is None:
-                raise Exception("topLevelContainer not found")
+                self.confDbYangMap[moduleName] = j['module']
+                continue
 
+            # top level container must exist for rest of the yang files and it should
+            # have same name as module name.
             assert topLevelContainer['@name'] == moduleName
 
+            # Each container inside topLevelContainer maps to a sonic config table.
             container = topLevelContainer['container']
             # container is a list
             if isinstance(container, list):
