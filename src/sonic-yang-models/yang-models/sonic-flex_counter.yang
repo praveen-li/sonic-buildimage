@@ -5,19 +5,6 @@ module sonic-flex_counter {
     namespace "http://github.com/Azure/sonic-flex_counter";
     prefix flex_counter;
 
-    import ietf-yang-types {
-        prefix yang;
-    }
-
-    import ietf-inet-types {
-        prefix inet;
-    }
-
-    import sonic-extension {
-        prefix ext;
-        revision-date 2019-07-01;
-    }
-
     description "FLEX COUNTER YANG Module for SONiC OS";
 
     revision 2020-04-10 {

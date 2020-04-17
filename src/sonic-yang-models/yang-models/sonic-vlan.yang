@@ -1,11 +1,9 @@
 module sonic-vlan {
 
+    yang-version 1.1;
+
 	namespace "http://github.com/Azure/sonic-vlan";
 	prefix vlan;
-
-	import ietf-yang-types {
-		prefix yang;
-	}
 
 	import ietf-inet-types {
 		prefix inet;
