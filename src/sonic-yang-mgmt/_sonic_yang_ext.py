@@ -293,13 +293,51 @@ class sonic_yang_ext_mixin:
         return
 
     """
+    Process list inside a Container.
+    This function will call xlateList based on list(s) present in Container.
+    """
+    def xlateListInContainer(self, model, yang, configC, table):
+        clist = model
+        #print(clist['@name'])
+        yang[clist['@name']] = list()
+        self.sysLog(msg="xlateProcessListOfContainer: {}".format(clist['@name']))
+        self.xlateList(clist, yang[clist['@name']], configC, table)
+        # clean empty lists
+        if len(yang[clist['@name']]) == 0:
+            del yang[clist['@name']]
+
+        return
+
+    """
+    Process container inside a Container.
+    This function will call xlateContainer based on Container(s) present
+    in outer Container.
+    """
+    def xlateContainerInContainer(self, model, yang, configC, table):
+        ccontainer = model
+        #print(ccontainer['@name'])
+        yang[ccontainer['@name']] = dict()
+        if not configC.get(ccontainer['@name']):
+            return
+        self.sysLog(msg="xlateProcessListOfContainer: {}".format(ccontainer['@name']))
+        self.xlateContainer(ccontainer, yang[ccontainer['@name']], \
+        configC[ccontainer['@name']], table)
+        # clean empty container
+        if len(yang[ccontainer['@name']]) == 0:
+            del yang[ccontainer['@name']]
+        # remove copy after processing
+        del configC[ccontainer['@name']]
+
+        return
+
+    """
     Xlate a container
     This function will xlate from a dict in config DB to a Yang JSON container
     using yang model. Output will be stored in self.xlateJson
     """
     def xlateContainer(self, model, yang, config, table):
 
-        # To Handle multiple List, Make a copy of config, because we delete keys
+        # To Handle multiple Lists, Make a copy of config, because we delete keys
         # from config after each match. This is done to match one pkey with one list.
         configC = config.copy()
 
@@ -307,26 +345,33 @@ class sonic_yang_ext_mixin:
         # If single list exists in container,
         if clist and isinstance(clist, dict) and \
            clist['@name'] == model['@name']+"_LIST" and bool(configC):
-                #print(clist['@name'])
-                yang[clist['@name']] = list()
-                self.sysLog(msg="xlateContainer listD {}".format(clist['@name']))
-                self.xlateList(clist, yang[clist['@name']], \
-                               configC, table)
-                # clean empty lists
-                if len(yang[clist['@name']]) == 0:
-                    del yang[clist['@name']]
-                #print(yang[clist['@name']])
-
+                self.xlateListInContainer(clist, yang, configC, table)
         # If multi-list exists in container,
         elif clist and isinstance(clist, list) and bool(configC):
             for modelList in clist:
-                yang[modelList['@name']] = list()
-                self.sysLog(msg="xlateContainer listL {}".format(modelList['@name']))
-                self.xlateList(modelList, yang[modelList['@name']], configC, table)
-                # clean empty lists
-                if len(yang[modelList['@name']]) == 0:
-                    del yang[modelList['@name']]
+                self.xlateListInContainer(modelList, yang, configC, table)
 
+        # Handle container(s) in container
+        ccontainer = model.get('container')
+        # If single list exists in container,
+        if ccontainer and isinstance(ccontainer, dict) and bool(configC):
+            self.xlateContainerInContainer(ccontainer, yang, configC, table)
+        # If multi-list exists in container,
+        elif ccontainer and isinstance(ccontainer, list) and bool(configC):
+            for modelContainer in ccontainer:
+                self.xlateContainerInContainer(modelContainer, yang, configC, table)
+
+        ## Handle other leaves in container,
+        leafDict = self.createLeafDict(model)
+        for vKey in configC.keys():
+            #vkey must be a leaf\leaf-list\choice in container
+            if leafDict.get(vKey):
+                self.sysLog(syslog.LOG_DEBUG, "xlateContainer vkey {}".format(vKey))
+                yang[vKey] = self.findYangTypedValue(vKey, configC[vKey], leafDict)
+                # delete entry from copy of config
+                del configC[vKey]
+
+        # All entries in copy of config must have been parsed.
         if len(configC):
             self.sysLog(syslog.LOG_ERR, "Alert: Remaining keys in Config")
             raise(Exception("All Keys are not parsed in {}".format(table)))
@@ -442,22 +487,59 @@ class sonic_yang_ext_mixin:
         return
 
     """
+    Rev xlate a list inside a yang container
+    """
+    def revXlateListInContainer(self, model, yang, config, table):
+        modelList = model
+        # Pass matching list from Yang Json if exist
+        if yang.get(modelList['@name']):
+            self.sysLog(msg="revXlateListInContainer {}".format(modelList['@name']))
+            self.revXlateList(modelList, yang[modelList['@name']], config, table)
+        return
+
+    """
+    Rev xlate a container inside a yang container
+    """
+    def revXlateContainerInContainer(self, model, yang, config, table):
+        modelContainer = model
+        # Pass matching list from Yang Json if exist
+        if yang.get(modelContainer['@name']):
+            config[modelContainer['@name']] = dict()
+            self.sysLog(msg="revXlateContainerInContainer {}".format(modelContainer['@name']))
+            self.revXlateContainer(modelContainer, yang[modelContainer['@name']], \
+                config[modelContainer['@name']], table)
+        return
+
+    """
     Rev xlate from yang container to table in config DB
     """
     def revXlateContainer(self, model, yang, config, table):
 
-        # Note: right now containers has only LISTs.
         # IF container has only one list
-        if isinstance(model['list'], dict):
-            modelList = model['list']
-            # Pass matching list from Yang Json
-            self.sysLog(msg="revXlateContainer {}".format(modelList['@name']))
-            self.revXlateList(modelList, yang[modelList['@name']], config, table)
+        clist = model.get('list')
+        if isinstance(clist, dict):
+            self.revXlateListInContainer(clist, yang, config, table)
+        # IF container has lists
+        elif isinstance(clist, list):
+            for modelList in clist:
+                self.revXlateListInContainer(modelList, yang, config, table)
 
-        elif isinstance(model['list'], list):
-            for modelList in model['list']:
-                self.sysLog(msg="revXlateContainer {}".format(modelList['@name']))
-                self.revXlateList(modelList, yang[modelList['@name']], config, table)
+        ccontainer = model.get('container')
+        # IF container has only one inner container
+        if isinstance(ccontainer, dict):
+            self.revXlateContainerInContainer(ccontainer, yang, config, table)
+        # IF container has only many inner container
+        elif isinstance(ccontainer, list):
+            for modelContainer in ccontainer:
+                self.revXlateContainerInContainer(modelContainer, yang, config, table)
+
+        ## Handle other leaves in container,
+        leafDict = self.createLeafDict(model)
+        for vKey in yang:
+            #vkey must be a leaf\leaf-list\choice in container
+            if leafDict.get(vKey):
+                self.sysLog(syslog.LOG_DEBUG, "revXlateContainer vkey {}".format(vKey))
+                config[vKey] = self.revFindYangTypedValue(vKey, yang[vKey], leafDict)
 
         return
 
