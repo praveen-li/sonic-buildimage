@@ -273,7 +273,7 @@ class Test_SonicYang(object):
 
         syc.loadYangModel()
 
-        syc.load_data(json.loads(jIn))
+        syc.load_data(json.loads(jIn), allowExtraTables=False)
 
         syc.get_data()
 
