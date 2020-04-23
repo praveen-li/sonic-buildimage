@@ -577,6 +577,62 @@
 		}
 	},
 
+    "CRM_WITH_WRONG_PERCENTAGE": {
+        "sonic-crm:sonic-crm": {
+            "sonic-crm:CRM": {
+                "Config": {
+                    "acl_counter_high_threshold": 85,
+                    "acl_counter_low_threshold": 110,
+                    "acl_counter_threshold_type": "PERCENTAGE"
+                }
+            }
+        }
+    },
+
+    "CRM_WITH_CORRECT_USED_VALUE": {
+        "sonic-crm:sonic-crm": {
+            "sonic-crm:CRM": {
+                "Config": {
+                    "acl_counter_high_threshold": 85,
+                    "acl_counter_low_threshold": 120,
+                    "acl_counter_threshold_type": "used"
+                }
+            }
+        }
+    },
+
+    "VERSIONS_WITH_INCORRECT_PATTERN": {
+        "sonic-versions:sonic-versions": {
+            "sonic-versions:VERSIONS": {
+                "DATABASE": {
+                    "VERSION": "version_1_2"
+                }
+            }
+        }
+    },
+
+    "FLEX_COUNTER_TABLE_WITH_CORRECT_USED_VALUE": {
+        "sonic-flex_counter:sonic-flex_counter": {
+            "sonic-flex_counter:FLEX_COUNTER_TABLE": {
+                "PFCWD": {
+                    "FLEX_COUNTER_STATUS": "enable"
+                },
+                "PG_WATERMARK": {
+                    "FLEX_COUNTER_STATUS": "enable"
+                },
+                "PORT": {
+                    "FLEX_COUNTER_STATUS": "enable"
+                },
+                "QUEUE": {
+                    "FLEX_COUNTER_STATUS": "enable"
+                },
+                "QUEUE_WATERMARK": {
+                    "FLEX_COUNTER_STATUS": "enable"
+                }
+            }
+        }
+    },
+
 	"ACL_RULE_WRONG_INNER_ETHER_TYPE": {
 		"sonic-acl:sonic-acl": {
 			"sonic-acl:ACL_RULE": {
