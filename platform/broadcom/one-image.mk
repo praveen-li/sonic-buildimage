@@ -37,7 +37,8 @@ $(SONIC_ONE_IMAGE)_LAZY_INSTALLS += $(DELL_S6000_PLATFORM_MODULE) \
                                $(LNKD_BOLT_FLEX_OLD_PLATFORM_MODULE) \
                                $(ALPHANETWORKS_SNH60A0_320FV2_PLATFORM_MODULE) \
                                $(ALPHANETWORKS_SNH60B0_640F_PLATFORM_MODULE) \
-                               $(CISCO_N9200_PLATFORM_MODULE)
+                               $(CISCO_N9200_PLATFORM_MODULE) \
+                               $(CEL_SILVERSTONE_PLATFORM_MODULE)
 ifeq ($(INSTALL_DEBUG_TOOLS),y)
 	$(SONIC_ONE_IMAGE)_DOCKERS = $(SONIC_INSTALL_DOCKER_DBG_IMAGES)
 	$(SONIC_ONE_IMAGE)_DOCKERS += $(filter-out $(patsubst %-$(DBG_IMAGE_MARK).gz,%.gz, $(SONIC_INSTALL_DOCKER_DBG_IMAGES)), $(SONIC_INSTALL_DOCKER_IMAGES))

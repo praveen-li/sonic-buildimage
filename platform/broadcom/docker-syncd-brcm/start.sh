@@ -63,6 +63,22 @@ if [[ -r ${PLATFORM_DIR}/led_proc_init.soc && ! -f /var/warmboot/warm-starting ]
     supervisorctl start ledinit
 fi
 
+if [[ -r ${HWSKU_DIR}/FecSetting_Rs544.c && ! -f /var/warmboot/warm-starting ]]; then
+    if [ $wait_done == 0]; then
+        wait_syncd
+        wait_done=1
+    fi
+    bcmcmd "cint ${HWSKU_DIR}/FecSetting_Rs544.c"
+fi
+
+if [[ -r ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc && ! -f /var/warmboot/warm-starting ]]; then
+    if [ $wait_done == 0]; then
+        wait_syncd
+        wait_done=1
+    fi
+    bcmcmd "rcload ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc"
+fi
+
 if [ -x ${PLATFORM_DIR}/i2c_init.sh ]; then
     if [ $wait_done == 0]; then
         wait_syncd
