@@ -3,7 +3,7 @@ import syslog
 
 from json import dump
 from glob import glob
-from _sonic_yang_ext import sonic_yang_ext_mixin
+from sonic_yang_ext import sonic_yang_ext_mixin
 
 """
 Yang schema and data tree python APIs based on libyang python
