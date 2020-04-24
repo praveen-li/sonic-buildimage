@@ -18,7 +18,7 @@
 	url = https://github.com/p4lang/p4-hlir
 [submodule "quagga"]
 	path = src/sonic-quagga
-	url = https://github.com/Azure/sonic-quagga	
+	url = https://github.com/Azure/sonic-quagga
 	branch = debian/0.99.24.1
 [submodule "sonic-dbsyncd"]
 	path = src/sonic-dbsyncd
@@ -40,7 +40,7 @@
 	url = https://github.com/aristanetworks/sonic
 [submodule "src/sonic-platform-common"]
 	path = src/sonic-platform-common
-	url = https://github.com/Azure/sonic-platform-common	
+	url = https://github.com/Azure/sonic-platform-common
 [submodule "src/sonic-platform-daemons"]
 	path = src/sonic-platform-daemons
 	url = ssh://git.corp.linkedin.com:29418/sonic/sonic-platform-daemons.git

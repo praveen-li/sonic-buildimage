@@ -18,6 +18,8 @@ echo "# Config files managed by sonic-config-engine" > /var/sonic/config_status
 
 rm -f /var/run/rsyslogd.pid
 
+supervisorctl start bgpcfgd
+
 supervisorctl start rsyslogd
 
 # Start Quagga processes
@@ -25,5 +27,3 @@ supervisorctl start zebra
 supervisorctl start bgpd
 
 supervisorctl start fpmsyncd
-
-supervisorctl start bgpcfgd

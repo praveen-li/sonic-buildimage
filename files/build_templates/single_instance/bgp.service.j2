@@ -1,7 +1,7 @@
 [Unit]
 Description=BGP container
 Requires=updategraph.service
-After=updategraph.service interfaces-config.service
+After=updategraph.service
 Before=ntp-config.service
 StartLimitIntervalSec=1200
 StartLimitBurst=3

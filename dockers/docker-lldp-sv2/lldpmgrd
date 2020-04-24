@@ -97,12 +97,6 @@ class LldpManager(object):
                                               self.REDIS_TIMEOUT_MS,
                                               True)
 
-        # Open a handle to the Application database
-        self.appl_db = swsscommon.DBConnector(swsscommon.APPL_DB,
-                                                self.REDIS_HOSTNAME,
-                                                self.REDIS_PORT,
-                                                self.REDIS_TIMEOUT_MS)
-
         self.pending_cmds = {}
 
     def is_port_up(self, port_name):
