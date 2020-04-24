@@ -1,5 +1,31 @@
 #!/bin/bash
 
+# single instance containers are still supported (even though it might not look like it)
+# if no instance number is passed to this script, $DEV will simply be unset, resulting in docker
+# commands being sent to the base container name. E.g. `docker start database$DEV` simply starts
+# the container `database` if no instance number is passed since `$DEV` is not defined
+
+
+{%- if docker_container_name == "database" %}
+link_namespace() {
+    # Makes namespace of a docker container available in
+    # /var/run/netns so it can be managed with iproute2
+
+    mkdir -p /var/run/netns
+    PID="$(docker inspect -f {{"'{{.State.Pid}}'"}} "{{docker_container_name}}$DEV")"
+
+    if `ip netns | grep --quiet -w "{{docker_container_name}}$DEV"`; then # namespace exists
+        if [ $(readlink -f /var/run/netns/$NET_NS$DEV) = $(readlink -f /proc/$PID/ns/net) ]; then # namespace is correctly linked
+            return 0
+        else # if it's incorrectly linked remove it
+            ip netns delete "{{docker_container_name}}$DEV"
+        fi
+    fi
+
+    ln -s /proc/$PID/ns/net /var/run/netns/$NET_NS$DEV
+}
+{%- endif %}
+
 function getMountPoint()
 {
     echo $1 | python -c "import sys, json, os; mnts = [x for x in json.load(sys.stdin)[0]['Mounts'] if x['Destination'] == '/usr/share/sonic/hwsku']; print '' if len(mnts) == 0 else os.path.basename(mnts[0]['Source'])" 2>/dev/null
@@ -36,6 +62,8 @@ function preStartAction()
         echo -n > /tmp/dump.rdb
         docker cp /tmp/dump.rdb database:/var/lib/redis/
     fi
+{%- elif docker_container_name == "snmp" %}
+    sonic-db-cli STATE_DB HSET 'DEVICE_METADATA|localhost' chassis_serial_number $(decode-syseeprom -s)
 {%- else %}
     : # nothing
 {%- endif %}
@@ -44,25 +72,29 @@ function preStartAction()
 function postStartAction()
 {
 {%- if docker_container_name == "database" %}
+    if [ "$DEV" ]; then
+        link_namespace $DEV
+    fi
     # Wait until redis starts
-    REDIS_SOCK="/var/run/redis/redis.sock"
-    until [[ $(/usr/bin/docker exec database redis-cli -s $REDIS_SOCK ping | grep -c PONG) -gt 0 ]]; do
-        sleep 1;
-    done
+    /usr/bin/docker exec database ping_pong_db_insts
     if [[ ("$BOOT_TYPE" == "warm" || "$BOOT_TYPE" == "fastfast") && -f $WARM_DIR/dump.rdb ]]; then
         rm -f $WARM_DIR/dump.rdb
     else
-        # If there is a config db dump file, load it
+        # If there is a config_db.json dump file, load it.
         if [ -r /etc/sonic/config_db.json ]; then
-            sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
+            if [ -r /etc/sonic/init_cfg.json ]; then
+                sonic-cfggen -j /etc/sonic/init_cfg.json -j /etc/sonic/config_db.json --write-to-db
+            else
+                sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
+            fi
         fi
 
         if [[ "$BOOT_TYPE" == "fast" ]]; then
             # set the key to expire in 3 minutes
-            redis-cli -n 6 SET "FAST_REBOOT|system" "1" "EX" "180"
+            sonic-db-cli STATE_DB SET "FAST_REBOOT|system" "1" "EX" "180"
         fi
 
-        redis-cli -n 4 SET "CONFIG_DB_INITIALIZED" "1"
+        sonic-db-cli CONFIG_DB SET "CONFIG_DB_INITIALIZED" "1"
     fi
 
     if [[ -x /usr/bin/db_migrator.py ]]; then
@@ -89,8 +121,6 @@ function postStartAction()
             docker cp $PSENSOR pmon:/usr/bin/
         fi
     fi
-{%- elif docker_container_name == "snmp" %}
-    docker exec -i database redis-cli -n 6 HSET 'DEVICE_METADATA|localhost' chassis_serial_number $(decode-syseeprom -s)
 {%- else %}
     : # nothing
 {%- endif %}
@@ -111,7 +141,7 @@ start() {
     HWSKU=`sonic-cfggen -d -v 'DEVICE_METADATA["localhost"]["hwsku"]'`
     {%- endif %}
 
-    DOCKERCHECK=`docker inspect --type container {{docker_container_name}} 2>/dev/null`
+    DOCKERCHECK=`docker inspect --type container {{docker_container_name}}$DEV 2>/dev/null`
     if [ "$?" -eq "0" ]; then
         {%- if docker_container_name == "database" %}
         DOCKERMOUNT=""
@@ -120,51 +150,81 @@ start() {
         {%- endif %}
         if [ x"$DOCKERMOUNT" == x"$HWSKU" ]; then
             {%- if docker_container_name == "database" %}
-            echo "Starting existing {{docker_container_name}} container"
+            echo "Starting existing {{docker_container_name}}$DEV container"
             {%- else %}
-            echo "Starting existing {{docker_container_name}} container with HWSKU $HWSKU"
+            echo "Starting existing {{docker_container_name}}$DEV container with HWSKU $HWSKU"
             {%- endif %}
             preStartAction
-            docker start {{docker_container_name}}
+            docker start {{docker_container_name}}$DEV
             postStartAction
             exit $?
         fi
 
         # docker created with a different HWSKU, remove and recreate
-        echo "Removing obsolete {{docker_container_name}} container with HWSKU $DOCKERMOUNT"
-        docker rm -f {{docker_container_name}}
+        echo "Removing obsolete {{docker_container_name}}$DEV container with HWSKU $DOCKERMOUNT"
+        docker rm -f {{docker_container_name}}$DEV
     fi
 
-{%- if docker_container_name == "database" %}
-    echo "Creating new {{docker_container_name}} container"
-{%- else %}
-    echo "Creating new {{docker_container_name}} container with HWSKU $HWSKU"
-{%- endif %}
+    {%- if docker_container_name == "database" %}
+    echo "Creating new {{docker_container_name}}$DEV container"
+    # if database_config exists in old_config, use it; otherwise use the default one in new image
+    if [ -f /etc/sonic/old_config/database_config.json ]; then
+        echo "Use database_config.json from old system..."
+        mv /etc/sonic/old_config/database_config.json /etc/sonic/
+    fi
+    {%- else %}
+    echo "Creating new {{docker_container_name}}$DEV container with HWSKU $HWSKU"
+    {%- endif %}
+
+    if [ -z "$DEV" ]; then
+        NET="host"
+    else
+        {%- if docker_container_name == "database" %}
+        NET="bridge"
+        {%- else %}
+        NET="container:database$DEV"
+        {%- endif %}
+    fi
+
 {%- if sonic_asic_platform == "mellanox" %}
     # TODO: Mellanox will remove the --tmpfs exception after SDK socket path changed in new SDK version
 {%- endif %}
     docker create {{docker_image_run_opt}} \
+        --net=$NET \
+        --uts=host \{# W/A: this should be set per-docker, for those dockers which really need host's UTS namespace #}
 {%- if install_debug_image == "y" %}
         -v /src:/src:ro -v /debug:/debug:rw \
 {%- endif %}
 {%- if '--log-driver=json-file' in docker_image_run_opt or '--log-driver' not in docker_image_run_opt %}
         --log-opt max-size=2M --log-opt max-file=5 \
 {%- endif %}
-{%- if docker_container_name == "syncd" and sonic_asic_platform == "mellanox" %}
-        -e SX_SNIFFER_ENABLE \
-        -e SX_SNIFFER_TARGET \
-        -e PRM_SNIFFER \
-        -e PRM_SNIFFER_FILE_PATH \
+{%- if sonic_asic_platform == "mellanox" %}
+{%- if docker_container_name == "syncd" %}
         -v /var/log/mellanox/sniffer:/var/log/mellanox/sniffer:rw \
+        -v mlnx_sdk_socket:/var/run/sx_sdk \
+        -v mlnx_sdk_ready:/tmp \
+        -v /dev/shm:/dev/shm:rw \
+        -e SX_API_SOCKET_FILE=/var/run/sx_sdk/sx_api.sock \
+{%- elif docker_container_name == "pmon" %}
+        -v /var/run/hw-management:/var/run/hw-management:rw \
+        -v mlnx_sdk_socket:/var/run/sx_sdk \
+        -v mlnx_sdk_ready:/tmp \
+        -e SX_API_SOCKET_FILE=/var/run/sx_sdk/sx_api.sock \
+        -v /dev/shm:/dev/shm:rw \
+{%- else %}
+        --tmpfs /tmp \
+{%- endif %}
 {%- endif %}
         -v /var/run/redis:/var/run/redis:rw \
         -v /usr/share/sonic/device/$PLATFORM:/usr/share/sonic/platform:ro \
 {%- if docker_container_name != "database" %}
         -v /usr/share/sonic/device/$PLATFORM/$HWSKU:/usr/share/sonic/hwsku:ro \
 {%- endif %}
+{%- if sonic_asic_platform != "mellanox" %}
         --tmpfs /tmp \
+{%- endif %}
         --tmpfs /var/tmp \
-        --name={{docker_container_name}} {{docker_image_name}}:latest || {
+        --name={{docker_container_name}}$DEV {{docker_image_name}}:latest || {
             echo "Failed to docker run" >&1
             exit 4
     }
@@ -175,18 +235,14 @@ start() {
 }
 
 wait() {
-    docker wait {{docker_container_name}}
+    docker wait {{docker_container_name}}$DEV
 }
 
 stop() {
-# TBD, assuming the syncd would remove DMA when stop syncd so no need below any longer
-# {%- if docker_container_name == "syncd" %}
-    # When stopping the syncd service, we don't allow any traffic going through ASIC
-    # This is to prevent some potential reboot hang issue
-#    bcmcmd "port xe enable=false stp=disable"
-#    bcmcmd "port ce enable=false stp=disable"
-# {%- endif %}
-
+    docker stop {{docker_container_name}}$DEV
+{%- if docker_container_name == "database" %}
+    ip netns delete "$NET_NS$DEV"
+{%- endif %}
 {%- if docker_container_name == "bgp" %}
     # Before stopping the BGP docker, kill watchfrr, zebra and bgpd to help the bgp graceful restart procedure
     echo "Stopping bgp ..."
@@ -194,16 +250,18 @@ stop() {
     docker exec -i bgp pkill -9 zebra
     docker exec -i bgp pkill -9 bgpd || [ $? == 1 ]
 {%- endif %}
-
-    docker stop {{docker_container_name}}
 }
+
+OP=$1
+DEV=$2 # namespace/device number to operate on
+NET_NS="asic" #name of the network namespace
 
 case "$1" in
     start|wait|stop)
         $1
         ;;
     *)
-        echo "Usage: $0 {start|wait|stop}"
+        echo "Usage: $0 {start namespace(optional)|wait namespace(optional)|stop namespace(optional)}"
         exit 1
         ;;
 esac

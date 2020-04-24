@@ -2,46 +2,27 @@
 SHELL = /bin/bash
 .SHELLFLAGS += -e
 
-MAIN_TARGET = frr_$(FRR_VERSION)-1~sonic.debian8+1_amd64.deb
-DERIVED_TARGET = $(FRR_DBG)
+MAIN_TARGET = $(FRR)
+DERIVED_TARGET = $(FRR_PYTHONTOOLS) $(FRR_DBG) $(FRR_SNMP) $(FRR_SNMP_DBG)
+SUFFIX = $(shell date +%Y%m%d\.%H%M%S)
+STG_BRANCH = stg_temp.$(SUFFIX)
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
-
 	# Build the package
 	pushd ./frr
-
-	# remove all diff and apply the patches
-	git stash
-	patch -p1  < ../patch/0001-zebra-kernel-level-graceful-restart.patch
-
-	# clean up the previous build
-	rm -rf debian
-	rm -f frr*.tar.gz
-	rm -f frr*.tar.xz
-	rm -f frr*.dsc
-
-	# make a dist tarball
-	./bootstrap.sh
-	./configure
-	make dist
-
-	# Create backports debian sources
-	cp -a debianpkg debian
-	make -f debian/rules backports
-
-	# new directory to build the package 
-	rm -rf frrpkg
-	mkdir frrpkg
-	cd frrpkg
-	tar xf ../frr_*.orig.tar.gz
-	cd frr*
-	tar xf ../../frr_*sonic.debian8*.debian.tar.xz
-
-	# build package
-	dpkg-buildpackage -rfakeroot -b -us -uc
-	cd ..
-	mv $(DERIVED_TARGET) $* $(DEST)/
-
+	git checkout -b $(FRR_BRANCH) origin/$(FRR_BRANCH)
+	stg branch --create $(STG_BRANCH) $(FRR_TAG)
+	stg import -s ../patch/series
+	tools/tarsource.sh -V -e '-sonic'
+	dpkg-buildpackage -rfakeroot -b -us -uc -Ppkg.frr.nortrlib -j$(SONIC_CONFIG_MAKE_JOBS)
+	stg undo || true
+	git clean -xfdf
+	git checkout $(FRR_BRANCH)
+	stg branch --delete $(STG_BRANCH)
+	git rev-parse --short HEAD | xargs git checkout
+	git checkout master
+	git branch -D $(FRR_BRANCH)
 	popd
+	mv $(DERIVED_TARGET) $* $(DEST)/
 
 $(addprefix $(DEST)/, $(DERIVED_TARGET)): $(DEST)/% : $(DEST)/$(MAIN_TARGET)

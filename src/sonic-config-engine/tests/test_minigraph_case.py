@@ -68,7 +68,7 @@ class TestCfgGenCaseInsensitive(TestCase):
     def test_minigraph_interfaces(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v \'INTERFACE.keys()\''
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "[('Ethernet0', '10.0.0.58/31'), ('Ethernet0', 'FC00::75/126')]")
+        self.assertEqual(output.strip(), "[('Ethernet0', '10.0.0.58/31'), 'Ethernet0', ('Ethernet0', 'FC00::75/126')]")
 
     def test_minigraph_vlans(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v VLAN'
@@ -83,7 +83,7 @@ class TestCfgGenCaseInsensitive(TestCase):
     def test_minigraph_vlan_interfaces(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "VLAN_INTERFACE.keys()"'
         output = self.run_script(argument)
-        self.assertEqual(output.strip(), "[('Vlan1000', '192.168.0.1/27')]")
+        self.assertEqual(output.strip(), "[('Vlan1000', '192.168.0.1/27'), 'Vlan1000']")
 
     def test_minigraph_portchannels(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v PORTCHANNEL'
@@ -125,3 +125,19 @@ class TestCfgGenCaseInsensitive(TestCase):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "NTP_SERVER"'
         output = self.run_script(argument)
         self.assertEqual(output.strip(), "{'10.0.10.1': {}, '10.0.10.2': {}}")
+
+    def test_minigraph_vnet(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "VNET"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "")
+
+    def test_minigraph_vxlan(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "VXLAN_TUNNEL"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "")
+
+    def test_minigraph_bgp_mon(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "BGP_MONITORS"'
+        output = self.run_script(argument)
+        self.assertEqual(output.strip(), "{}")
+

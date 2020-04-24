@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-export platform=vs
+if [[ -z "$fake_platform"  ]]; then
+    export platform=vs
+else
+    export platform=$fake_platform
+fi
 
 MAC_ADDRESS=$(sonic-cfggen -d -v 'DEVICE_METADATA.localhost.mac')
 if [ "$MAC_ADDRESS" == "None" ] || [ -z "$MAC_ADDRESS" ]; then

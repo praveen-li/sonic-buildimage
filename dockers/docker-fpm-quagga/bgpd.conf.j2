@@ -23,25 +23,19 @@ route-map FROM_BGP_SPEAKER_V4 permit 10
 !
 route-map TO_BGP_SPEAKER_V4 deny 10
 !
-{% if BGP_MONITORS is defined and BGP_MONITORS|length > 0 %}
-route-map FROM_BGPMON deny 10
-!
-route-map TO_BGPMON permit 10
-!
-{% endif %}
 router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
   bgp log-neighbor-changes
   bgp bestpath as-path multipath-relax
   no bgp default ipv4-unicast
   bgp graceful-restart restart-time 240
   bgp graceful-restart
-{% for (name, prefix) in LOOPBACK_INTERFACE %}
+{% for (name, prefix) in LOOPBACK_INTERFACE|pfx_filter %}
 {% if prefix | ipv4 and name == 'Loopback0' %}
   bgp router-id {{ prefix | ip }}
 {% endif %}
 {% endfor %}
 {# advertise loopback #}
-{% for (name, prefix) in LOOPBACK_INTERFACE %}
+{% for (name, prefix) in LOOPBACK_INTERFACE|pfx_filter %}
 {% if prefix | ipv4 and name == 'Loopback0' %}
   network {{ prefix | ip }}/32
 {% elif prefix | ipv6 and name == 'Loopback0' %}
@@ -53,7 +47,7 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
 {% endblock bgp_init %}
 {% endif %}
 {% block vlan_advertisement %}
-{% for (name, prefix) in VLAN_INTERFACE %}
+{% for (name, prefix) in VLAN_INTERFACE|pfx_filter %}
 {% if prefix | ipv4 %}
   network {{ prefix }}
 {% elif prefix | ipv6 %}
@@ -63,6 +57,42 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
 {% endif %}
 {% endfor %}
 {% endblock vlan_advertisement %}
+{% block bgp_sessions %}
+{% for neighbor_addr, bgp_session in BGP_NEIGHBOR.iteritems() %}
+{% if bgp_session['asn'] | int != 0 %}
+  neighbor {{ neighbor_addr }} remote-as {{ bgp_session['asn'] }}
+  neighbor {{ neighbor_addr }} description {{ bgp_session['name'] }}
+{# set the bgp neighbor timers if they have not default values #}
+{% if     (bgp_session['keepalive'] is defined and bgp_session['keepalive'] | int != 60)
+      or  (bgp_session['holdtime'] is defined  and bgp_session['holdtime']  | int != 180) %}
+  neighbor {{ neighbor_addr }} timers {{ bgp_session['keepalive'] }} {{ bgp_session['holdtime'] }}
+{% endif %}
+{% if bgp_session.has_key('admin_status') and bgp_session['admin_status'] == 'down' or not bgp_session.has_key('admin_status') and DEVICE_METADATA['localhost'].has_key('default_bgp_status') and DEVICE_METADATA['localhost']['default_bgp_status'] == 'down' %}
+  neighbor {{ neighbor_addr }} shutdown
+{% endif %}
+{% if neighbor_addr | ipv4 %}
+  address-family ipv4
+{% if DEVICE_METADATA['localhost']['type'] == 'ToRRouter' %}
+    neighbor {{ neighbor_addr }} allowas-in 1
+{% endif %}
+    neighbor {{ neighbor_addr }} activate
+    neighbor {{ neighbor_addr }} soft-reconfiguration inbound
+    maximum-paths 64
+  exit-address-family
+{% endif %}
+{% if neighbor_addr | ipv6 %}
+  address-family ipv6
+{% if DEVICE_METADATA['localhost']['type'] == 'ToRRouter' %}
+    neighbor {{ neighbor_addr }} allowas-in 1
+{% endif %}
+    neighbor {{ neighbor_addr }} activate
+    neighbor {{ neighbor_addr }} soft-reconfiguration inbound
+    maximum-paths 64
+  exit-address-family
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endblock bgp_sessions %}
 {% block bgp_peers_with_range %}
 {% if BGP_PEER_RANGE %}
 {% for bgp_peer in BGP_PEER_RANGE.values() %}
@@ -71,14 +101,14 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
 {% if bgp_peer['peer_asn'] is defined %}
   neighbor {{ bgp_peer['name'] }} remote-as {{ bgp_peer['peer_asn'] }}
 {% else %}
-  neighbor {{ bgp_peer['name'] }} remote-as {{ deployment_id_asn_map[DEVICE_METADATA['localhost']['deployment_id']] }}
+  neighbor {{ bgp_peer['name'] }} remote-as {{ constants.deployment_id_asn_map[DEVICE_METADATA['localhost']['deployment_id']] }}
 {% endif %}
   neighbor {{ bgp_peer['name'] }} ebgp-multihop 255
   neighbor {{ bgp_peer['name'] }} soft-reconfiguration inbound
 {% if bgp_peer['src_address'] is defined %}
   neighbor {{ bgp_peer['name'] }} update-source {{ bgp_peer['src_address'] | ip }}
 {% else %}
-{% for (name, prefix) in LOOPBACK_INTERFACE %}
+{% for (name, prefix) in LOOPBACK_INTERFACE|pfx_filter %}
 {% if name == 'Loopback1' %}
   neighbor {{ bgp_peer['name'] }} update-source {{ prefix | ip }}
 {% endif %}
@@ -100,30 +130,6 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
 {% endfor %}
 {% endif %}
 {% endblock bgp_peers_with_range %}
-{% block bgp_monitors %}
-{% if BGP_MONITORS is defined and BGP_MONITORS|length > 0 %}
-  neighbor BGPMON peer-group
-  neighbor BGPMON activate
-{% for (name, prefix) in LOOPBACK_INTERFACE %}
-{% if prefix | ipv4 and name == 'Loopback0' %}
-  neighbor BGPMON update-source {{ prefix | ip }}
-{% endif %}
-{% endfor %}
-  neighbor BGPMON route-map FROM_BGPMON in
-  neighbor BGPMON route-map TO_BGPMON out
-  neighbor BGPMON send-community
-  neighbor BGPMON maximum-prefix 1
-{% for neighbor_addr, bgp_session in BGP_MONITORS.items() %}
-  neighbor {{ neighbor_addr }} remote-as {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
-  neighbor {{ neighbor_addr }} peer-group BGPMON
-  neighbor {{ neighbor_addr }} description {{ bgp_session['name'] }}
-  neighbor {{ neighbor_addr }} activate
-  address-family ipv6
-    neighbor {{ neighbor_addr }} activate
-  exit-address-family
-{% endfor %}
-{% endif %}
-{% endblock bgp_monitors %}
 !
 {% if DEVICE_METADATA['localhost'].has_key('bgp_asn') %}
 maximum-paths 64

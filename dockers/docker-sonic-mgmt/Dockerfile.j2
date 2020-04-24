@@ -20,7 +20,11 @@ RUN apt-get install -y \
                 libxslt1-dev \
                 python-setuptools \
                 build-essential \
-                curl
+                curl \
+                cmake \
+                tcpdump \
+                python-dev \
+                python-scapy
 
 # For JNLP launcher
 RUN apt-get install -y default-jre
@@ -46,11 +50,33 @@ RUN pip install ipaddr \
                 jinja2==2.7.2 \
                 cffi==1.10.0 \
                 paramiko==2.1.2 \
-                passlib
+                passlib \
+                ipython==5.4.1 \
+    && git clone https://github.com/p4lang/scapy-vxlan.git \
+    && cd scapy-vxlan \
+    && python setup.py install \
+    && cd .. \
+    && rm -fr scapy-vxlan \
+    && wget https://github.com/nanomsg/nanomsg/archive/1.0.0.tar.gz \
+    && tar xvfz 1.0.0.tar.gz \
+    && cd nanomsg-1.0.0    \
+    && mkdir -p build      \
+    && cd build            \
+    && cmake ..            \
+    && make install        \
+    && ldconfig            \
+    && cd ../..            \
+    && rm -fr nanomsg-1.0.0 \
+    && rm -f 1.0.0.tar.gz  \
+    && pip install nnpy    \
+    && pip install dpkt
 
 # Install Microsoft Azure Kusto Library for Python
 RUN pip install azure-kusto-data==0.0.13 \
                 azure-kusto-ingest==0.0.13
+
+# Install pytest-ansible module
+RUN pip install pytest-ansible==2.2.2
 
 ## Copy and install sonic-mgmt docker dependencies
 COPY \
@@ -64,8 +90,7 @@ RUN dpkg -i \
 debs/{{ deb }}{{' '}}
 {%- endfor %}
 
-RUN git clone https://github.com/ansible/ansible
-RUN cd ansible && git checkout v2.0.0.2-1 -b v2.0.0.2-1 && git submodule update --init --recursive && make && make install
+RUN pip install ansible==2.8.7
 
 RUN mkdir /var/run/sshd
 EXPOSE 22

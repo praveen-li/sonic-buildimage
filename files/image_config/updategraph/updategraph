@@ -1,16 +1,14 @@
 #!/bin/bash
 
-CONFIG_DB_INDEX=4
-
 reload_minigraph()
 {
     echo "Reloading minigraph..."
     if [ ! -f /etc/sonic/init_cfg.json ]; then
         echo "{}" > /etc/sonic/init_cfg.json
     fi
-    redis-cli -n $CONFIG_DB_INDEX FLUSHDB
+    sonic-db-cli CONFIG_DB FLUSHDB
     sonic-cfggen -H -m -j /etc/sonic/init_cfg.json --write-to-db
-    redis-cli -n $CONFIG_DB_INDEX SET "CONFIG_DB_INITIALIZED" "1"
+    sonic-db-cli CONFIG_DB SET "CONFIG_DB_INITIALIZED" "1"
     if [ -f /etc/sonic/acl.json ]; then
         acl-loader update full /etc/sonic/acl.json
     fi
@@ -26,81 +24,12 @@ reload_minigraph()
     fi
 }
 
-function copy_config_files_and_directories()
-{
-    for file_dir in $@; do
-        if [ -f /etc/sonic/old_config/${file_dir} ] || [ -d /etc/sonic/old_config/${file_dir} ]; then
-            logger "Copying SONiC configuration ${file_dir} ..."
-            cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/
-        else
-            logger "Missing SONiC configuration ${file_dir} ..."
-        fi
-    done
-
-    sync
-}
-
-function check_system_warm_boot()
-{
-    SYSTEM_WARM_START=`/usr/bin/redis-cli -n 6 hget "WARM_RESTART_ENABLE_TABLE|system" enable`
-    # SYSTEM_WARM_START could be empty, always make WARM_BOOT meaningful.
-    if [[ x"$SYSTEM_WARM_START" == x"true" ]]; then
-        WARM_BOOT="true"
-    else
-        WARM_BOOT="false"
-    fi
-}
-
-
 if [ ! -f /etc/sonic/updategraph.conf ]; then
     echo "No updategraph.conf found, generating a default one."
     echo "enabled=false" >/etc/sonic/updategraph.conf
 fi
 
 . /etc/sonic/updategraph.conf
-
-check_system_warm_boot
-copy_list="minigraph.xml snmp.yml acl.json config_db.json frr"
-if [ -f /tmp/pending_config_migration ]; then
-    copy_config_files_and_directories $copy_list
-    if [ x"${WARM_BOOT}" == x"true" ]; then
-        echo "Warm reboot detected..."
-    elif [ -r /etc/sonic/config_db.json ]; then
-        echo "Use config_db.json from old system..."
-        sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
-
-        # Disable Linkedin ZTP process if doing config migration
-        sed -i "s/ZTP_MODE=TRUE/ZTP_MODE=FALSE/g" /etc/ztp/ztp.conf
-
-        if [[ -x /usr/bin/db_migrator.py ]]; then
-            # Migrate the DB to the latest schema version if needed
-            /usr/bin/db_migrator.py -o migrate
-        fi
-    elif [ -r /etc/sonic/minigraph.xml ]; then
-        echo "Use minigraph.xml from old system..."
-        reload_minigraph
-        sonic-cfggen -d --print-data > /etc/sonic/config_db.json
-    else
-        echo "Didn't found neither config_db.json nor minigraph.xml ..."
-    fi
-    rm -f /tmp/pending_config_migration
-    sed -i "/enabled=/d" /etc/sonic/updategraph.conf
-    echo "enabled=false" >> /etc/sonic/updategraph.conf
-    exit 0
-fi
-
-if [ -f /tmp/pending_config_initialization ]; then
-    rm -f /tmp/pending_config_initialization
-    if [ "$enabled" != "true" ]; then
-        PLATFORM=`sonic-cfggen -H -v DEVICE_METADATA.localhost.platform`
-        PRESET=(`head -n 1 /usr/share/sonic/device/$PLATFORM/default_sku`)
-        sonic-cfggen -H -k ${PRESET[0]} --preset ${PRESET[1]} > /etc/sonic/config_db.json
-        redis-cli -n $CONFIG_DB_INDEX FLUSHDB
-        sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
-        redis-cli -n $CONFIG_DB_INDEX SET "CONFIG_DB_INITIALIZED" "1"
-        exit 0
-    fi
-fi
 
 if [ "$enabled" = "reload_only" ]; then
     reload_minigraph
@@ -111,6 +40,12 @@ fi
 
 if [ "$enabled" != "true" ]; then
     echo "Disabled in updategraph.conf. Skipping graph update."
+    exit 0
+fi
+
+# If ZTP package is available and enabled, use ZTP to download and load the graph.
+if [ -e /usr/bin/ztp ] && [ "$(ztp status -c)" != "0:DISABLED" ]; then
+    echo "ZTP is available and enabled. Skipping graph update."
     exit 0
 fi
 
@@ -140,9 +75,9 @@ if [ "$src" = "dhcp" ]; then
         else
             cp -f /tmp/device_meta.json /etc/sonic/config_db.json
         fi
-        redis-cli -n $CONFIG_DB_INDEX FLUSHDB
+        sonic-db-cli CONFIG_DB FLUSHDB
         sonic-cfggen -j /etc/sonic/config_db.json --write-to-db
-        redis-cli -n $CONFIG_DB_INDEX SET "CONFIG_DB_INITIALIZED" "1"
+        sonic-db-cli CONFIG_DB SET "CONFIG_DB_INITIALIZED" "1"
         if [ "$dhcp_as_static" = "true" ]; then
             sed -i "/enabled=/d" /etc/sonic/updategraph.conf
             echo "enabled=false" >> /etc/sonic/updategraph.conf

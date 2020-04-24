@@ -5,6 +5,10 @@
 
 # /etc/ntp.conf, configuration for ntpd; see ntp.conf(5) for help
 
+# To avoid ntpd from panic and exit if the drift between new time and
+# current system time is large.
+tinker panic 0
+
 driftfile /var/lib/ntp/ntp.drift
 
 
@@ -31,11 +35,11 @@ server {{ ntp_server }} iburst
 # if we don't have both of them (default is to listen on all ip addresses)
 interface ignore wildcard
 {% if MGMT_INTERFACE %}
-{% for (mgmt_intf, mgmt_prefix) in MGMT_INTERFACE %}
+{% for (mgmt_intf, mgmt_prefix) in MGMT_INTERFACE|pfx_filter %}
 interface listen {{ mgmt_prefix | ip }}
 {% endfor %}
 {% elif LOOPBACK_INTERFACE %}
-{% for (name, prefix) in LOOPBACK_INTERFACE %}
+{% for (name, prefix) in LOOPBACK_INTERFACE|pfx_filter %}
 {% if prefix | ipv4 and name == 'Loopback0' %}
 interface listen {{ prefix | ip }}
 {% endif %}

@@ -1625,8 +1625,6 @@ static ssize_t delta_bin_attr_write(struct file *filp, struct kobject *kobj, str
     struct delta_bin_attribute *delta_attr = to_delta_attr(attr);
     char attr_path[100];
 
-    mutex_lock(&dni_lock);
-
     switch(delta_attr->index){
         case EEPROM_SFP_1:
         case EEPROM_SFP_2:

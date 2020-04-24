@@ -1,4 +1,10 @@
-FROM debian:jessie
+{% if CONFIGURED_ARCH == "armhf" %}
+FROM multiarch/debian-debootstrap:armhf-stretch
+{% elif CONFIGURED_ARCH == "arm64" %}
+FROM multiarch/debian-debootstrap:arm64-stretch
+{% else %}
+FROM debian:stretch
+{% endif %}
 
 MAINTAINER Pavel Shirshov
 
@@ -23,10 +29,12 @@ RUN sed --in-place 's/httpredir.debian.org/debian-archive.trafficmanager.net/' /
     && apt-get install -y   \
         openssh-server      \
         vim                 \
+        telnet              \
         net-tools           \
         traceroute          \
         lsof                \
         tcpdump             \
+        ethtool             \
         unzip               \
         pkg-config          \
         binutils            \
@@ -38,15 +46,19 @@ RUN sed --in-place 's/httpredir.debian.org/debian-archive.trafficmanager.net/' /
         cmake               \
         libqt5core5a        \
         libqt5network5      \
+        libboost-atomic1.62.0 \
         less                \
         git                 \
         iputils-ping        \
         hping3              \
         curl                \
         tcpdump             \
+        tmux                \
         python              \
         python-dev          \
-        python-scapy
+        python-libpcap      \
+        python-scapy        \
+        python-six
 
 RUN dpkg -i \
 {% for deb in docker_ptf_debs.split(' ') -%}
@@ -95,10 +107,10 @@ RUN rm -rf /debs \
 
 ## Adjust sshd settings
 RUN mkdir /var/run/sshd \
- && echo 'root:root' | chpasswd \
- && sed -ri 's/^PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
- && sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config \
- && sed -i '$aUseDNS no' /etc/ssh/sshd_config
+    && echo 'root:root' | chpasswd \
+    && sed -ri '/^#?PermitRootLogin/c\PermitRootLogin yes' /etc/ssh/sshd_config \
+    && sed -ri '/^#?UsePAM/c\UsePAM no' /etc/ssh/sshd_config \
+    && sed -ri '/^#?UseDNS/c\UseDNS no' /etc/ssh/sshd_config
 
 COPY ["supervisord.conf", "/etc/supervisor/"]
 COPY ["conf.d/supervisord.conf", "conf.d/sshd.conf", "conf.d/ptf_nn_agent.conf", "/etc/supervisor/conf.d/"]

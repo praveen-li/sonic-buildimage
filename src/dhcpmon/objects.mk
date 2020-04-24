@@ -1,4 +1,4 @@
 USER_OBJS :=
 
-LIBS := -levent
+LIBS := -levent -lexplain
 

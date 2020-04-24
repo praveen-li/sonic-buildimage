@@ -7,3 +7,4 @@ portmgrd
 buffermgrd
 vrfmgrd
 nbrmgrd
+vxlanmgrd

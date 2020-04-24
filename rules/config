@@ -16,6 +16,14 @@ SONIC_CONFIG_BUILD_JOBS = 1
 # Corresponding -j argument will be passed to make/dpkg commands that build separate packages
 SONIC_CONFIG_MAKE_JOBS = $(shell nproc)
 
+# SONIC_USE_DOCKER_BUILDKIT - use docker buildkit for build.
+# If set to y SONiC build system will set environment variable DOCKER_BUILDKIT=1
+# to enable docker buildkit.
+# This options will speed up docker image build time.
+# NOTE: SONIC_USE_DOCKER_BUILDKIT will produce larger installable SONiC image
+# because of a docker bug (more details: https://github.com/moby/moby/issues/38903)
+# SONIC_USE_DOCKER_BUILDKIT = y
+
 # SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD - use native dockerd for build.
 # If set to y SONiC build container will use native dockerd instead of dind for faster build
 # SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD = y
@@ -36,6 +44,9 @@ DEFAULT_PASSWORD = admin123
 # If not set (default behavior) the default minigraph built into the image will be used.
 # ENABLE_DHCP_GRAPH_SERVICE = y
 
+# ENABLE_ZTP - installs Zero Touch Provisioning support.
+# ENABLE_ZTP = y
+
 # SHUTDOWN_BGP_ON_START - if set to y all bgp sessions will be in admin down state when
 # bgp service starts.
 # SHUTDOWN_BGP_ON_START = y
@@ -44,9 +55,9 @@ DEFAULT_PASSWORD = admin123
 # by default for TOR switch
 # ENABLE_PFCWD_ON_START = y
 
-# SONIC_INSTALL_DEBUG_TOOLS - installs debugging tools in baseline docker
+# INSTALL_DEBUG_TOOLS - installs debugging tools in baseline docker
 # Uncomment next line to enable:
-# SONIC_INSTALL_DEBUG_TOOLS = y
+# INSTALL_DEBUG_TOOLS = y
 
 # SONIC_ROUTING_STACK - specify the routing-stack being elected to drive SONiC's control-plane.
 # Supported routing stacks on SONiC are:
@@ -80,8 +91,20 @@ DEFAULT_KERNEL_PROCURE_METHOD = build
 # host, then either the appropriate account and group will need to be created on the host
 # manually or changes need to be made when the image is built to create the account and
 # group during installation.
-FRR_USER_UID = 1000
-FRR_USER_GID = 1000
+FRR_USER_UID = 300
+FRR_USER_GID = 300
 
 # Default VS build memory preparation
 DEFAULT_VS_PREPARE_MEM = yes
+
+# ENABLE_SYSTEM_SFLOW - build docker-sonic-sflow for sFlow support
+ENABLE_SFLOW = y
+
+# ENABLE_MGMT_FRAMEWORK - build docker-sonic-mgt-framework for CLI and REST server support
+ENABLE_MGMT_FRAMEWORK = y
+
+# ENABLE_RESTAPI - build docker-sonic-restapi for configuring the switch using REST APIs
+ENABLE_RESTAPI = n
+
+# ENABLE_NAT - build docker-sonic-nat for nat support
+ENABLE_NAT = y
