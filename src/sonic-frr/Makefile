@@ -13,6 +13,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	# remove all diff and apply the patches
 	git stash
 	patch -p1  < ../patch/0001-zebra-kernel-level-graceful-restart.patch
+	patch -p1  < ../patch/bgp_vty_show_sum.patch
 
 	# clean up the previous build
 	rm -rf debian

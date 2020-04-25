@@ -1,0 +1,52 @@
+diff --git a/bgpd/bgp_vty.c b/bgpd/bgp_vty.c
+index 874af821b..32b0ecffd 100644
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -6819,6 +6819,11 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 	int pfx_rcd_safi;
+ 	json_object *json_peer = NULL;
+ 	json_object *json_peers = NULL;
++        struct bgp_table *table;
++        struct bgp_node *rn;
++        struct bgp_adj_out *adj;
++        struct peer_af *paf;
++        unsigned long output_count = 0;
+ 
+ 	/* labeled-unicast routes are installed in the unicast table so in order
+ 	 * to
+@@ -6873,6 +6878,7 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 	}
+ 
+ 	for (ALL_LIST_ELEMENTS(bgp->peer, node, nnode, peer)) {
++                output_count = 0;
+ 		if (!CHECK_FLAG(peer->flags, PEER_FLAG_CONFIG_NODE))
+ 			continue;
+ 
+@@ -7093,7 +7099,26 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 			if (peer->domainname)
+ 				json_object_string_add(json_peer, "domainname",
+ 						       peer->domainname);
+-
++                        if (peer->desc)
++                                json_object_string_add(json_peer, "description",
++                                                       peer->desc);
++
++                        /*
++                         * advertised prefixes
++                         */
++                        table = bgp->rib[afi][safi];
++                        for (rn = bgp_table_top(table); rn; rn = bgp_route_next(rn)) {
++                            for (adj = rn->adj_out; adj; adj = adj->next)
++                                SUBGRP_FOREACH_PEER (adj->subgroup, paf) {
++                                        if (paf->peer != peer)
++                                                continue;
++                                        if (adj->attr) {
++                                                output_count++;
++                                        }
++                                 }
++                        }
++
++                        json_object_int_add(json_peer, "advertisedPrefixes", output_count);
+ 			json_object_int_add(json_peer, "remoteAs", peer->as);
+ 			json_object_int_add(json_peer, "version", 4);
+ 			json_object_int_add(json_peer, "msgRcvd",
