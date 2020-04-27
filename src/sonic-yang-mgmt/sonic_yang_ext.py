@@ -1,6 +1,7 @@
 # This script is used as extension of sonic_yang class. It has methods of
 # class sonic_yang. A separate file is used to avoid a single large file.
 
+from __future__ import print_function
 import yang as ly
 import re
 import syslog
@@ -118,16 +119,22 @@ class sonic_yang_ext_mixin:
     """
     Crop config as per yang models,
     This Function crops from config only those TABLEs, for which yang models is
-    provided.
+    provided. The Tables without YANG models are stored in
+    self.tablesWithOutYangModels.
     """
-    def cropConfigDB(self, croppedFile=None, allowExtraTables=True):
+    def cropConfigDB(self, croppedFile=None):
 
         for table in self.jIn.keys():
             if table not in self.confDbYangMap:
-                if allowExtraTables:
-                    del self.jIn[table]
-                else:
-                    raise(Exception("No Yang Model Exist for {}".format(table)))
+                # store in tablesWithOutYang
+                self.tablesWithOutYang[table] = self.jIn[table]
+                del self.jIn[table]
+
+        if len(self.tablesWithOutYang):
+            print("Note: Below table(s) have no YANG models:")
+            for table in self.tablesWithOutYang.keys():
+                print(unicode(table), end=", ")
+            print()
 
         if croppedFile:
             with open(croppedFile, 'w') as f:
@@ -833,14 +840,15 @@ def delete_node(self, xpath):
     input:    data
     returns:  True - success   False - failed
     """
-    def load_data(self, configdbJson, allowExtraTables=True):
+    def load_data(self, configdbJson):
 
        try:
           self.jIn = configdbJson
-          # reset xlate
+          # reset xlate and tablesWithOutYang
           self.xlateJson = dict()
+          self.tablesWithOutYang = dict()
           # self.jIn will be cropped
-          self.cropConfigDB(allowExtraTables=allowExtraTables)
+          self.cropConfigDB()
           # xlated result will be in self.xlateJson
           self.xlateConfigDB()
           #print(self.xlateJson)

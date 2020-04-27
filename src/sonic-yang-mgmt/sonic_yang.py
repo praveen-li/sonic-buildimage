@@ -34,6 +34,8 @@ class sonic_yang(sonic_yang_ext_mixin):
         self.xlateJson = dict()
         # reverse translation from yang JSON, == config db json
         self.revXlateJson = dict()
+        # below dict store the input config tables which have no YANG models
+        self.tablesWithOutYang = dict()
 
         try:
             self.ctx = ly.Context(yang_dir)
