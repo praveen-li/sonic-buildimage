@@ -1,6 +1,6 @@
-module test-sonic-portchannel {
+module test-portchannel {
 
-	namespace "http://github.com/Azure/sonic-portchannel";
+	namespace "http://github.com/Azure/portchannel";
 	prefix lag;
 
 	import ietf-yang-types {
@@ -11,27 +11,21 @@ module test-sonic-portchannel {
 		prefix inet;
 	}
 
-	import test-sonic-head {
+	import test-head {
 		prefix head;
 		revision-date 2019-07-01;
 	}
 
-	import test-sonic-port {
+	import test-port {
 		prefix port;
 		revision-date 2019-07-01;
 	}
-
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
-	description "PORTCHANNEL yang Module for SONiC OS";
 
 	revision 2019-07-01 {
 		description "First Revision";
 	}
 
-	container sonic-portchannel {
+	container portchannel {
 		container PORTCHANNEL {
 
 			description "PORTCHANNEL part of config_db.json";
@@ -50,7 +44,7 @@ module test-sonic-portchannel {
 				leaf-list members {
 					/* leaf-list members are unique by default */
 					type leafref {
-						path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+						path /port:port/port:PORT/port:PORT_LIST/port:port_name;
 					}
 				}
 
@@ -80,6 +74,6 @@ module test-sonic-portchannel {
 
 		} /* end of container PORTCHANNEL */
 
-	} /* end of container sonic-portchannel */
+	} /* end of container portchannel */
 
-} /* end of module sonic-port */
+} /* end of module port */

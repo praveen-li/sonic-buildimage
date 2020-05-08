@@ -1,6 +1,6 @@
 {
-	"test-sonic-vlan:sonic-vlan": {
-		"test-sonic-vlan:VLAN_INTERFACE": {
+	"test-vlan:vlan": {
+		"test-vlan:VLAN_INTERFACE": {
 			"VLAN_INTERFACE_LIST": [{
 					"vlanid": 111,
 					"ip-prefix": "2000:f500:45:6709::1/64",
@@ -40,7 +40,7 @@
 			]
 		},
 
-		"test-sonic-vlan:VLAN": {
+		"test-vlan:VLAN": {
 			"VLAN_LIST": [{
 					"vlanid": 111,
 					"description": "server_vlan",
@@ -48,18 +48,7 @@
 						"10.1.7.116"
 					],
 					"mtu": "9216",
-					"admin_status": "up",
-					"members": [
-						"Ethernet8",
-						"Ethernet3",
-						"Ethernet0",
-						"Ethernet1",
-						"Ethernet6",
-						"Ethernet4",
-						"Ethernet5",
-						"Ethernet9",
-						"Ethernet2"
-					]
+					"admin_status": "up"
 				},
 				{
 					"vlanid": 555,
@@ -68,17 +57,12 @@
 						"10.1.7.116"
 					],
 					"mtu": "9216",
-					"admin_status": "up",
-					"members": [
-						"Ethernet9",
-						"Ethernet2",
-						"Ethernet8"
-					]
+					"admin_status": "up"
 				}
 			]
 		},
 
-		"test-sonic-vlan:VLAN_MEMBER": {
+		"test-vlan:VLAN_MEMBER": {
 			"VLAN_MEMBER_LIST": [{
 					"vlanid": 111,
 					"port": "Ethernet0",
@@ -117,8 +101,8 @@
 			]
 		}
 	},
-	"test-sonic-port:sonic-port": {
-		"test-sonic-port:PORT": {
+	"test-port:port": {
+		"test-port:PORT": {
 			"PORT_LIST": [{
 					"port_name": "Ethernet0",
 					"alias": "eth0",
@@ -203,8 +187,8 @@
 		}
 	},
 
-	"test-sonic-acl:sonic-acl": {
-		"test-sonic-acl:ACL_RULE": {
+	"test-acl:acl": {
+		"test-acl:ACL_RULE": {
 			"ACL_RULE_LIST": [{
 					"ACL_TABLE_NAME": "PACL-V4",
 					"RULE_NAME": "Rule_20",
@@ -237,7 +221,7 @@
 			]
 		},
 
-		"test-sonic-acl:ACL_TABLE": {
+		"test-acl:ACL_TABLE": {
 			"ACL_TABLE_LIST": [{
 					"ACL_TABLE_NAME": "PACL-V6",
 					"policy_desc": "Filter IPv6",
@@ -256,8 +240,8 @@
 		}
 	},
 
-	"test-sonic-interface:sonic-interface": {
-		"test-sonic-interface:INTERFACE": {
+	"test-interface:interface": {
+		"test-interface:INTERFACE": {
 			"INTERFACE_LIST": [{
 					"interface": "Ethernet8",
 					"ip-prefix": "10.1.1.65/26",

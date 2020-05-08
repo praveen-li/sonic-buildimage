@@ -1,8 +1,8 @@
-module test-sonic-acl {
+module test-acl {
 
 	yang-version 1.1;
 
-	namespace "http://github.com/Azure/sonic-acl";
+	namespace "http://github.com/Azure/acl";
 	prefix acl;
 
 	import ietf-yang-types {
@@ -13,32 +13,26 @@ module test-sonic-acl {
 		prefix inet;
 	}
 
-	import test-sonic-head {
+	import test-head {
 		prefix head;
 		revision-date 2019-07-01;
 	}
 
-	import test-sonic-port {
+	import test-port {
 		prefix port;
 		revision-date 2019-07-01;
 	}
 
-	import test-sonic-portchannel {
+	import test-portchannel {
 		prefix lag;
 		revision-date 2019-07-01;
 	}
-
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
-	description "ACL YANG Module for SONiC OS";
 
 	revision 2019-07-01 {
 		description "First Revision";
 	}
 
-	container sonic-acl {
+	container acl {
 
 		container ACL_RULE {
 
@@ -50,7 +44,7 @@ module test-sonic-acl {
 
 				leaf ACL_TABLE_NAME {
 					type leafref {
-						path "/acl:sonic-acl/acl:ACL_TABLE/acl:ACL_TABLE_LIST/acl:ACL_TABLE_NAME";
+						path "/acl:acl/acl:ACL_TABLE/acl:ACL_TABLE_LIST/acl:ACL_TABLE_NAME";
 					}
 				}
 
@@ -257,10 +251,10 @@ module test-sonic-acl {
                     /* union of leafref is allowed in YANG 1.1 */
 					type union {
 						type leafref {
-							path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+							path /port:port/port:PORT/port:PORT_LIST/port:port_name;
 						}
 						type leafref {
-							path /lag:sonic-portchannel/lag:PORTCHANNEL/lag:PORTCHANNEL_LIST/lag:portchannel_name;
+							path /lag:portchannel/lag:PORTCHANNEL/lag:PORTCHANNEL_LIST/lag:portchannel_name;
 						}
 					}
 				}
@@ -269,6 +263,6 @@ module test-sonic-acl {
 		}
         /* end of container ACL_TABLE */
 	}
-    /* end of container sonic-acl */
+    /* end of container acl */
 }
-/* end of module sonic-acl */
+/* end of module acl */

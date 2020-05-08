@@ -21,7 +21,7 @@ class Test_SonicYang(object):
 
     @pytest.fixture(autouse=True, scope='class')
     def data(self):
-        test_file = "/sonic/src/sonic-yang-mgmt/tests/libyang-python-tests/test_SonicYang.json"
+        test_file = "./tests/libyang-python-tests/test_SonicYang.json"
         data = self.jsonTestParser(test_file)
         return data
 
@@ -268,8 +268,8 @@ class Test_SonicYang(object):
     """
     @pytest.fixture(autouse=True, scope='class')
     def sonic_yang_data(self):
-        sonic_yang_dir = "/sonic/src/sonic-yang-models/yang-models/"
-        sonic_yang_test_file = "/sonic/src/sonic-yang-models/tests/yang_model_tests/yangTest.json"
+        sonic_yang_dir = "../sonic-yang-models/yang-models/"
+        sonic_yang_test_file = "../sonic-yang-models/tests/yang_model_tests/yangTest.json"
 
         syc = sy.sonic_yang(sonic_yang_dir)
         syc.loadYangModel()

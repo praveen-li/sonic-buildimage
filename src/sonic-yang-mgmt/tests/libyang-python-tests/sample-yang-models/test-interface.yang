@@ -1,6 +1,6 @@
-module test-sonic-interface {
+module test-interface {
 
-	namespace "http://github.com/Azure/sonic-interface";
+	namespace "http://github.com/Azure/interface";
 	prefix intf;
 
 	import ietf-yang-types {
@@ -11,27 +11,21 @@ module test-sonic-interface {
 		prefix inet;
 	}
 
-	import test-sonic-head {
+	import test-head {
 		prefix head;
 		revision-date 2019-07-01;
 	}
 
-	import test-sonic-port {
+	import test-port {
 		prefix port;
 		revision-date 2019-07-01;
 	}
-
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
-	description "INTERFACE yang Module for SONiC OS";
 
 	revision 2019-07-01 {
 		description "First Revision";
 	}
 
-	container sonic-interface {
+	container interface {
 		container INTERFACE {
 
 			description "INTERFACE part of config_db.json";
@@ -42,7 +36,7 @@ module test-sonic-interface {
 
 				leaf interface {
 					type leafref {
-						path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+						path /port:port/port:PORT/port:PORT_LIST/port:port_name;
 					}
 				}
 

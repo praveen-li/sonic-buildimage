@@ -1,18 +1,12 @@
-module test-sonic-head {
+module test-head {
 
-    namespace "http://sonic-head";
-    prefix sonic-head;
+    namespace "http://head";
+    prefix head;
 
-    organization "Linkedin Corporation";
-
-    contact "lnos_coders@linkedin.com";
-
-    description "Head yang Module for SONiC OS";
-    
     revision 2019-07-01 {
         description "First Revision";
     }
-    
+
     typedef ip-family {
         type enumeration {
             enum IPv4;

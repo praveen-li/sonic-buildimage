@@ -1,6 +1,6 @@
-module test-sonic-port{
+module test-port{
 
-	namespace "http://github.com/Azure/sonic-port";
+	namespace "http://github.com/Azure/port";
 	prefix port;
 
 	import ietf-yang-types {
@@ -11,22 +11,16 @@ module test-sonic-port{
 		prefix inet;
 	}
 
-	import test-sonic-head {
+	import test-head {
 		prefix head;
 		revision-date 2019-07-01;
 	}
-
-	organization "Linkedin Corporation";
-
-	contact "lnos_coders@linkedin.com";
-
-	description "PORT yang Module for SONiC OS";
 
 	revision 2019-07-01 {
 		description "First Revision";
 	}
 
-	container sonic-port{
+	container port{
 		container PORT {
 
 			description "PORT part of config_db.json";
@@ -79,6 +73,6 @@ module test-sonic-port{
 
 		} /* end of container PORT */
 
-	} /* end of container sonic-port */
+	} /* end of container port */
 
-} /* end of module sonic-port */
+} /* end of module port */
