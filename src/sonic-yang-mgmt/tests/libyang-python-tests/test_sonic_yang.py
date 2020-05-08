@@ -143,7 +143,7 @@ class Test_SonicYang(object):
         for node in data['new_nodes']:
             xpath = str(node['xpath'])
             value = node['value']
-            yang_s.add_node(xpath, str(value))
+            yang_s.add_data_node(xpath, str(value))
 
             data_node = yang_s.find_data_node(xpath)
             assert data_node is not None

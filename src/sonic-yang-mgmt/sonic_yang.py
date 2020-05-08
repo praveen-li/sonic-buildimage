@@ -376,7 +376,7 @@ class sonic_yang(sonic_yang_ext_mixin):
     """
     def add_data_node(self, data_xpath, value):
         try:
-            self.new_node(xpath, value)
+            self.new_data_node(data_xpath, value)
             #check if the node added to the data tree
             self.find_data_node(data_xpath)
         except Exception as e:
