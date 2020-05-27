@@ -287,6 +287,14 @@ RUN pip3 install redis==2.10.6
 # For snmpagent build
 RUN pip3 install python-arptable>=0.0.1 psutil==5.7.0
 
+# For sonic-utilities build
+RUN pip install mockredispy==2.9.3
+RUN pip install pytest-runner==4.4
+RUN pip install setuptools==40.8.0
+
+# For sonic-swss-common testing
+RUN pip install Pympler==0.8
+
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
 
