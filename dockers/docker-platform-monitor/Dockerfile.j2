@@ -40,6 +40,7 @@ RUN pip install /python-wheels/{{ whl }}
 
 COPY ["start.sh", "lm-sensors.sh", "/usr/bin/"]
 COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
+COPY ["ssd_tools/*", "/usr/bin/"]
 
 RUN apt-get purge -y           \
         python-pip          && \

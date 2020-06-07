@@ -191,8 +191,8 @@
 
 {% endfor %}
     },
-{% if generate_wred_profile is defined %}
-{{- generate_wred_profile() }}
+{% if generate_wred_profiles is defined %}
+    {{- generate_wred_profiles() }}
 {% else %}
     "WRED_PROFILE": {
         "AZURE_LOSSLESS" : {
