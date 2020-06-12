@@ -37,13 +37,23 @@ RUN pip install /python-wheels/{{ whl }}
 {% endif %}
 
 # Clean up
-RUN apt-get purge -y python-pip
-RUN apt-get clean -y
-RUN apt-get autoclean -y
-RUN apt-get autoremove -y
-RUN rm -rf /debs /python-wheels ~/.cache
 
 COPY ["start.sh", "lm-sensors.sh", "/usr/bin/"]
 COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
+COPY ["ssd_tools/*", "/usr/bin/"]
+
+RUN apt-get purge -y           \
+        python-pip          && \
+    apt-get clean -y        && \
+    apt-get autoclean -y    && \
+    apt-get autoremove -y   && \
+    rm -rf /debs               \
+           /python-wheels      \
+           ~/.cache
+
+COPY ["start.sh", "lm-sensors.sh", "/usr/bin/"]
+COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
+COPY ["files/supervisor-proc-exit-listener", "/usr/bin"]
+COPY ["critical_processes", "/etc/supervisor"]
 
 ENTRYPOINT ["/usr/bin/supervisord"]
