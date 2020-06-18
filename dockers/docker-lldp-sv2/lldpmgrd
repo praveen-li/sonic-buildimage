@@ -98,10 +98,12 @@ class LldpManager(object):
                                               True)
 
         self.pending_cmds = {}
+        self.config_port_names = set()
+        self.app_port_names = set()
 
     def is_port_up(self, port_name):
         """
-        Determine if a port is up or down by looking into the oper-status for the port in 
+        Determine if a port is up or down by looking into the oper-status for the port in
         PORT TABLE in the Application DB
         """
         # Retrieve all entires for this port from the Port table
@@ -141,8 +143,8 @@ class LldpManager(object):
             if not port_alias:
                 log_info("Unable to retrieve port alias for port '{}'. Using port name instead.".format(port_name))
                 port_alias = port_name
-            
-            # Get the port description. If None or empty string, we'll skip this configuration 
+
+            # Get the port description. If None or empty string, we'll skip this configuration
             port_desc = port_table_dict.get("description")
 
         else:
@@ -208,32 +210,43 @@ class LldpManager(object):
         sel.addSelectable(sst_appdb)
 
         # Listen for changes to the PORT table in the CONFIG_DB and APP_DB
+        # Only when port is present in both DBs and the operation status is UP
+        # we are going to configure it in lldp
         while True:
             (state, c) = sel.select(SELECT_TIMEOUT_MS)
 
             if state == swsscommon.Select.OBJECT:
+
+                # handle alias or description changes, by listening to
+                # changes in config DB
                 (key, op, fvp) = sst_confdb.pop()
-                if fvp:
-                    fvp_dict = dict(fvp)
-
-                    # handle config change
-                    if (fvp_dict.has_key("alias") or fvp_dict.has_key("description")) and (op in ["SET", "DEL"]):
-                        if self.is_port_up(key):
-                            self.generate_pending_lldp_config_cmd_for_port(key)
-                        else:
-                            self.pending_cmds.pop(key, None)
-
-                (key, op, fvp) = sst_appdb.pop()
-                if (key != "PortInitDone") and (key != "PortConfigDone"):
-                    if fvp:
+                if op == "DEL":
+                    self.config_port_names.discard(key)
+                    self.pending_cmds.pop(key, None)
+                elif op == "SET":
+                    self.config_port_names.add(key)
+                    if fvp and key in self.app_port_names:
                         fvp_dict = dict(fvp)
 
-                        # handle port status change
-                        if fvp_dict.has_key("oper_status"):
-                            if "up" in fvp_dict.get("oper_status"):
-                                self.generate_pending_lldp_config_cmd_for_port(key)
-                            else:
-                                self.pending_cmds.pop(key, None)
+                        if (fvp_dict.has_key("alias") or fvp_dict.has_key("description")) and (self.is_port_up(key)):
+                            self.generate_pending_lldp_config_cmd_for_port(key)
+
+                # handle port status change, by listening to
+                # changes in APP DB
+                (key, op, fvp) = sst_appdb.pop()
+                if (key != "PortInitDone") and (key != "PortConfigDone"):
+                    if op == "DEL":
+                        self.app_port_names.discard(key)
+                        self.pending_cmds.pop(key, None)
+                    elif op == "SET":
+                        self.app_port_names.add(key)
+                        if fvp and key in self.config_port_names:
+                            fvp_dict = dict(fvp)
+
+                            # handle port status change
+                            if fvp_dict.has_key("oper_status"):
+                                if "up" in fvp_dict.get("oper_status"):
+                                    self.generate_pending_lldp_config_cmd_for_port(key)
 
             # Process all pending commands
             self.process_pending_cmds()

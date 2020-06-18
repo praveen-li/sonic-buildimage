@@ -565,7 +565,7 @@ def filter_acl_mirror_table_bindings(acls, neighbors, port_channels):
 #
 ###############################################################################
 
-def parse_xml(filename, platform=None, port_config_file=None):
+def parse_xml(filename, platform=None, port_config_file=None, hwsku_config_file=None):
     root = ET.parse(filename).getroot()
     mini_graph_path = filename
 
@@ -611,7 +611,10 @@ def parse_xml(filename, platform=None, port_config_file=None):
         if child.tag == str(docker_routing_config_mode_qn):
             docker_routing_config_mode = child.text
 
-    (ports, alias_map) = get_port_config(hwsku, platform, port_config_file)
+    if hwsku_config_file:
+        (ports, alias_map) = get_port_config(hwsku, platform, port_config_file, hwsku_config_file)
+    else:
+        (ports, alias_map) = get_port_config(hwsku, platform, port_config_file)
     port_alias_map.update(alias_map)
     for child in root:
         if child.tag == str(QName(ns, "DpgDec")):

@@ -41,7 +41,6 @@ RUN apt-get install -y net-tools \
                        libpython2.7 \
                        grub2-common \
                        python-click-default-group \
-                       python-click \
                        python-natsort \
                        python-tabulate \
                        bash-completion \
@@ -52,14 +51,20 @@ RUN apt-get install -y net-tools \
                        psmisc \
                        tcpdump \
                        python-scapy \
+                       jq \
                        conntrack \
-                       iptables
+                       iptables \
+                       python3-pip
 
 RUN pip install setuptools
 RUN pip install py2_ipaddress
 RUN pip install six
 RUN pip install pyroute2==0.5.3 netifaces==0.10.7
 RUN pip install monotonic==1.5
+RUN pip install click==7.0.0
+RUN pip install ijson
+RUN pip install jsondiff
+RUN pip install xmltodict
 
 {% if docker_sonic_vs_debs.strip() -%}
 # Copy locally-built Debian package dependencies
@@ -85,6 +90,23 @@ RUN dpkg_apt() { [ -f $1 ] && { dpkg -i $1 || apt-get -y install -f; } || return
 {%- endfor %}
 {%- endif %}
 
+{% if docker_sonic_vs_whls.strip() %}
+# copy all whl PKGs first,
+{% for whl in docker_sonic_vs_whls.split(' ') -%}
+COPY python-wheels/{{ whl }}  python-wheels/
+{% endfor %}
+
+# install PKGs after copying all PKGs to avoid dependency failure
+# use py3 to find python3 package, which is forced by wheel as of now
+{%- for whl in docker_sonic_vs_whls.split(' ') %}
+{%- if 'py3' in whl %}
+RUN pip3 install python-wheels/{{ whl }}
+{% else -%}
+RUN pip install python-wheels/{{ whl }}
+{%- endif %}
+{%- endfor %}
+{% endif %}
+
 # Clean up
 RUN apt-get clean -y
 RUN apt-get autoclean -y
@@ -109,6 +131,9 @@ COPY ["files/arp_update", "/usr/bin/"]
 COPY ["files/buffers_config.j2", "files/qos_config.j2", "/usr/share/sonic/templates/"]
 COPY ["files/sonic_version.yml", "/etc/sonic/"]
 COPY ["database_config.json", "/etc/default/sonic-db/"]
+COPY ["platform.json", "/usr/share/sonic/device/x86_64-kvm_x86_64-r0/"]
+COPY ["hwsku.json", "/usr/share/sonic/device/x86_64-kvm_x86_64-r0/Force10-S6000/"]
+COPY ["platform.json", "/usr/share/sonic/platform/"]
 
 # Workaround the tcpdump issue
 RUN mv /usr/sbin/tcpdump /usr/bin/tcpdump

@@ -72,8 +72,6 @@ src/monit/*
 !src/monit/patch/
 src/mpdecimal/*
 !src/mpdecimal/Makefile
-src/python-click/*
-!src/python-click/Makefile
 src/python3/*
 !src/python3/Makefile
 src/radvd/*

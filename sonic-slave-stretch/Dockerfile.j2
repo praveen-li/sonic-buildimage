@@ -346,7 +346,7 @@ RUN pip install j2cli==0.3.10
 # Remove python-click 6.6
 RUN apt-get purge -y python-click
 # For sonic utilities testing
-RUN pip install click-default-group click natsort tabulate netifaces==0.10.7 fastentrypoints
+RUN pip install click-default-group click==7.0.0 natsort tabulate netifaces==0.10.7 fastentrypoints
 
 # For sonic snmpagent mock testing
 RUN pip3 install mockredispy==2.9.3
@@ -366,6 +366,13 @@ RUN pip install pexpect==4.6.0
 RUN pip install mockredispy==2.9.3
 RUN pip install pytest-runner==4.4
 RUN pip install setuptools==40.8.0
+
+# For sonic_yang_mgmt build
+RUN pip install ijson==2.6.1
+RUN pip3 install ijson==2.6.1
+RUN pip install jsondiff==1.2.0
+RUN pip install xmltodict==0.12.0
+RUN pip install pyang==2.1.1
 
 # For mgmt-framework build
 RUN pip install mmh3

@@ -9,9 +9,15 @@ $(DOCKER_SONIC_VS)_DEPENDS += $(SWSS) \
                               $(PYTHON_SWSSCOMMON) \
                               $(LIBTEAMDCT) \
                               $(LIBTEAM_UTILS) \
-                              $(SONIC_DEVICE_DATA)
+                              $(SONIC_DEVICE_DATA) \
+                              $(LIBYANG) \
+                              $(LIBYANG_CPP) \
+                              $(LIBYANG_PY2)
 
 $(DOCKER_SONIC_VS)_PYTHON_DEBS += $(SONIC_UTILS)
+
+$(DOCKER_SONIC_VS)_PYTHON_WHEELS += $(SONIC_YANG_MODELS_PY3)
+$(DOCKER_SONIC_VS)_PYTHON_WHEELS += $(SONIC_YANG_MGMT_PY)
 
 ifeq ($(INSTALL_DEBUG_TOOLS), y)
 $(DOCKER_SONIC_VS)_DEPENDS += $(SWSS_DBG) \
