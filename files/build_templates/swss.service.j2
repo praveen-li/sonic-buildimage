@@ -18,8 +18,6 @@ Environment=sonic_asic_platform={{ sonic_asic_platform }}
 ExecStartPre=/usr/local/bin/swss.sh start
 ExecStart=/usr/local/bin/swss.sh wait
 ExecStop=/usr/local/bin/swss.sh stop
-Restart=always
-RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
