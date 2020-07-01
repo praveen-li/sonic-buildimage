@@ -577,6 +577,30 @@
 		}
 	},
 
+	"ACL_TABLE_MANDATORY_TYPE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"stage": "EGRESS"
+				}]
+			}
+		}
+	},
+
+	"ACL_TABLE_DEFAULT_VALUE_STAGE": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3"
+				}]
+			}
+		}
+	},
+
 	"ACL_RULE_WRONG_INNER_ETHER_TYPE": {
 		"sonic-acl:sonic-acl": {
 			"sonic-acl:ACL_RULE": {
@@ -1116,7 +1140,8 @@
 					"Ethernet26",
 					"Ethernet27",
 					"Ethernet24"
-				]
+				],
+				"stage": "INGRESS"
 			},
 			"V6-ACL-TBLE": {
 				"type": "L3V6",
@@ -1230,10 +1255,76 @@
 				"family": "IPv4"
 			}
 		},
-		"CRM": {
-			"Config": {
-				"polling_interval": "0"
-			}
-		}
-	}
+        "BREAKOUT_CFG": {
+            "Ethernet0": {
+                "brkout_mode": "1x100G[40G]"
+            },
+            "Ethernet4": {
+                "brkout_mode": "4x25G"
+            },
+            "Ethernet8": {
+                "brkout_mode": "1x100G[40G]"
+            }
+        },
+        "VERSIONS": {
+            "DATABASE": {
+                "VERSION": "version_1_0_3"
+            }
+        },
+        "FLEX_COUNTER_TABLE": {
+            "PFCWD": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "PG_WATERMARK": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "PORT": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "QUEUE": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "QUEUE_WATERMARK": {
+                "FLEX_COUNTER_STATUS": "enable"
+            }
+        },
+        "CRM": {
+            "Config": {
+                "acl_counter_high_threshold": "85",
+                "acl_counter_low_threshold": "70",
+                "acl_counter_threshold_type": "percentage",
+                "polling_interval": "0"
+            }
+        }
+    },
+    "SAMPLE_CONFIG_DB_JSON_1": {
+        "FLEX_COUNTER_TABLE": {
+            "PFCWD": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "PG_WATERMARK": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "PORT": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "QUEUE": {
+                "FLEX_COUNTER_STATUS": "enable"
+            },
+            "QUEUE_WATERMARK": {
+                "FLEX_COUNTER_STATUS": "enable"
+            }
+        },
+        "CRM": {
+            "Config": {
+                "acl_counter_high_threshold": "85",
+                "acl_counter_low_threshold": "70",
+                "acl_counter_threshold_type": "percentage",
+                "polling_interval": "0"
+            }
+        },
+        "UNKNOWN_TABLE": {
+            "Error": "This Table is for testing, This Table does not have YANG models."
+        }
+    }
 }

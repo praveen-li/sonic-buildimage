@@ -256,6 +256,7 @@ module sonic-acl {
 				}
 
 				leaf type {
+					mandatory true;
 					type head:acl_table_type;
 				}
 
@@ -264,6 +265,7 @@ module sonic-acl {
 						enum INGRESS;
 						enum EGRESS;
 					}
+					default INGRESS;
 				}
 
 				leaf-list ports {

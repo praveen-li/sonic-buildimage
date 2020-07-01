@@ -1,11 +1,8 @@
 import sys
 import os
 import pytest
-import yang as ly
 import sonic_yang as sy
 import json
-import getopt
-import subprocess
 import glob
 import logging
 from ijson import items as ijson_itmes
@@ -31,7 +28,6 @@ class Test_SonicYang(object):
     @pytest.fixture(autouse=True, scope='class')
     def yang_s(self, data):
         yang_dir = str(data['yang_dir'])
-        data_file = str(data['data_file'])
         yang_s = sy.sonic_yang(yang_dir)
         return yang_s
 
@@ -62,7 +58,7 @@ class Test_SonicYang(object):
             raise(e)
         return jInput
 
-    def setup_class(cls):
+    def setup_class(self):
         pass
 
     def load_yang_model_file(self, yang_s, yang_dir, yang_file, module_name):
@@ -140,14 +136,14 @@ class Test_SonicYang(object):
                  assert dnode is not None
                  assert dnode.path() == xpath
             else:
-                 assert dnode == None
+                 assert dnode is None
 
     #test add node
     def test_add_node(self, data, yang_s):
         for node in data['new_nodes']:
             xpath = str(node['xpath'])
             value = node['value']
-            status = yang_s.add_data_node(xpath, str(value))
+            yang_s.add_data_node(xpath, str(value))
 
             data_node = yang_s.find_data_node(xpath)
             assert data_node is not None
@@ -165,7 +161,6 @@ class Test_SonicYang(object):
     #test delete data node
     def test_delete_node(self, data, yang_s):
         for node in data['delete_nodes']:
-            expected = node['valid']
             xpath = str(node['xpath'])
             yang_s._delete_node(xpath)
 
@@ -266,19 +261,39 @@ class Test_SonicYang(object):
             data_type = yang_s.get_leafref_type_schema(xpath)
             assert expected_type == data_type
 
-    def test_xlate_rev_xlate(self):
-        # In this test, xlation and revXlation is tested with latest Sonic
-        # YANG model.
+    """
+    This is helper function to load YANG models for tests cases, which works
+    on Real SONiC Yang models. Mainly tests  for translation and reverse
+    translation.
+    """
+    @pytest.fixture(autouse=True, scope='class')
+    def sonic_yang_data(self):
+        sonic_yang_dir = "/sonic/src/sonic-yang-models/yang-models/"
+        sonic_yang_test_file = "/sonic/src/sonic-yang-models/tests/yang_model_tests/yangTest.json"
 
-        yang_dir = "/sonic/src/sonic-yang-models/yang-models/"
-        yang_test_file = "/sonic/src/sonic-yang-models/tests/yang_model_tests/yangTest.json"
-        jIn = self.readIjsonInput(yang_test_file, 'SAMPLE_CONFIG_DB_JSON')
-        # load yang models
-        syc = sy.sonic_yang(yang_dir)
-
+        syc = sy.sonic_yang(sonic_yang_dir)
         syc.loadYangModel()
 
+        sonic_yang_data = dict()
+        sonic_yang_data['yang_dir'] = sonic_yang_dir
+        sonic_yang_data['test_file'] = sonic_yang_test_file
+        sonic_yang_data['syc'] = syc
+
+        return sonic_yang_data
+
+    def test_xlate_rev_xlate(self, sonic_yang_data):
+        # In this test, xlation and revXlation is tested with latest Sonic
+        # YANG model.
+        test_file = sonic_yang_data['test_file']
+        syc = sonic_yang_data['syc']
+
+        jIn = self.readIjsonInput(test_file, 'SAMPLE_CONFIG_DB_JSON')
+
         syc.load_data(json.loads(jIn))
+
+        syc.load_data(json.loads(jIn))
+
+        # TODO: Make sure no extra table is loaded
 
         syc.get_data()
 
@@ -291,5 +306,21 @@ class Test_SonicYang(object):
 
         return
 
-    def teardown_class(cls):
+    def test_table_with_no_yang(self, sonic_yang_data):
+        # in this test, tables with no YANG models must be stored seperately
+        # by this library.
+        test_file = sonic_yang_data['test_file']
+        syc = sonic_yang_data['syc']
+
+        jIn = self.readIjsonInput(test_file, 'SAMPLE_CONFIG_DB_JSON_1')
+
+        syc.load_data(json.loads(jIn))
+
+        ty = syc.tablesWithOutYang
+
+        assert (len(ty) and "UNKNOWN_TABLE" in ty) == True
+
+        return
+
+    def teardown_class(self):
         pass

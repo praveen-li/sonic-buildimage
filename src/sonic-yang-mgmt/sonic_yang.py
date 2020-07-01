@@ -3,12 +3,14 @@ import syslog
 
 from json import dump
 from glob import glob
-from datetime import datetime
+from sonic_yang_ext import sonic_yang_ext_mixin
 
 """
 Yang schema and data tree python APIs based on libyang python
+Here, sonic_yang_ext_mixin extends funtionality of sonic_yang,
+i.e. it is mixin not parent class.
 """
-class sonic_yang:
+class sonic_yang(sonic_yang_ext_mixin):
 
     def __init__(self, yang_dir, debug=False):
         self.yang_dir = yang_dir
@@ -32,6 +34,8 @@ class sonic_yang:
         self.xlateJson = dict()
         # reverse translation from yang JSON, == config db json
         self.revXlateJson = dict()
+        # below dict store the input config tables which have no YANG models
+        self.tablesWithOutYang = dict()
 
         try:
             self.ctx = ly.Context(yang_dir)
@@ -57,11 +61,6 @@ class sonic_yang:
     def fail(self, e):
         print(e)
         raise e
-
-    """
-    import all function from extension file
-    """
-    from _sonic_yang_ext import *
 
     """
     load_schema_module(): load a Yang model file
@@ -240,7 +239,7 @@ class sonic_yang:
             ctx = self.ctx
 
         try:
-            rc = node.validate(ly.LYD_OPT_CONFIG, ctx)
+            node.validate(ly.LYD_OPT_CONFIG, ctx)
         except Exception as e:
             self.fail(e)
 
@@ -371,17 +370,17 @@ class sonic_yang:
             return path
 
     """
-    add_node(): add a node to Yang schema or data tree
+    add_data_node(): add a node to Yang schema or data tree
     input:    xpath and value of the node to be added
     returns:  Exception if failed
     """
     def add_data_node(self, data_xpath, value):
         try:
-            data_node = self.new_data_node(data_xpath, value)
+            self.new_data_node(data_xpath, value)
             #check if the node added to the data tree
             self.find_data_node(data_xpath)
         except Exception as e:
-            print("add_node(): Failed to add data node for xpath: " + str(data_xpath))
+            print("add_data_node(): Failed to add data node for xpath: " + str(data_xpath))
             self.fail(e)
 
     """
@@ -455,7 +454,7 @@ class sonic_yang:
     """
     def set_data_node_value(self, data_xpath, value):
         try:
-            data_node = self.root.new_path(self.ctx, data_xpath, str(value), ly.LYD_ANYDATA_STRING, ly.LYD_PATH_OPT_UPDATE)
+            self.root.new_path(self.ctx, data_xpath, str(value), ly.LYD_ANYDATA_STRING, ly.LYD_PATH_OPT_UPDATE)
         except Exception as e:
             print("set data node value failed for xpath: " + str(data_xpath))
             self.fail(e)
@@ -477,7 +476,7 @@ class sonic_yang:
                 raise Exception('data node not found')
 
             for data_set in node_set.data():
-                schema = data_set.schema()
+                data_set.schema()
                 list.append(data_set.path())
             return list
 
@@ -489,7 +488,6 @@ class sonic_yang:
     """
     def find_schema_dependencies (self, schema_xpath):
         ref_list = []
-        node = self.root
         try:
             schema_node = self.find_schema_node(schema_xpath)
         except Exception as e:
@@ -530,7 +528,7 @@ class sonic_yang:
                 for link in backlinks.schema():
                      node_set = node.find_path(link.path())
                      for data_set in node_set.data():
-                          schema = data_set.schema()
+                          data_set.schema()
                           casted = data_set.subtype()
                           if value == casted.value_str():
                               ref_list.append(data_set.path())
@@ -651,7 +649,7 @@ class sonic_yang:
                 if subtype.type().base() != ly.LY_TYPE_LEAFREF:
                     return None
                 else:
-                    leafref_path = subtype.type().info().lref().path()
+                    subtype.type().info().lref().path()
                     target = subtype.type().info().lref().target()
                     target_path = target.path()
                     target_type = self.get_data_type(target_path)
