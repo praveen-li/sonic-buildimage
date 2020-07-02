@@ -103,10 +103,10 @@ DEFAULT_VS_PREPARE_MEM = yes
 ENABLE_SFLOW = y
 
 # ENABLE_MGMT_FRAMEWORK - build docker-sonic-mgt-framework for CLI and REST server support
-ENABLE_MGMT_FRAMEWORK = y
+ENABLE_MGMT_FRAMEWORK = n
 
 # ENABLE_RESTAPI - build docker-sonic-restapi for configuring the switch using REST APIs
 ENABLE_RESTAPI = n
 
 # ENABLE_NAT - build docker-sonic-nat for nat support
-ENABLE_NAT = y
+ENABLE_NAT = n
