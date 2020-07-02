@@ -323,27 +323,27 @@ sudo chroot $FILESYSTEM_ROOT docker info
 {% set imagename = imagefilename.split('.')|first -%}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker load < {{image}}
 {% if 'docker-snmp-sv2' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-dhcp-relay' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-orchagent' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-lldp-sv2' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-platform-monitor' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-database' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-sonic-telemetry' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-fpm-frr' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-router-advertiser' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-teamd' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% elif 'docker-syncd' in imagename %}
-sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.0
+sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:lnos_v2.2.1
 {% else %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker tag {{imagename}}:latest {{imagename}}:$(sonic_get_version)
 {% endif %}
