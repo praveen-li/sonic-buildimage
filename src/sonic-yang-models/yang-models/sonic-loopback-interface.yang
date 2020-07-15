@@ -1,14 +1,12 @@
 module sonic-loopback-interface {
 
+    yang-version 1.1;
+
     namespace "http://github.com/Azure/sonic-loopback-interface";
     prefix lointf;
 
-    import ietf-inet-types {
-        prefix inet;
-    }
-
-    import sonic-head {
-        prefix head;
+    import sonic-types {
+        prefix stypes;
         revision-date 2019-07-01;
     }
 
@@ -71,8 +69,8 @@ module sonic-loopback-interface {
 
                 leaf ip-prefix {
                     type union {
-                        type head:sonic-ip4-prefix;
-                        type head:sonic-ip6-prefix;
+                        type stypes:sonic-ip4-prefix;
+                        type stypes:sonic-ip6-prefix;
                     }
                 }
 
@@ -93,7 +91,7 @@ module sonic-loopback-interface {
 
                     must "(contains(../ip-prefix, ':') and current()='IPv6') or
                         (contains(../ip-prefix, '.') and current()='IPv4')";
-                    type head:ip-family;
+                    type stypes:ip-family;
                 }
             }
         }

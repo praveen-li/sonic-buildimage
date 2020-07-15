@@ -1,0 +1,55 @@
+module sonic-breakout_cfg {
+
+    yang-version 1.1;
+
+    namespace "http://github.com/Azure/sonic-breakout_cfg";
+    prefix breakout_cfg;
+
+    import sonic-extension {
+        prefix ext;
+        revision-date 2019-07-01;
+    }
+
+    description "BREAKOUT_CFG YANG Module for SONiC OS";
+
+    revision 2020-04-10 {
+        description "First Revision";
+    }
+
+    container sonic-breakout_cfg {
+
+        container BREAKOUT_CFG {
+
+            description "BREAKOUT_CFG part of config_db.json";
+
+            list BREAKOUT_CFG_LIST {
+
+                key "port";
+
+                ext:key-regex-configdb-to-yang "^([a-zA-Z0-9_-]+)$";
+
+                ext:key-regex-yang-to-configdb "<port>";
+
+                leaf port {
+                    type string {
+                        length 1..255;
+                    }
+                }
+
+                leaf brkout_mode {
+                    type string {
+                        length 1..64;
+                        /* should be not allow any pattern here, since this is
+                         * auto populated by cli.
+                         */
+                        /* pattern "1x100G[40G]|2x50G|4x25G[10G]"; */
+                    }
+                }
+            }
+            /* end of list BREAKOUT_CFG_LIST */
+        }
+        /* end of container BREAKOUT_CFG */
+	}
+	/* end of top level container */
+}
+/* end of module sonic-breakout_cfg */
