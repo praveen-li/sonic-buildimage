@@ -5,16 +5,8 @@ module sonic-portchannel {
 	namespace "http://github.com/Azure/sonic-portchannel";
 	prefix lag;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-head {
-		prefix head;
+	import sonic-types {
+		prefix stypes;
 		revision-date 2019-07-01;
 	}
 
@@ -95,7 +87,7 @@ module sonic-portchannel {
 
 				leaf admin_status {
 					mandatory true;
-					type head:admin_status;
+					type stypes:admin_status;
 				}
 			} /* end of list PORTCHANNEL_LIST */
 

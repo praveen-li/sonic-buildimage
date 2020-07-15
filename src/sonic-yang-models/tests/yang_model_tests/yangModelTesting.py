@@ -132,6 +132,14 @@ class YangModelTesting:
                     'key': 'sonic-acl:stage',
                     'value': 'INGRESS'
                 }
+            },
+            'CRM_BRK_CFG_FLEX_TABLE': {
+                'desc': 'CRM BREAKOUT CFG FLEX COUNTER TABLE.',
+                'eStr': self.defaultYANGFailure['None']
+            },
+            'DEV_META_DEV_NEIGH_VERSION_TABLE': {
+                'desc': 'DEVICE_METADATA DEVICE_NEIGHBOR VERSION TABLE.',
+                'eStr': self.defaultYANGFailure['None']
             }
         }
 

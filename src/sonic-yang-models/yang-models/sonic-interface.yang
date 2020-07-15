@@ -5,16 +5,8 @@ module sonic-interface {
 	namespace "http://github.com/Azure/sonic-interface";
 	prefix intf;
 
-	import ietf-yang-types {
-		prefix yang;
-	}
-
-	import ietf-inet-types {
-		prefix inet;
-	}
-
-	import sonic-head {
-		prefix head;
+	import sonic-types {
+		prefix stypes;
 		revision-date 2019-07-01;
 	}
 
@@ -93,8 +85,8 @@ module sonic-interface {
 
 				leaf ip-prefix {
 					type union {
-						type head:sonic-ip4-prefix;
-						type head:sonic-ip6-prefix;
+						type stypes:sonic-ip4-prefix;
+						type stypes:sonic-ip6-prefix;
 					}
 				}
 
@@ -115,7 +107,7 @@ module sonic-interface {
 
 					must "(contains(../ip-prefix, ':') and current()='IPv6') or
 						(contains(../ip-prefix, '.') and current()='IPv4')";
-					type head:ip-family;
+					type stypes:ip-family;
 				}
 			}
 			/* end of INTERFACE_IPPREFIX_LIST */

@@ -601,6 +601,103 @@
 		}
 	},
 
+	"DEV_META_DEV_NEIGH_VERSION_TABLE": {
+		"sonic-device_metadata:sonic-device_metadata": {
+			"sonic-device_metadata:DEVICE_METADATA": {
+				"localhost": {
+					"bgp_asn": "64850",
+					"mac": "00:11:22:33:44:55",
+					"hostname": "asw.dc",
+					"type": "ToR",
+					"hwsku": "Stone"
+				}
+			}
+		},
+		"sonic-device_neighbor:sonic-device_neighbor": {
+			"sonic-device_neighbor:DEVICE_NEIGHBOR": {
+				"DEVICE_NEIGHBOR_LIST": [
+					{
+						"port": "Eth18",
+						"name": "dccsw03.nw",
+						"peer_name": "Ethernet116"
+					},
+					{
+						"port": "Eth18",
+						"name": "dccsw02.nw",
+						"peer_name": "Ethernet114"
+					},
+					{
+						"port": "Eth18",
+						"name": "dccsw01.nw",
+						"peer_name": "Ethernet112"
+					},
+					{
+						"port": "Eth18",
+						"name": "dccsw04.nw",
+						"peer_name": "Ethernet118"
+					}
+				]
+			}
+		},
+		"sonic-versions:sonic-versions": {
+			"sonic-versions:VERSIONS": {
+				"DATABASE": {
+					"VERSION": "version_2_10_31"
+				}
+			}
+		}
+	},
+
+	"CRM_BRK_CFG_FLEX_TABLE": {
+		"sonic-crm:sonic-crm": {
+			"sonic-crm:CRM": {
+				"Config": {
+					"acl_counter_low_threshold": "70",
+					"acl_counter_high_threshold": "85",
+					"acl_counter_threshold_type": "percentage",
+					"polling_interval": "0"
+				}
+			}
+		},
+		"sonic-breakout_cfg:sonic-breakout_cfg": {
+			"sonic-breakout_cfg:BREAKOUT_CFG": {
+				"BREAKOUT_CFG_LIST": [
+					{
+						"brkout_mode": "1x100G[40G]",
+						"port": "Ethernet0"
+					},
+					{
+						"brkout_mode": "1x100G[40G]",
+						"port": "Ethernet8"
+					},
+					{
+						"brkout_mode": "4x25G",
+						"port": "Ethernet4"
+					}
+				]
+			}
+		},
+		"sonic-flex_counter:sonic-flex_counter": {
+			"sonic-flex_counter:FLEX_COUNTER_TABLE": {
+				"QUEUE": {
+					"FLEX_COUNTER_STATUS": "enable"
+				},
+				"PG_WATERMARK": {
+					"FLEX_COUNTER_STATUS": "enable"
+				},
+				"QUEUE_WATERMARK": {
+					"FLEX_COUNTER_STATUS": "enable"
+				},
+				"PFCWD": {
+					"FLEX_COUNTER_STATUS": "enable"
+				},
+				"PORT": {
+					"FLEX_COUNTER_STATUS": "enable"
+				}
+			}
+		}
+	},
+
 	"ACL_RULE_WRONG_INNER_ETHER_TYPE": {
 		"sonic-acl:sonic-acl": {
 			"sonic-acl:ACL_RULE": {
