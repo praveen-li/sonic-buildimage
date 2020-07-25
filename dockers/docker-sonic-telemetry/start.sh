@@ -10,3 +10,4 @@ supervisorctl start rsyslogd
 supervisorctl start telemetry
 supervisorctl start dialout
 supervisorctl start node_exporter
+supervisorctl start bgp_metrics
