@@ -21,7 +21,7 @@ RUN dpkg -i \
 debs/{{ deb }}{{' '}}
 {%- endfor %}
 
-COPY ["start.sh", "telemetry.sh", "dialout.sh", "node_exporter.sh", "/usr/bin/"]
+COPY ["start.sh", "telemetry.sh", "dialout.sh", "node_exporter.sh", "bgp_metrics.sh", "/usr/bin/"]
 COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
 
 RUN apt-get clean -y; apt-get autoclean -y; apt-get autoremove -y
