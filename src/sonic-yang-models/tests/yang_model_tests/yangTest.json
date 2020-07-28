@@ -655,6 +655,12 @@
 					"acl_counter_low_threshold": "70",
 					"acl_counter_high_threshold": "85",
 					"acl_counter_threshold_type": "percentage",
+					"ipv6_neighbor_high_threshold": "67",
+					"ipv6_neighbor_low_threshold": "56",
+					"ipv6_neighbor_threshold_type": "percentage",
+					"nexthop_group_high_threshold": "67",
+					"nexthop_group_low_threshold": "56",
+					"nexthop_group_threshold_type": "percentage",
 					"polling_interval": "0"
 				}
 			}
@@ -1390,6 +1396,12 @@
                 "acl_counter_high_threshold": "85",
                 "acl_counter_low_threshold": "70",
                 "acl_counter_threshold_type": "percentage",
+                "ipv6_neighbor_high_threshold": "67",
+                "ipv6_neighbor_low_threshold": "56",
+                "ipv6_neighbor_threshold_type": "percentage",
+                "nexthop_group_high_threshold": "67",
+                "nexthop_group_low_threshold": "56",
+                "nexthop_group_threshold_type": "percentage",
                 "polling_interval": "0"
             }
         }

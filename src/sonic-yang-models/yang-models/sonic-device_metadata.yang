@@ -38,8 +38,8 @@ module sonic-device_metadata {
 
                 leaf default_bgp_status {
                     type enumeration {
-                        enum UP;
-                        enum DOWN;
+                        enum up;
+                        enum down;
                     }
                 }
 
