@@ -33,7 +33,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../acl_counter_high_threshold<100 and
                         ../acl_counter_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -49,7 +49,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../acl_group_high_threshold<100 and
                         ../acl_group_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -65,7 +65,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../acl_entry_high_threshold<100 and
                         ../acl_entry_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -81,7 +81,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../acl_table_high_threshold<100 and
                         ../acl_table_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -97,7 +97,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../fdb_entry_high_threshold<100 and
                         ../fdb_entry_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -113,7 +113,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../ipv4_neighbor_high_threshold<100 and
                         ../ipv4_neighbor_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -129,7 +129,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../ipv4_nexthop_high_threshold<100 and
                         ../ipv4_nexthop_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -145,7 +145,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../ipv4_route_high_threshold<100 and
                         ../ipv4_route_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -157,11 +157,27 @@ module sonic-crm {
                     type threshold;
                 }
 
+                leaf ipv6_neighbor_threshold_type {
+                    must "(((current()='PERCENTAGE' or current()='percentage') and
+                        ../ipv6_neighbor_high_threshold<100 and
+                        ../ipv6_neighbor_low_threshold<100) or
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
+                    type stypes:crm_threshold_type;
+                }
+
+                leaf ipv6_neighbor_high_threshold {
+                    type threshold;
+                }
+
+                leaf ipv6_neighbor_low_threshold {
+                    type threshold;
+                }
+
                 leaf ipv6_nexthop_threshold_type {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../ipv6_nexthop_high_threshold<100 and
                         ../ipv6_nexthop_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -177,7 +193,7 @@ module sonic-crm {
                     must "(((current()='PERCENTAGE' or current()='percentage') and
                         ../ipv6_route_high_threshold<100 and
                         ../ipv6_route_low_threshold<100) or
-                        (current()!='PERCENTAGE' and current()!='PERCENTAGE'))";
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
                     type stypes:crm_threshold_type;
                 }
 
@@ -186,6 +202,38 @@ module sonic-crm {
                 }
 
                 leaf ipv6_route_low_threshold {
+                    type threshold;
+                }
+
+                leaf nexthop_group_threshold_type {
+                    must "(((current()='PERCENTAGE' or current()='percentage') and
+                        ../nexthop_group_high_threshold<100 and
+                        ../nexthop_group_low_threshold<100) or
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
+                    type stypes:crm_threshold_type;
+                }
+
+                leaf nexthop_group_high_threshold {
+                    type threshold;
+                }
+
+                leaf nexthop_group_low_threshold {
+                    type threshold;
+                }
+
+                leaf nexthop_group_member_threshold_type {
+                    must "(((current()='PERCENTAGE' or current()='percentage') and
+                        ../nexthop_group_member_high_threshold<100 and
+                        ../nexthop_group_member_low_threshold<100) or
+                        (current()!='PERCENTAGE' and current()!='percentage'))";
+                    type stypes:crm_threshold_type;
+                }
+
+                leaf nexthop_group_member_high_threshold {
+                    type threshold;
+                }
+
+                leaf nexthop_group_member_low_threshold {
                     type threshold;
                 }
 
