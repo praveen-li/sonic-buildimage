@@ -97,92 +97,6 @@ def unique_name(l):
             new_list.append(item)
     return new_list
 
-def valid_config(data):
-    """Verifies that proposed config-state (data) is semantically
-    correct/consistent.
-
-    Args:
-    data: config-data in dictionary form
-
-    Returns:
-    'true' if valid configuration, 'false' otherwise
-    """
-
-    # Verifies that there is a valid entry in PORT table for every entry
-    # present in INTERFACE table. See that there's no need to verify the
-    # opposite direction as it's perfectly valid to have PORT entries with
-    # no matching entry in INTERFACE table.
-    #
-    #  "INTERFACE": {
-    #     "Ethernet112|10.1.2.2/24": {},
-    #     "Ethernet112|fc00:1:2::2/64": {},
-    #  }
-    #
-    if 'INTERFACE' in data and 'PORT' in data:
-        interface_table = data['INTERFACE']
-
-        for key in interface_table:
-            if key[0] not in data['PORT']:
-                print("Interface", key[0], "not found in PORT table.")
-                return False
-
-    # Verifies that VLAN_INTERFACE entries are relying on existing VLAN entities.
-    #
-    #  "VLAN_INTERFACE": {
-    #      "Vlan100|172.18.1.1/24": {
-    #      "scope": "global",
-    #      }
-    #   }
-    if 'VLAN_INTERFACE' in data and 'VLAN' in data:
-        vlan_interface_table = data['VLAN_INTERFACE']
-
-        for key in vlan_interface_table:
-            if key[0] not in data['VLAN']:
-                print("Vlan interface", key[0], "not found in VLAN table.")
-                return False
-
-    # Verifies that VLAN table holds members and they are present in PORT table.
-    #
-    #   "VLAN_MEMBER": {
-    #       "Vlan777|Ethernet8": {
-    #           "tagging_mode": "tagged"
-    #       },
-    #       "Vlan100|Ethernet8": {
-    #           "tagging_mode": "untagged"
-    #       },
-    #       ....
-    #   }
-
-    if 'VLAN' in data and 'PORT' in data:
-        if 'VLAN_MEMBER' not in data:
-            print("VLAN member table not found.")
-            return False
-
-        vlan_member_table = data['VLAN_MEMBER']
-
-        for key, value in vlan_member_table.iteritems():
-            if key[1] not in data['PORT']:
-                print("VLAN member", key[1], "not found in PORT table.")
-                return False
-
-    # Verifies that each DEVICE_NEIGHBOR key matches a valid entry in PORT table.
-    #
-    #  "DEVICE_NEIGHBOR": {
-    #      "Ethernet112": {
-    #      "name": "lnos-x1-a-csw01",
-    #      "port": "Ethernet1"
-    #      }
-    #   }
-    if 'DEVICE_NEIGHBOR' in data and 'PORT' in data:
-        devnbr_table = data['DEVICE_NEIGHBOR']
-
-        for key in devnbr_table:
-            if key not in data['PORT']:
-                print("DEVICE_NEIGHBOR port", key, "not found in PORT table.")
-                return False
-
-    return True
-
 def pfx_filter(value):
     """INTERFACE Table can have keys in one of the two formats:
        string or tuple - This filter skips the string keys and only
@@ -293,7 +207,6 @@ def main():
     group.add_argument("-t", "--template", help="render the data with the template file")
     group.add_argument("-v", "--var", help="print the value of a variable, support jinja2 expression")
     group.add_argument("--var-json", help="print the value of a variable, in json format")
-    group.add_argument("--check-config", help="check passed config -- to be used with -j or -m or -d", action='store_true')
     group.add_argument("-w", "--write-to-db", help="write config into configdb", action='store_true')
     group.add_argument("--print-data", help="print all data", action='store_true')
     group.add_argument("--preset", help="generate sample configuration from a preset template", choices=get_available_config())
@@ -399,11 +312,6 @@ def main():
         configdb = ConfigDBConnector(**db_kwargs)
         configdb.connect(False)
         configdb.mod_config(FormatConverter.output_to_db(sort_data(data)))
-
-    if args.check_config:
-        if valid_config(FormatConverter.output_to_db(data)) == False:
-            print("\nInvalid configuration detected. No configuration changes processed. Exiting...\n")
-            sys.exit(1)
 
     if args.print_data:
         print(json.dumps(FormatConverter.to_serialized(data), indent=4, cls=minigraph_encoder))
