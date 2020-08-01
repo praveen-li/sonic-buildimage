@@ -45,7 +45,7 @@ class YangModelTesting:
             'Pattern': ['pattern', 'does not satisfy'],
             'Mandatory': ['required element', 'Missing'],
             'Verify': ['verified'],
-            'None': ['']
+            'None': []
         }
 
         self.ExceptionTests = {
@@ -140,12 +140,23 @@ class YangModelTesting:
             'DEV_META_DEV_NEIGH_VERSION_TABLE': {
                 'desc': 'DEVICE_METADATA DEVICE_NEIGHBOR VERSION TABLE.',
                 'eStr': self.defaultYANGFailure['None']
+            },
+            'INCORRECT_VLAN_NAME': {
+                'desc': 'INCORRECT VLAN_NAME FIELD IN VLAN TABLE.',
+                'eStr': self.defaultYANGFailure['Pattern']
+            }
+        }
+
+        self.SpecialTests = {
+            'ALL_VLAN_TEST': {
+                'desc': 'VLAN TEST.',
+                'eStr': self.defaultYANGFailure['None'],
             }
         }
 
         self.tests = tests
         if (self.tests == None):
-            self.tests = self.ExceptionTests.keys()
+            self.tests = self.ExceptionTests.keys()+self.SpecialTests.keys()
         self.yangDir = yangDir
         self.jsonFile = jsonFile
         self.testNum = 1
@@ -188,6 +199,8 @@ class YangModelTesting:
                 test = test.strip()
                 if test in self.ExceptionTests:
                     ret = ret + self.runExceptionTest(test);
+                elif test in self.SpecialTests:
+                    ret = ret + self.runSpecialTest(test);
         except Exception as e:
             printExceptionDetails()
             raise e
@@ -268,7 +281,9 @@ class YangModelTesting:
             s = self.loadConfigData(jInput, self.ExceptionTests[test].get('verify'))
             eStr = self.ExceptionTests[test]['eStr']
             log.debug(eStr)
-            if (sum(1 for str in eStr if str not in s) == 0):
+            if len(eStr) == 0 and s != "":
+                raise Exception("{} in not empty".format(s))
+            elif (sum(1 for str in eStr if str not in s) == 0):
                 log.info(desc + " Passed\n")
                 return PASS
         except Exception as e:
@@ -276,6 +291,37 @@ class YangModelTesting:
         log.info(desc + " Failed\n")
         return FAIL
 
+    """
+        Run Special Tests
+    """
+    def runSpecialTest(self, test):
+        try:
+            if test == 'ALL_VLAN_TEST':
+                return self.runVlanSpecialTest(test);
+        except Exception as e:
+            printExceptionDetails()
+        log.info(desc + " Failed\n")
+        return FAIL
+
+    def runVlanSpecialTest(self, test):
+        try:
+            desc = self.SpecialTests[test]['desc']
+            self.logStartTest(desc)
+            jInput = json.loads(self.readJsonInput(test))
+            # check all Vlan from 1 to 4094
+            for i in xrange(4095):
+                vlan = 'Vlan'+str(i)
+                jInput["sonic-vlan:sonic-vlan"]["sonic-vlan:VLAN"]["VLAN_LIST"]\
+                      [0]["vlan_name"] = vlan
+                log.debug(jInput)
+                s = self.loadConfigData(json.dumps(jInput))
+                if s!="":
+                    raise Exception("{} in not empty".format(s))
+            return PASS
+        except Exception as e:
+            printExceptionDetails()
+        log.info(desc + " Failed\n")
+        return FAIL
 # End of Class
 
 """
