@@ -257,11 +257,14 @@ module sonic-acl {
 				}
 
 				leaf stage {
-					type enumeration {
-						enum INGRESS;
-						enum EGRESS;
+					type string {
+						pattern "ingress|egress|INGRESS|EGRESS";
 					}
-					default INGRESS;
+					default "INGRESS";
+				}
+
+				leaf-list services {
+					type string;
 				}
 
 				leaf-list ports {

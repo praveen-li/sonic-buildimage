@@ -44,9 +44,8 @@ module sonic-device_metadata {
                 }
 
                 leaf docker_routing_config_mode {
-                    type enumeration {
-                        enum unified;
-                        enum split;
+                    type string {
+                        pattern "unified|split|separated";
                     }
                 }
 

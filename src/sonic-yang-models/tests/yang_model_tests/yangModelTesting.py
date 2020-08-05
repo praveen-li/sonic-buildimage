@@ -128,7 +128,7 @@ class YangModelTesting:
             'ACL_TABLE_DEFAULT_VALUE_STAGE': {
                 'desc': 'ACL_TABLE DEFAULT VALUE FOR STAGE FIELD.',
                 'eStr': self.defaultYANGFailure['Verify'],
-                'verify': {'xpath': "/sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[ACL_TABLE_NAME='NO-NSW-PACL-V4']/stage",
+                'verify': {'xpath': "/sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[ACL_TABLE_NAME='NO-NSW-PACL-V4']/ACL_TABLE_NAME",
                     'key': 'sonic-acl:stage',
                     'value': 'INGRESS'
                 }
@@ -143,7 +143,27 @@ class YangModelTesting:
             },
             'INCORRECT_VLAN_NAME': {
                 'desc': 'INCORRECT VLAN_NAME FIELD IN VLAN TABLE.',
-                'eStr': self.defaultYANGFailure['Pattern']
+                'eStr': self.defaultYANGFailure['Pattern'] + ["Vlan"]
+            },
+            'ACL_TABLE_STAGE_SERVICES': {
+                'desc': 'ACL_TABLE LOAD STAGE SERVICES SUCCESSFULLY.',
+                'eStr': self.defaultYANGFailure['Verify'],
+                'verify': {'xpath': "/sonic-acl:sonic-acl/ACL_TABLE/ACL_TABLE_LIST[ACL_TABLE_NAME='NO-NSW-PACL-V4']/ACL_TABLE_NAME",
+                    'key': 'sonic-acl:services',
+                    'value': ["SNMP"]
+                }
+            },
+            'PORT_TEST': {
+                'desc': 'LOAD PORT TABLE WITH FEC AND PFC_ASYM SUCCESSFULLY. VERIFY PFC_ASYM.',
+                'eStr': self.defaultYANGFailure['Verify'],
+                'verify': {'xpath': "/sonic-port:sonic-port/PORT/PORT_LIST[port_name='Ethernet8']/port_name",
+                    'key': 'sonic-port:pfc_asym',
+                    'value': 'on'
+                }
+            },
+            'PORT_NEG_TEST': {
+                'desc': 'LOAD PORT TABLE FEC PATTERN FAILURE',
+                'eStr': self.defaultYANGFailure['Pattern'] + ['rc']
             }
         }
 
@@ -220,7 +240,7 @@ class YangModelTesting:
                 jInst = ijson.items(f, test)
                 for it in jInst:
                     jInput = jInput + json.dumps(it)
-            log.debug(jInput)
+            log.debug("Read json JIn: {}".format(jInput))
         except Exception as e:
             printExceptionDetails()
         return jInput
@@ -256,12 +276,15 @@ class YangModelTesting:
             # verify the data tree if asked
             if verify is not None:
                 xpath = verify['xpath']
+                log.debug("Verify xpath: {}".format(xpath))
                 set = node.find_path(xpath)
                 for dnode in set.data():
                     if (xpath == dnode.path()):
+                        log.debug("Verify dnode: {}".format(dnode.path()))
                         data = dnode.print_mem(ly.LYD_JSON, ly.LYP_WITHSIBLINGS \
                             | ly.LYP_FORMAT | ly.LYP_WD_ALL)
                         data = json.loads(data)
+                        log.debug("Verify data: {}".format(data))
                         assert (data[verify['key']] == verify['value'])
                         s = 'verified'
         except Exception as e:
@@ -280,7 +303,7 @@ class YangModelTesting:
             # load the data, expect a exception with must condition failure
             s = self.loadConfigData(jInput, self.ExceptionTests[test].get('verify'))
             eStr = self.ExceptionTests[test]['eStr']
-            log.debug(eStr)
+            log.debug("eStr: {}".format(eStr))
             if len(eStr) == 0 and s != "":
                 raise Exception("{} in not empty".format(s))
             elif (sum(1 for str in eStr if str not in s) == 0):

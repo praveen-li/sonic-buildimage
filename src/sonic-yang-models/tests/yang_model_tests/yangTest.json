@@ -557,8 +557,45 @@
 					"lanes": "65",
 					"description": "Ethernet8",
 					"speed": 25000,
+					"fec": "rs",
 					"mtu": 9000,
 					"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"PORT_TEST": {
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+					"port_name": "Ethernet8",
+					"alias": "eth8",
+					"lanes": "65",
+					"description": "Ethernet8",
+					"speed": 25000,
+					"fec": "rs",
+					"mtu": 9000,
+					"admin_status": "up",
+					"pfc_asym": "on"
+				}]
+			}
+		}
+	},
+
+	"PORT_NEG_TEST": {
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+					"port_name": "Ethernet8",
+					"alias": "eth8",
+					"lanes": "65",
+					"description": "Ethernet8",
+					"speed": 25000,
+					"fec": "rc",
+					"mtu": 9000,
+					"admin_status": "up",
+					"pfc_asym": "off"
 				}]
 			}
 		}
@@ -636,6 +673,20 @@
 		}
 	},
 
+	"ACL_TABLE_STAGE_SERVICES": {
+		"sonic-acl:sonic-acl": {
+			"sonic-acl:ACL_TABLE": {
+				"ACL_TABLE_LIST": [{
+					"ACL_TABLE_NAME": "NO-NSW-PACL-V4",
+					"policy_desc": "Filter IPv4",
+					"type": "L3",
+					"stage": "ingress",
+					"services": ["SNMP"]
+				}]
+			}
+		}
+	},
+
 	"DEV_META_DEV_NEIGH_VERSION_TABLE": {
 		"sonic-device_metadata:sonic-device_metadata": {
 			"sonic-device_metadata:DEVICE_METADATA": {
@@ -644,6 +695,7 @@
 					"mac": "00:11:22:33:44:55",
 					"hostname": "asw.dc",
 					"type": "ToR",
+					"docker_routing_config_mode": "separated",
 					"hwsku": "Stone"
 				}
 			}
@@ -1279,7 +1331,8 @@
 					"Ethernet27",
 					"Ethernet24"
 				],
-				"stage": "INGRESS"
+				"stage": "INGRESS",
+				"services": ["SNMP", "SSH"]
 			},
 			"V6-ACL-TBLE": {
 				"type": "L3V6",
