@@ -9,6 +9,7 @@ nodes:
     max_lossless_tc: "2"
     forward_profile: "IFCS_FORWARD_PROFILE_ID_PROFILE_E"
     ilpm_enable: "1"
+    srp2: "126"
     wred_cr_ip_proto_list: "17"
     netdev:
     - auto_create: "no"
