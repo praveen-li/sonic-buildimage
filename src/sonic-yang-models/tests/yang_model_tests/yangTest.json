@@ -108,6 +108,47 @@
 		}
 	},
 
+	"PORT_CHANNEL_TEST": {
+		"sonic-portchannel:sonic-portchannel": {
+			"sonic-portchannel:PORTCHANNEL": {
+				"PORTCHANNEL_LIST": [{
+					"portchannel_name": "PortChannel0001",
+					"admin_status": "up",
+					"members": [
+						"Ethernet0"
+					],
+					"min_links": "1",
+					"mtu": "9100"
+				}]
+			}
+		},
+		"sonic-port:sonic-port": {
+			"sonic-port:PORT": {
+				"PORT_LIST": [{
+						"port_name": "Ethernet0",
+						"alias": "eth0",
+						"description": "Ethernet0",
+						"speed": 25000,
+						"mtu": 9000,
+						"lanes": "65",
+						"admin_status": "up"
+				}]
+			}
+		}
+	},
+
+	"PORT_CHANNEL_WRONG_PATTERN": {
+		"sonic-portchannel:sonic-portchannel": {
+			"sonic-portchannel:PORTCHANNEL": {
+				"PORTCHANNEL_LIST": [{
+					"portchannel_name": "PortChannel11001",
+					"admin_status": "up",
+					"mtu": "9100"
+				}]
+			}
+		}
+	},
+
 	"VLAN_MEMEBER_WITH_NON_EXIST_VLAN": {
 		"sonic-vlan:sonic-vlan": {
 			"sonic-vlan:VLAN_MEMBER": {
@@ -840,6 +881,24 @@
 	},
 
 	"SAMPLE_CONFIG_DB_JSON": {
+		"PORTCHANNEL": {
+			"PortChannel0003": {
+				"admin_status": "up",
+				"min_links": "1",
+				"members": [
+					"Ethernet1"
+				],
+				"mtu": "9100"
+			},
+			"PortChannel0004": {
+				"admin_status": "up",
+				"min_links": "1",
+				"members": [
+					"Ethernet2"
+				],
+				"mtu": "9100"
+			}
+		},
 		"VLAN_INTERFACE": {
 			"Vlan111": {},
 			"Vlan777": {},

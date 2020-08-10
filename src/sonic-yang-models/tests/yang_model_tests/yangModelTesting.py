@@ -61,6 +61,10 @@ class YangModelTesting:
                 'desc': 'Configure a member port in VLAN_MEMBER table which does not exist.',
                 'eStr': self.defaultYANGFailure['LeafRef']
             },
+            'PORT_CHANNEL_TEST': {
+                'desc': 'Configure a member port in PORT_CHANNEL table.',
+                'eStr': self.defaultYANGFailure['None']
+            },
             'VLAN_MEMEBER_WITH_NON_EXIST_VLAN': {
                 'desc': 'Configure vlan-id in VLAN_MEMBER table which does not exist in VLAN  table.',
                 'eStr': self.defaultYANGFailure['LeafRef']
@@ -144,6 +148,10 @@ class YangModelTesting:
             'INCORRECT_VLAN_NAME': {
                 'desc': 'INCORRECT VLAN_NAME FIELD IN VLAN TABLE.',
                 'eStr': self.defaultYANGFailure['Pattern'] + ["Vlan"]
+            },
+            'PORT_CHANNEL_WRONG_PATTERN': {
+                'desc': 'INCORRECT PORTCHANNEL_NAME IN PORT_CHANNEL TABLE.',
+                'eStr': self.defaultYANGFailure['Pattern'] + ["PortChannel"]
             },
             'ACL_TABLE_STAGE_SERVICES': {
                 'desc': 'ACL_TABLE LOAD STAGE SERVICES SUCCESSFULLY.',
