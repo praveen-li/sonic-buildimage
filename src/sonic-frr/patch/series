@@ -1,2 +1,3 @@
 0001-zebra-kernel-level-graceful-restart.patch
 0002-bgp-vty-show-sum.patch
+0003-Fix-the-issue-when-bgp-docker-warm-restarted.patch

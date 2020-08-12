@@ -14,6 +14,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	git stash
 	patch -p1  < ../patch/0001-zebra-kernel-level-graceful-restart.patch
 	patch -p1  < ../patch/0002-bgp-vty-show-sum.patch
+	patch -p1  < ../patch/0003-Fix-the-issue-when-bgp-docker-warm-restarted.patch
 
 	# clean up the previous build
 	rm -rf debian
