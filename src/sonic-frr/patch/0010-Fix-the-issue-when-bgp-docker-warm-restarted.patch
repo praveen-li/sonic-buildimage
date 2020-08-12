@@ -1,0 +1,75 @@
+From 109c2e546964e0e7ab4916ace42d136d2fa0fcdf Mon Sep 17 00:00:00 2001
+From: Zhenggen Xu <zxu@linkedin.com>
+Date: Wed, 5 Aug 2020 18:16:43 -0700
+Subject: [PATCH] Fix the issue when bgp docker warm-restarted and the
+ restarting router withdrawn zebra learnt routes from peers that cause traffic
+ drop.
+
+On FRR <= 7.3, Full GR and "Route Selection Deferral Timer" are not implemented.
+So we levearge "update-delay" for restarting router to be in read-only mode
+after being restarted, then checking the EoRs (implicit and explicit) from
+peers or wait for the update-delay timer is expired.
+There was a timing issue where the first condition above is met but zebra hasn't
+learnt the local routes (e,g. connected routes), this will introduce issues
+if we send updates to peers at the moment, it will withdraw the those routes
+from peers thus dropping traffic.
+This is a workaround to only wait for update-delay time-out to get out of the
+read-only mode. This will introduce a slightly delay, but since the DUT is
+restarted and the timer is small in LinkedIn DC cases (e,g, 10 seconds),
+the impact is minimal if at all.
+
+Signed-off-by: Zhenggen Xu <zxu@linkedin.com>
+---
+ bgpd/bgp_packet.c | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/bgpd/bgp_packet.c b/bgpd/bgp_packet.c
+index 0ce2466f5..a080245e4 100644
+--- a/bgpd/bgp_packet.c
++++ b/bgpd/bgp_packet.c
+@@ -161,7 +161,11 @@ static struct stream *bgp_update_packet_eor(struct peer *peer, afi_t afi,
+  * peer. Ends the update-delay if all expected peers are done with EORs. */
+ void bgp_check_update_delay(struct bgp *bgp)
+ {
++/* Commented out, see below reasons */
++#if 0
+ 	struct listnode *node, *nnode;
++#endif
++
+ 	struct peer *peer = NULL;
+ 
+ 	if (bgp_debug_neighbor_events(peer))
+@@ -169,6 +173,21 @@ void bgp_check_update_delay(struct bgp *bgp)
+ 			   bgp->established, bgp->restarted_peers,
+ 			   bgp->implicit_eors, bgp->explicit_eors);
+ 
++/* LinkedIn changes to support warm restart bgp docker.
++ * On FRR <= 7.3, Full GR and "Route Selection Deferral Timer" are not implemented.
++ * So we levearge "update-delay" for restarting router to be in read-only mode
++ * after being restarted, then checking the EoRs (implicit and explicit) from
++ * peers or wait for the update-delay timer is expired.
++ * There was a timing issue where the first condition above is met but zebra hasn't
++ * learnt the local routes (e,g. connected routes), this will introduce issues
++ * if we send updates to peers at the moment, it will withdraw the those routes
++ * from peers thus dropping traffic.
++ * Below is a workaround to only wait for update-delay time-out to get out of the
++ * read-only mode. This will introduce a slightly delay, but since the DUT is
++ * restarted and the timer is small in LinkedIn DC cases (e,g, 10 seconds),
++ * the impact is minimal if at all.
++ */
++#if 0
+ 	if (bgp->established
+ 	    <= bgp->restarted_peers + bgp->implicit_eors + bgp->explicit_eors) {
+ 		/*
+@@ -199,6 +218,8 @@ void bgp_check_update_delay(struct bgp *bgp)
+ 			bgp->explicit_eors);
+ 		bgp_update_delay_end(bgp);
+ 	}
++#endif
++
+ }
+ 
+ /*
+-- 
+2.18.0
+
