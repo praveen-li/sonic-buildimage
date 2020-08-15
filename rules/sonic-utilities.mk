@@ -10,7 +10,7 @@
 #       then add the aforementioned runtime dependencies here.
 #
 
-SONIC_UTILS = python-sonic-utilities_3.0.0-1_all.deb
+SONIC_UTILS = python-sonic-utilities_3.0.1-1_all.deb
 $(SONIC_UTILS)_SRC_PATH = $(SRC_PATH)/sonic-utilities
 $(SONIC_UTILS)_DEBS_DEPENDS = $(LIBYANG) $(LIBYANG_CPP) $(LIBYANG_PY2) \
                                      $(LIBYANG_PY3)
