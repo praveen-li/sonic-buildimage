@@ -53,7 +53,17 @@ def db_connect_configdb():
     if config_db is None:
         return None
     try:
-        config_db.connect()
+        """
+        This could be blocking during the 'config load_minigraph' or
+        'config reload -l' process, as the CONFIG_DB_INITIALIZED is not
+        yet set in the configDB.
+
+        We could also use 'config_db.db_connect('CONFIG_DB') directly
+        rather than 'connect' function as it sets the flag 'wait_for_init'
+        to False by default.
+        """
+        # Connect to configDB without waiting the init done.
+        config_db.connect(wait_for_init=False)
     except:
         config_db = None
     return config_db
