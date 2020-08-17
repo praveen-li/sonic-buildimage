@@ -319,6 +319,8 @@ def main():
         if not ports:
             print('Failed to get port config', file=sys.stderr)
             sys.exit(1)
+        for port, v in ports.iteritems():
+            ports[port]['admin_status'] = 'up'
         deep_update(data, {'PORT': ports})
 
         brkout_table = get_breakout_mode(hwsku, platform, args.port_config)
@@ -379,6 +381,7 @@ def main():
         hardware_data = {'DEVICE_METADATA': {'localhost': {
             'platform': platform,
             'mac': mac,
+            'docker_routing_config_mode': 'split'
             }}}
         # The ID needs to be passed to the SAI to identify the asic.
         if asic_name is not None:
