@@ -41,7 +41,6 @@ COPY ["start.sh", "config.sh", "/usr/bin/"]
 COPY ["daemons", "/etc/frr/"]
 COPY ["daemons.conf", "/etc/frr/"]
 COPY ["vtysh.conf", "/etc/frr/"]
-COPY ["snmp.conf", "/etc/snmp/frr.conf"]
 
 ENTRYPOINT /usr/bin/config.sh   \
         && /usr/bin/start.sh    \
