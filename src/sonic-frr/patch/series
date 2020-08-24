@@ -1,3 +1,2 @@
 0001-zebra-kernel-level-graceful-restart.patch
 0002-bgp-vty-show-sum.patch
-0006-changes-for-making-snmp-socket-non-blocking.patch
