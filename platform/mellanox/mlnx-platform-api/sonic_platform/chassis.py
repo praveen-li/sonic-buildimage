@@ -11,10 +11,11 @@
 try:
     from sonic_platform_base.chassis_base import ChassisBase
     from sonic_platform_base.component_base import ComponentBase
-    from sonic_device_util import get_machine_info
-    from sonic_daemon_base.daemon_base import Logger
+    from sonic_py_common import device_info
+    from sonic_py_common.logger import Logger
     from os import listdir
     from os.path import isfile, join
+    from glob import glob
     import sys
     import io
     import re
@@ -28,11 +29,16 @@ MAX_SELECT_DELAY = 3600
 MLNX_NUM_PSU = 2
 
 GET_HWSKU_CMD = "sonic-cfggen -d -v DEVICE_METADATA.localhost.hwsku"
+GET_PLATFORM_CMD = "sonic-cfggen -d -v DEVICE_METADATA.localhost.platform"
 
 EEPROM_CACHE_ROOT = '/var/cache/sonic/decode-syseeprom'
 EEPROM_CACHE_FILE = 'syseeprom_cache'
 
 HWMGMT_SYSTEM_ROOT = '/var/run/hw-management/system/'
+
+MST_DEVICE_NAME_PATTERN = '/dev/mst/mt[0-9]*_pciconf0'
+MST_DEVICE_RE_PATTERN = '/dev/mst/mt([0-9]*)_pciconf0'
+SPECTRUM1_CHIP_ID = '52100'
 
 #reboot cause related definitions
 REBOOT_CAUSE_ROOT = HWMGMT_SYSTEM_ROOT
@@ -42,10 +48,14 @@ REBOOT_CAUSE_FILE_LENGTH = 1
 # Global logger class instance
 logger = Logger()
 
-# magic code defnition for port number, qsfp port position of each hwsku
+# System LED system fs definitions for 201911 branch only
+SYSTEM_STATUS_LED_GREEN_FILE = '/run/hw-management/led/led_status_green'
+LED_ON = '1'
+
+# magic code defnition for port number, qsfp port position of each Platform
 # port_position_tuple = (PORT_START, QSFP_PORT_START, PORT_END, PORT_IN_BLOCK, EEPROM_OFFSET)
-hwsku_dict_port = {'ACS-MSN2010': 3, 'ACS-MSN2100': 1, 'ACS-MSN2410': 2, 'ACS-MSN2700': 0, 'Mellanox-SN2700': 0, 'Mellanox-SN2700-D48C8': 0, 'LS-SN2700':0, 'ACS-MSN2740': 0, 'ACS-MSN3700': 0, 'ACS-MSN3700C': 0, 'ACS-MSN3800': 4, 'Mellanox-SN3800-D112C8': 4, 'ACS-MSN4700': 0}
-port_position_tuple_list = [(0, 0, 31, 32, 1), (0, 0, 15, 16, 1), (0, 48, 55, 56, 1), (0, 18, 21, 22, 1), (0, 0, 63, 64, 1)]
+platform_dict_port = {'x86_64-mlnx_msn2010-r0': 3, 'x86_64-mlnx_msn2100-r0': 1, 'x86_64-mlnx_msn2410-r0': 2, 'x86_64-mlnx_msn2700-r0': 0, 'x86_64-mlnx_lssn2700':0, 'x86_64-mlnx_msn2740-r0': 0, 'x86_64-mlnx_msn3420-r0':5, 'x86_64-mlnx_msn3700-r0': 0, 'x86_64-mlnx_msn3700c-r0': 0, 'x86_64-mlnx_msn3800-r0': 4, 'x86_64-mlnx_msn4600c-r0':4, 'x86_64-mlnx_msn4700-r0': 0}
+port_position_tuple_list = [(0, 0, 31, 32, 1), (0, 0, 15, 16, 1), (0, 48, 55, 56, 1), (0, 18, 21, 22, 1), (0, 0, 63, 64, 1), (0, 48, 59, 60, 1)]
 
 class Chassis(ChassisBase):
     """Platform-specific Chassis class"""
@@ -53,9 +63,10 @@ class Chassis(ChassisBase):
     def __init__(self):
         super(Chassis, self).__init__()
 
-        # Initialize SKU name
+        # Initialize SKU name and Platform name
         self.sku_name = self._get_sku_name()
-        mi = get_machine_info()
+        self.platform_name = self._get_platform_name()
+        mi = device_info.get_machine_info()
         if mi is not None:
             self.name = mi['onie_platform']
         else:
@@ -66,6 +77,7 @@ class Chassis(ChassisBase):
         self.sfp_module_initialized = False
         self.sfp_event_initialized = False
         self.reboot_cause_initialized = False
+        self.initialize_system_led()
         logger.log_info("Chassis loaded successfully")
 
 
@@ -79,7 +91,7 @@ class Chassis(ChassisBase):
         # Initialize PSU list
         self.psu_module = Psu
         for index in range(MLNX_NUM_PSU):
-            psu = Psu(index, self.sku_name)
+            psu = Psu(index, self.platform_name)
             self._psu_list.append(psu)
 
 
@@ -93,11 +105,21 @@ class Chassis(ChassisBase):
         num_of_fan, num_of_drawer = self._extract_num_of_fans_and_fan_drawers()
         multi_rotor_in_drawer = num_of_fan > num_of_drawer
 
+        # Fan's direction isn't supported on spectrum 1 devices for now
+        mst_dev_list = glob(MST_DEVICE_NAME_PATTERN)
+        if not mst_dev_list:
+            raise RuntimeError("Can't get chip type due to {} not found".format(MST_DEVICE_NAME_PATTERN))
+        m = re.search(MST_DEVICE_RE_PATTERN, mst_dev_list[0])
+        if m.group(1) == SPECTRUM1_CHIP_ID:
+            has_fan_dir = False
+        else:
+            has_fan_dir = True
+
         for index in range(num_of_fan):
             if multi_rotor_in_drawer:
-                fan = Fan(index, index/2)
+                fan = Fan(has_fan_dir, index, index/2, False, self.platform_name)
             else:
-                fan = Fan(index, index)
+                fan = Fan(has_fan_dir, index, index, False, self.platform_name)
             self._fan_list.append(fan)
 
 
@@ -107,7 +129,7 @@ class Chassis(ChassisBase):
         self.sfp_module = SFP
 
         # Initialize SFP list
-        port_position_tuple = self._get_port_position_tuple_by_sku_name()
+        port_position_tuple = self._get_port_position_tuple_by_platform_name()
         self.PORT_START = port_position_tuple[0]
         self.QSFP_PORT_START = port_position_tuple[1]
         self.PORT_END = port_position_tuple[2]
@@ -126,7 +148,7 @@ class Chassis(ChassisBase):
     def initialize_thermals(self):
         from sonic_platform.thermal import initialize_thermals
         # Initialize thermals
-        initialize_thermals(self.sku_name, self._thermal_list, self._psu_list)
+        initialize_thermals(self.platform_name, self._thermal_list, self._psu_list)
 
 
     def initialize_eeprom(self):
@@ -137,7 +159,9 @@ class Chassis(ChassisBase):
 
     def initialize_components(self):
         # Initialize component list
-        from sonic_platform.component import ComponentBIOS, ComponentCPLD
+        from sonic_platform.component import ComponentONIE, ComponentSSD, ComponentBIOS, ComponentCPLD
+        self._component_list.append(ComponentONIE())
+        self._component_list.append(ComponentSSD())
         self._component_list.append(ComponentBIOS())
         self._component_list.extend(ComponentCPLD.get_component_list())
 
@@ -182,13 +206,13 @@ class Chassis(ChassisBase):
 
     def get_sfp(self, index):
         """
-        Retrieves sfp represented by (0-based) index <index>
+        Retrieves sfp represented by (1-based) index <index>
 
         Args:
-            index: An integer, the index (0-based) of the sfp to retrieve.
+            index: An integer, the index (1-based) of the sfp to retrieve.
                    The index should be the sequence of a physical port in a chassis,
-                   starting from 0.
-                   For example, 0 for Ethernet0, 1 for Ethernet4 and so on.
+                   starting from 1.
+                   For example, 1 for Ethernet0, 2 for Ethernet4 and so on.
 
         Returns:
             An object dervied from SfpBase representing the specified sfp
@@ -197,7 +221,7 @@ class Chassis(ChassisBase):
             self.initialize_sfp()
 
         sfp = None
-
+        index -= 1
         try:
             sfp = self._sfp_list[index]
         except IndexError:
@@ -230,8 +254,14 @@ class Chassis(ChassisBase):
         return out.rstrip('\n')
 
 
-    def _get_port_position_tuple_by_sku_name(self):
-        position_tuple = port_position_tuple_list[hwsku_dict_port[self.sku_name]]
+    def _get_platform_name(self):
+        p = subprocess.Popen(GET_PLATFORM_CMD, shell=True, stdout=subprocess.PIPE)
+        out, err = p.communicate()
+        return out.rstrip('\n')
+
+
+    def _get_port_position_tuple_by_platform_name(self):
+        position_tuple = port_position_tuple_list[platform_dict_port[self.platform_name]]
         return position_tuple
 
 
@@ -433,25 +463,28 @@ class Chassis(ChassisBase):
             timeout = MAX_SELECT_DELAY
             while True:
                 status = self.sfp_event.check_sfp_status(port_dict, timeout)
-                if not port_dict == {}:
+                if bool(port_dict):
                     break
         else:
             status = self.sfp_event.check_sfp_status(port_dict, timeout)
 
         if status:
-            # get_change_event has the meaning of retrieving all the notifications through a single call.
-            # Typically this is implemented via a select framework which requires the underlay file-reading 
-            # interface able to retrieve all notifications without blocking once the fd has been selected. 
-            # However, sdk doesn't provide any interface satisfied the requirement. as a result,
-            # check_sfp_status returns only one notification may indicate more notifications in its queue.
-            # In this sense, we have to iterate in a loop to get all the notifications in case that
-            # the first call returns at least one.
-            i = 0
-            while i < self.MAX_SELECT_EVENT_RETURNED:
-                status = self.sfp_event.check_sfp_status(port_dict, 0)
-                if not status:
-                    break
-                i = i + 1
             return True, {'sfp':port_dict}
         else:
             return True, {'sfp':{}}
+
+    def get_thermal_manager(self):
+        from .thermal_manager import ThermalManager
+        return ThermalManager
+
+    def initialize_system_led(self):
+        """
+        Init system LED color to green.
+        This is for 201911 branch only
+        """
+        try:
+            with open(SYSTEM_STATUS_LED_GREEN_FILE, 'w') as f:
+                f.write(LED_ON)
+        except:
+            pass
+

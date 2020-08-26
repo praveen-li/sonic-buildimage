@@ -18,7 +18,9 @@ try:
     from sonic_platform.module import Module
     from sonic_platform.thermal import Thermal
     from sonic_platform.component import Component
+    from sonic_platform.watchdog import Watchdog
     from eeprom import Eeprom
+    import time
 except ImportError as e:
     raise ImportError(str(e) + "- required module not found")
 
@@ -37,12 +39,15 @@ class Chassis(ChassisBase):
     HWMON_DIR = "/sys/devices/platform/SMF.512/hwmon/"
     HWMON_NODE = os.listdir(HWMON_DIR)[0]
     MAILBOX_DIR = HWMON_DIR + HWMON_NODE
+    POLL_INTERVAL = 1 # Poll interval in seconds
 
     reset_reason_dict = {}
     reset_reason_dict[11] = ChassisBase.REBOOT_CAUSE_POWER_LOSS
     reset_reason_dict[33] = ChassisBase.REBOOT_CAUSE_WATCHDOG
     reset_reason_dict[44] = ChassisBase.REBOOT_CAUSE_NON_HARDWARE
     reset_reason_dict[55] = ChassisBase.REBOOT_CAUSE_NON_HARDWARE
+    reset_reason_dict[66] = ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER
+    reset_reason_dict[77] = ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER
 
     power_reason_dict = {}
     power_reason_dict[11] = ChassisBase.REBOOT_CAUSE_POWER_LOSS
@@ -76,10 +81,16 @@ class Chassis(ChassisBase):
             component = Component(i)
             self._component_list.append(component)
 
+        self._watchdog = Watchdog()
+        self._transceiver_presence = self._get_transceiver_presence()
+
     def _get_reboot_reason_smf_register(self):
-        # Returns 0xAA on software reload
-        # Returns 0xFF on power-cycle
-        # Returns 0x01 on first-boot
+        # In S6100, mb_poweron_reason register will
+        # Returns 0xaa or 0xcc on software reload
+        # Returns 0xff or 0xbb on power-cycle
+        # Returns 0xdd on Watchdog
+        # Returns 0xee on Thermal Shutdown
+        # Returns 0x99 on Unknown reset
         smf_mb_reg_reason = self._get_pmc_register('mb_poweron_reason')
         return int(smf_mb_reg_reason, 16)
 
@@ -94,6 +105,24 @@ class Chassis(ChassisBase):
 
         try:
             with open(mb_reg_file, 'r') as fd:
+                rv = fd.read()
+        except Exception as error:
+            rv = 'ERR'
+
+        rv = rv.rstrip('\r\n')
+        rv = rv.lstrip(" ")
+        return rv
+
+    def _get_register(self, reg_file):
+        # On successful read, returns the value read from given
+        # reg_name and on failure returns 'ERR'
+        rv = 'ERR'
+
+        if (not os.path.isfile(reg_file)):
+            return rv
+
+        try:
+            with open(reg_file, 'r') as fd:
                 rv = fd.read()
         except Exception as error:
             rv = 'ERR'
@@ -188,27 +217,121 @@ class Chassis(ChassisBase):
         power_reason = int(self._get_pmc_register('smf_poweron_reason'))
         smf_mb_reg_reason = self._get_reboot_reason_smf_register()
 
-        if ((smf_mb_reg_reason == 0x01) and (power_reason == 0x11)):
+        if ((smf_mb_reg_reason == 0xbb) or (smf_mb_reg_reason == 0xff)):
+            return (ChassisBase.REBOOT_CAUSE_POWER_LOSS, None)
+        elif ((smf_mb_reg_reason == 0xaa) or (smf_mb_reg_reason == 0xcc)):
+            return (ChassisBase.REBOOT_CAUSE_NON_HARDWARE, None)
+        elif (smf_mb_reg_reason == 0xdd):
+            return (ChassisBase.REBOOT_CAUSE_WATCHDOG, None)
+        elif (smf_mb_reg_reason == 0xee):
+            return (self.power_reason_dict[power_reason], None)
+        elif (reset_reason == 66):
+            return (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
+                    "Emulated Cold Reset")
+        elif (reset_reason == 77):
+            return (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
+                    "Emulated Warm Reset")
+        else:
             return (ChassisBase.REBOOT_CAUSE_NON_HARDWARE, None)
 
-        # Reset_Reason = 11 ==> PowerLoss
-        # So return the reboot reason from Last Power_Reason Dictionary
-        # If Reset_Reason is not 11 return from Reset_Reason dictionary
-        # Also check if power_reason, reset_reason are valid values by
-        # checking key presence in dictionary else return
-        # REBOOT_CAUSE_HARDWARE_OTHER as the Power_Reason and Reset_Reason
-        # registers returned invalid data
-
-        # In S6100, if Reset_Reason is not 11 and smf_mb_reg_reason
-        # is ff or bb, then it is PowerLoss
-        if (reset_reason == 11):
-            if (power_reason in self.power_reason_dict):
-                return (self.power_reason_dict[power_reason], None)
-        else:
-            if ((smf_mb_reg_reason == 0xbb) or (smf_mb_reg_reason == 0xff)):
-                return (ChassisBase.REBOOT_CAUSE_POWER_LOSS, None)
-
-            if (reset_reason in self.reset_reason_dict):
-                return (self.reset_reason_dict[reset_reason], None)
-
         return (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Invalid Reason")
+
+    def _get_transceiver_presence(self):
+
+        cpld2_modprs = self._get_register(
+                    "/sys/class/i2c-adapter/i2c-14/14-003e/qsfp_modprs")
+        cpld3_modprs = self._get_register(
+                    "/sys/class/i2c-adapter/i2c-15/15-003e/qsfp_modprs")
+        cpld4_modprs = self._get_register(
+                    "/sys/class/i2c-adapter/i2c-16/16-003e/qsfp_modprs")
+        cpld5_modprs = self._get_register(
+                    "/sys/class/i2c-adapter/i2c-17/17-003e/qsfp_modprs")
+
+        # If IOM is not present, register read will fail.
+        # Handle the scenario gracefully
+        if (cpld2_modprs == 'read error') or (cpld2_modprs == 'ERR'):
+            cpld2_modprs = '0x0'
+        if (cpld3_modprs == 'read error') or (cpld3_modprs == 'ERR'):
+            cpld3_modprs = '0x0'
+        if (cpld4_modprs == 'read error') or (cpld4_modprs == 'ERR'):
+            cpld4_modprs = '0x0'
+        if (cpld5_modprs == 'read error') or (cpld5_modprs == 'ERR'):
+            cpld5_modprs = '0x0'
+
+        # Make it contiguous
+        transceiver_presence = (int(cpld2_modprs, 16) & 0xffff) |\
+                               ((int(cpld4_modprs, 16) & 0xffff) << 16) |\
+                               ((int(cpld3_modprs, 16) & 0xffff) << 32) |\
+                               ((int(cpld5_modprs, 16) & 0xffff) << 48)
+
+        return transceiver_presence
+
+    def get_change_event(self, timeout=0):
+        """
+        Returns a nested dictionary containing all devices which have
+        experienced a change at chassis level
+
+        Args:
+            timeout: Timeout in milliseconds (optional). If timeout == 0,
+                this method will block until a change is detected.
+
+        Returns:
+            (bool, dict):
+                - True if call successful, False if not;
+                - A nested dictionary where key is a device type,
+                  value is a dictionary with key:value pairs in the
+                  format of {'device_id':'device_event'},
+                  where device_id is the device ID for this device and
+                        device_event,
+                             status='1' represents device inserted,
+                             status='0' represents device removed.
+                  Ex. {'fan':{'0':'0', '2':'1'}, 'sfp':{'11':'0'}}
+                      indicates that fan 0 has been removed, fan 2
+                      has been inserted and sfp 11 has been removed.
+        """
+        port_dict = {}
+        ret_dict = {'sfp': port_dict}
+        forever = False
+
+        if timeout == 0:
+            forever = True
+        elif timeout > 0:
+            timeout = timeout / float(1000) # Convert to secs
+        else:
+            return False, ret_dict # Incorrect timeout
+
+        while True:
+            if forever:
+                timer = self.POLL_INTERVAL
+            else:
+                timer = min(timeout, self.POLL_INTERVAL)
+                start_time = time.time()
+
+            time.sleep(timer)
+            cur_presence = self._get_transceiver_presence()
+
+            # Update dict only if a change has been detected
+            if cur_presence != self._transceiver_presence:
+                changed_ports = self._transceiver_presence ^ cur_presence
+                for port in range(self.get_num_sfps()):
+                    # Mask off the bit corresponding to particular port
+                    mask = 1 << port
+                    if changed_ports & mask:
+                        # qsfp_modprs 1 => optics is removed
+                        if cur_presence & mask:
+                            port_dict[port] = '0'
+                        # qsfp_modprs 0 => optics is inserted
+                        else:
+                            port_dict[port] = '1'
+
+                # Update current presence
+                self._transceiver_presence = cur_presence
+                break
+
+            if not forever:
+                elapsed_time = time.time() - start_time
+                timeout = round(timeout - elapsed_time, 3)
+                if timeout <= 0:
+                    break
+
+        return True, ret_dict

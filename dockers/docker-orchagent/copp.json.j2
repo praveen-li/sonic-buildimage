@@ -1,0 +1,112 @@
+[
+    {
+        "COPP_TABLE:trap.group.bgp.lldp,lacp": {
+            "trap_ids": "bgp,bgpv6,lldp,lacp",
+            "trap_action":"trap",
+            "trap_priority":"4",
+            "queue": "4"
+        },
+        "OP": "SET"
+    },
+{% if DEVICE_METADATA is defined and DEVICE_METADATA['localhost'] is defined and DEVICE_METADATA['localhost']['type'] is defined and DEVICE_METADATA['localhost']['type'] != "ToRRouter" %}
+{% else %}
+
+    {
+        "COPP_TABLE:trap.group.dhcp": {
+            "trap_ids": "dhcp,dhcpv6",
+            "trap_action":"trap",
+            "trap_priority":"4",
+            "queue": "4",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"600",
+            "cbs":"600",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    },
+{% endif %}
+    {
+        "COPP_TABLE:trap.group.arp": {
+            "trap_ids": "arp_req,arp_resp,neigh_discovery",
+            "trap_action":"copy",
+            "trap_priority":"4",
+            "queue": "4",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"600",
+            "cbs":"600",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    },
+    {
+        "COPP_TABLE:trap.group.ssh": {
+            "trap_ids": "ssh",
+            "trap_action":"trap",
+            "trap_priority":"3",
+            "queue": "3",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"3000",
+            "cbs":"3000",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    },
+    {
+        "COPP_TABLE:trap.group.ip2me.udld": {
+            "trap_ids": "ip2me,udld",
+            "trap_action":"trap",
+            "trap_priority":"2",
+            "queue": "2",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"3000",
+            "cbs":"3000",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    },
+    {
+        "COPP_TABLE:trap.group.nat": {
+            "trap_ids": "src_nat_miss,dest_nat_miss",
+            "trap_action":"trap",
+            "trap_priority":"1",
+            "queue": "1",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"600",
+            "cbs":"600",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    },
+    {
+         "COPP_TABLE:trap.group.sflow": {
+             "trap_ids": "sample_packet",
+             "trap_action":"trap",
+             "trap_priority":"1",
+             "queue": "1",
+             "meter_type":"packets",
+             "mode":"sr_tcm",
+             "cir":"1000",
+             "cbs":"1000",
+             "red_action":"drop",
+             "genetlink_name":"psample",
+             "genetlink_mcgrp_name":"packets"
+        },
+        "OP": "SET"
+    },
+    {
+        "COPP_TABLE:default": {
+            "queue": "0",
+            "meter_type":"packets",
+            "mode":"sr_tcm",
+            "cir":"600",
+            "cbs":"600",
+            "red_action":"drop"
+        },
+        "OP": "SET"
+    }
+]

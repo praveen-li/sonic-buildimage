@@ -68,7 +68,7 @@ def db_connect_configdb():
         config_db = None
     return config_db
 
-def get_port_config_file_name(hwsku=None, platform=None):
+def get_port_config_file_name(hwsku=None, platform=None, asic=None):
 
     # check 'platform.json' file presence
     port_config_candidates_Json = []
@@ -79,13 +79,16 @@ def get_port_config_file_name(hwsku=None, platform=None):
     # check 'portconfig.ini' file presence
     port_config_candidates = []
     port_config_candidates.append(os.path.join(HWSKU_ROOT_PATH, PORT_CONFIG_INI))
-    if platform and hwsku:
-        port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH, platform, hwsku, PORT_CONFIG_INI))
-    elif platform and not hwsku:
-        port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH, platform, PORT_CONFIG_INI))
-    elif hwsku and not platform:
+    if hwsku:
+        if platform:
+            if asic:
+                port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH, platform, hwsku, asic, PORT_CONFIG_INI))
+            port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH, platform, hwsku, PORT_CONFIG_INI))
         port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH_DOCKER, hwsku, PORT_CONFIG_INI))
         port_config_candidates.append(os.path.join(SONIC_ROOT_PATH, hwsku, PORT_CONFIG_INI))
+
+    elif platform and not hwsku:
+        port_config_candidates.append(os.path.join(PLATFORM_ROOT_PATH, platform, PORT_CONFIG_INI))
 
     for candidate in port_config_candidates_Json + port_config_candidates:
         if os.path.isfile(candidate):
@@ -105,24 +108,24 @@ def get_hwsku_file_name(hwsku=None, platform=None):
             return candidate
     return None
 
-def get_port_config(hwsku=None, platform=None, port_config_file=None, hwsku_config_file=None):
+def get_port_config(hwsku=None, platform=None, port_config_file=None, hwsku_config_file=None, asic=None):
     config_db = db_connect_configdb()
-
     # If available, Read from CONFIG DB first
     if config_db is not None and port_config_file is None:
 
         port_data = config_db.get_table("PORT")
-        if port_data is not None:
+        if bool(port_data):
             ports = ast.literal_eval(json.dumps(port_data))
             port_alias_map = {}
+            port_alias_asic_map = {}
             for intf_name in ports.keys():
-                port_alias_map[ports[intf_name]["alias"]]= intf_name
-            return (ports, port_alias_map)
+                port_alias_map[ports[intf_name]["alias"]] = intf_name
+            return (ports, port_alias_map, port_alias_asic_map)
 
     if not port_config_file:
-        port_config_file = get_port_config_file_name(hwsku, platform)
+        port_config_file = get_port_config_file_name(hwsku, platform, asic)
         if not port_config_file:
-            return ({}, {})
+            return ({}, {}, {})
 
 
     # Read from 'platform.json' file
@@ -130,7 +133,7 @@ def get_port_config(hwsku=None, platform=None, port_config_file=None, hwsku_conf
         if not hwsku_config_file:
              hwsku_json_file = get_hwsku_file_name(hwsku, platform)
              if not hwsku_json_file:
-                return ({}, {})
+                return ({}, {}, {})
         else:
             hwsku_json_file = hwsku_config_file
 
@@ -140,10 +143,10 @@ def get_port_config(hwsku=None, platform=None, port_config_file=None, hwsku_conf
     else:
         return parse_port_config_file(port_config_file)
 
-
 def parse_port_config_file(port_config_file):
     ports = {}
     port_alias_map = {}
+    port_alias_asic_map = {}
     # Default column definition
     titles = ['name', 'lanes', 'alias', 'index']
     with open(port_config_file) as data:
@@ -165,7 +168,15 @@ def parse_port_config_file(port_config_file):
             data.setdefault('alias', name)
             ports[name] = data
             port_alias_map[data['alias']] = name
-    return (ports, port_alias_map)
+            # asic_port_name to sonic_name mapping also included in
+            # port_alias_map
+            if (('asic_port_name' in data) and
+                (data['asic_port_name'] != name)):
+                port_alias_map[data['asic_port_name']] = name
+            # alias to asic_port_name mapping
+            if 'asic_port_name' in data:
+                port_alias_asic_map[data['alias']] = data['asic_port_name'].strip()
+    return (ports, port_alias_map, port_alias_asic_map)
 
 
 # Generate configs (i.e. alias, lanes, speed, index) for port
@@ -250,6 +261,7 @@ def get_child_ports(interface, breakout_mode, platform_json_file):
 def parse_platform_json_file(hwsku_json_file, platform_json_file):
     ports = {}
     port_alias_map = {}
+    port_alias_asic_map = {}
 
     port_dict = readJson(platform_json_file)
     hwsku_dict = readJson(hwsku_json_file)
@@ -277,7 +289,7 @@ def parse_platform_json_file(hwsku_json_file, platform_json_file):
 
     for i in ports.keys():
         port_alias_map[ports[i]["alias"]]= i
-    return (ports, port_alias_map)
+    return (ports, port_alias_map, port_alias_asic_map)
 
 
 def get_breakout_mode(hwsku=None, platform=None, port_config_file=None):

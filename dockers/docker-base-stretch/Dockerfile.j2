@@ -44,6 +44,7 @@ RUN apt-get update &&        \
         perl                 \
         procps               \
         python               \
+        python-pip           \
         rsyslog              \
         vim-tiny             \
 # Install dependencies of supervisor
@@ -54,7 +55,9 @@ RUN apt-get update &&        \
         libjemalloc1         \
         liblua5.1-0          \
         lua-bitop            \
-        lua-cjson
+        lua-cjson            \
+# for processing json files in bash environment
+        jq
 
 {% if CONFIGURED_ARCH == "armhf" %}
 # ip and ifconfig utility missing in docker for armhf
@@ -62,6 +65,9 @@ RUN apt-get -y install       \
         iproute2             \
         net-tools
 {% endif %}
+
+# For templating
+RUN pip install j2cli
 
 RUN mkdir -p /etc/supervisor /var/log/supervisor
 
@@ -78,6 +84,9 @@ RUN apt-get -y purge   \
 # Install built Debian packages and implicitly install their dependencies
 {{ install_debian_packages(docker_base_stretch_debs.split(' ')) }}
 {%- endif %}
+
+# Add support for supervisord to handle startup dependencies
+RUN pip install supervisord-dependent-startup==1.4.0
 
 # Clean up apt
 # Remove /var/lib/apt/lists/*, could be obsoleted for derived images

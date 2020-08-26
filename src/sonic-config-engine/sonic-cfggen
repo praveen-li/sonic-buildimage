@@ -16,6 +16,8 @@ See usage string for detail description for arguments.
 """
 
 from __future__ import print_function
+import sys
+sys.path.insert(0, "/usr/local/lib/python2.7/dist-packages")
 
 # monkey patch re.compile to do lazy regular expression compilation.
 # This is done to improve import time of jinja2, yaml, natsort modules, because they
@@ -37,13 +39,13 @@ from functools import partial
 from minigraph import minigraph_encoder
 from minigraph import parse_xml
 from minigraph import parse_device_desc_xml
+from minigraph import parse_asic_sub_role
 from portconfig import get_port_config, get_port_config_file_name, get_breakout_mode
-from sonic_device_util import get_machine_info
-from sonic_device_util import get_platform_info
-from sonic_device_util import get_system_mac
+from sonic_py_common.device_info import get_platform, get_system_mac
+from sonic_py_common.multi_asic import get_asic_id_from_name, is_multi_asic, get_asic_device_id
 from config_samples import generate_sample_config
 from config_samples import get_available_config
-from swsssdk import SonicV2Connector, ConfigDBConnector
+from swsssdk import SonicV2Connector, ConfigDBConnector, SonicDBConfig 
 from redis_bcc import RedisBytecodeCache
 from collections import OrderedDict
 from natsort import natsorted
@@ -52,7 +54,11 @@ def sort_by_port_index(value):
     if not value:
         return
     if isinstance(value, list):
-        value.sort(key = lambda k: int(k[8:]))
+        # In multi-ASIC platforms backend ethernet ports are identified as 
+        # 'Ethernet-BPxy'. Add 1024 to sort backend ports to the end.
+        value.sort(
+            key = lambda k: int(k[8:]) if "BP" not in k else int(k[11:]) + 1024
+        )
 
 def is_ipv4(value):
     if not value:
@@ -111,7 +117,17 @@ def pfx_filter(value):
     for key,val in value.items():
         if not isinstance(key, tuple):
             continue
-        table[key] = val
+        intf, ip_address = key
+        if '/' not in ip_address:
+            if is_ipv4(ip_address):
+                new_ip_address = "%s/32" % ip_address
+            elif is_ipv6(ip_address):
+                new_ip_address = "%s/128" % ip_address
+            else:
+                raise ValueError("'%s' is invalid ip address" % ip_address)
+            table[(intf, new_ip_address)] = val
+        else:
+            table[key] = val
     return table
 
 def ip_network(value):
@@ -195,6 +211,7 @@ def main():
     group.add_argument("-m", "--minigraph", help="minigraph xml file", nargs='?', const='/etc/sonic/minigraph.xml')
     group.add_argument("-M", "--device-description", help="device description xml file")
     group.add_argument("-k", "--hwsku", help="HwSKU")
+    parser.add_argument("-n", "--namespace", help="namespace name", nargs='?', const=None, default=None)
     parser.add_argument("-p", "--port-config", help="port config file, used with -m or -k", nargs='?', const=None)
     parser.add_argument("-S", "--hwsku-config", help="hwsku config file, used with -p and -m or -k", nargs='?', const=None)
     parser.add_argument("-y", "--yaml", help="yaml file that contains additional variables", action='append', default=[])
@@ -205,6 +222,7 @@ def main():
     parser.add_argument("-s", "--redis-unix-sock-file", help="unix sock file for redis connection")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-t", "--template", help="render the data with the template file")
+    parser.add_argument("-T", "--template_dir", help="search base for the template files", action='store')
     group.add_argument("-v", "--var", help="print the value of a variable, support jinja2 expression")
     group.add_argument("--var-json", help="print the value of a variable, in json format")
     group.add_argument("-w", "--write-to-db", help="write config into configdb", action='store_true')
@@ -214,7 +232,7 @@ def main():
     group.add_argument("-K", "--key", help="Lookup for a specific key")
     args = parser.parse_args()
 
-    platform = get_platform_info(get_machine_info())
+    platform = get_platform()
 
     db_kwargs = {}
     if args.redis_unix_sock_file != None:
@@ -222,6 +240,15 @@ def main():
 
     data = {}
     hwsku = args.hwsku
+    asic_name = args.namespace
+    asic_id = None
+    if asic_name is not None:
+        asic_id = get_asic_id_from_name(asic_name)
+
+
+    # Load the database config for the namespace from global database json
+    if args.namespace is not None:
+        SonicDBConfig.load_sonic_global_db_config(namespace=args.namespace)
 
     if hwsku is not None:
         hardware_data = {'DEVICE_METADATA': {'localhost': {
@@ -230,7 +257,7 @@ def main():
         deep_update(data, hardware_data)
         if args.port_config is None:
             args.port_config = get_port_config_file_name(hwsku, platform)
-        (ports, _) = get_port_config(hwsku, platform, args.port_config)
+        (ports, _, _) = get_port_config(hwsku, platform, args.port_config, asic_id)
         if not ports:
             print('Failed to get port config', file=sys.stderr)
             sys.exit(1)
@@ -248,11 +275,13 @@ def main():
         minigraph = args.minigraph
         if platform:
             if args.port_config != None:
-                deep_update(data, parse_xml(minigraph, platform, args.port_config))
+                deep_update(data, parse_xml(minigraph, platform, args.port_config, \
+                                            asic_name=asic_name, hwsku_config_file=args.hwsku_config))
             else:
-                deep_update(data, parse_xml(minigraph, platform))
+                deep_update(data, parse_xml(minigraph, platform, asic_name=asic_name))
         else:
-            deep_update(data, parse_xml(minigraph, port_config_file=args.port_config, hwsku_config_file=args.hwsku_config))
+            deep_update(data, parse_xml(minigraph, port_config_file=args.port_config, \
+                                        asic_name=asic_name, hwsku_config_file=args.hwsku_config))
 
     if args.device_description != None:
         deep_update(data, parse_device_desc_xml(args.device_description))
@@ -269,20 +298,49 @@ def main():
         deep_update(data, json.loads(args.additional_data))
 
     if args.from_db:
-        configdb = ConfigDBConnector(**db_kwargs)
+        if args.namespace is None:
+            configdb = ConfigDBConnector(**db_kwargs)
+        else:
+            configdb = ConfigDBConnector(use_unix_socket_path=True, namespace=args.namespace, **db_kwargs)
+
         configdb.connect()
         deep_update(data, FormatConverter.db_to_output(configdb.get_config()))
 
+
+    # the minigraph file must be provided to get the mac address for backend asics
     if args.platform_info:
+        asic_role = None
+        if asic_name is not None:
+            if args.minigraph is not None:
+                asic_role = parse_asic_sub_role(args.minigraph, asic_name)
+
+            if asic_role is not None and asic_role.lower() == "backend":
+                mac = get_system_mac(namespace=asic_name)
+            else:
+                mac = get_system_mac()
+        else:
+            mac = get_system_mac()
+
         hardware_data = {'DEVICE_METADATA': {'localhost': {
             'platform': platform,
-            'mac': get_system_mac()
+            'mac': mac,
             }}}
+        # The ID needs to be passed to the SAI to identify the asic.
+        if asic_name is not None:
+            device_id = get_asic_device_id(asic_id)
+            # if the device_id obtained is None, exit with error
+            if device_id is None:
+                print('Failed to get device ID for', asic_name, file=sys.stderr)
+                sys.exit(1)
+            hardware_data['DEVICE_METADATA']['localhost'].update(asic_id=device_id)
         deep_update(data, hardware_data)
 
-    if args.template != None:
+    if args.template is not None:
         template_file = os.path.abspath(args.template)
         paths  = ['/', '/usr/share/sonic/templates', os.path.dirname(template_file)]
+        if args.template_dir is not None:
+            template_dir = os.path.abspath(args.template_dir)
+            paths.append(template_dir)
         loader = jinja2.FileSystemLoader(paths)
 
         redis_bcc = RedisBytecodeCache(SonicV2Connector(host='127.0.0.1'))
@@ -295,6 +353,8 @@ def main():
         env.filters['ip_network'] = ip_network
         for attr in ['ip', 'network', 'prefixlen', 'netmask']:
             env.filters[attr] = partial(prefix_attr, attr)
+        # Pass the is_multi_asic function as global
+        env.globals['multi_asic'] = is_multi_asic
         template = env.get_template(template_file)
         print(template.render(sort_data(data)))
 
@@ -302,14 +362,18 @@ def main():
         template = jinja2.Template('{{' + args.var + '}}')
         print(template.render(data))
 
-    if args.var_json != None:
+    if args.var_json != None and args.var_json in data:
         if args.key != None:
             print(json.dumps(FormatConverter.to_serialized(data[args.var_json], args.key), indent=4, cls=minigraph_encoder))
         else:
             print(json.dumps(FormatConverter.to_serialized(data[args.var_json]), indent=4, cls=minigraph_encoder))
 
     if args.write_to_db:
-        configdb = ConfigDBConnector(**db_kwargs)
+        if args.namespace is None:
+            configdb = ConfigDBConnector(**db_kwargs)
+        else:
+            configdb = ConfigDBConnector(use_unix_socket_path=True, namespace=args.namespace, **db_kwargs)
+
         configdb.connect(False)
         configdb.mod_config(FormatConverter.output_to_db(sort_data(data)))
 
