@@ -31,7 +31,11 @@ function copy_config_files_and_directories()
     for file_dir in $@; do
         if [ -f /etc/sonic/old_config/${file_dir} ] || [ -d /etc/sonic/old_config/${file_dir} ]; then
             logger "Copying SONiC configuration ${file_dir} ..."
-            cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/
+            if [ -d /etc/sonic/${file_dir} ]; then
+                cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/
+            else
+                cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/${file_dir}
+            fi
         else
             logger "Missing SONiC configuration ${file_dir} ..."
         fi
@@ -60,7 +64,7 @@ fi
 . /etc/sonic/updategraph.conf
 
 check_system_warm_boot
-copy_list="minigraph.xml snmp.yml acl.json config_db.json frr"
+copy_list="minigraph.xml snmp.yml acl.json config_db.json frr/frr.conf"
 if [ -f /tmp/pending_config_migration ]; then
     copy_config_files_and_directories $copy_list
     if [ x"${WARM_BOOT}" == x"true" ]; then
