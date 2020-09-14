@@ -1,0 +1,63 @@
+From d5c866d88dd5ce827ebac849beca24d2cfb019b9 Mon Sep 17 00:00:00 2001
+From: Ping Mao <pmao@linkedin.com>
+Date: Mon, 14 Sep 2020 13:26:38 -0700
+Subject: [PATCH] Add BGP neighbor descripton and advertised prefix counter to
+ "show bgp summary json"
+
+---
+ bgpd/bgp_vty.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/bgpd/bgp_vty.c b/bgpd/bgp_vty.c
+index bb9da327d..65866e214 100644
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -8062,6 +8062,10 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 	json_object *json_peer = NULL;
+ 	json_object *json_peers = NULL;
+ 	struct peer_af *paf;
++        struct bgp_table *table;
++        struct bgp_node *rn;
++        struct bgp_adj_out *adj;
++        unsigned long output_count = 0;
+ 
+ 	/* labeled-unicast routes are installed in the unicast table so in order
+ 	 * to
+@@ -8151,6 +8155,7 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 		
+ 	count = 0;		/* Reset the value as its used again */
+ 	for (ALL_LIST_ELEMENTS(bgp->peer, node, nnode, peer)) {
++                output_count = 0;
+ 		if (!CHECK_FLAG(peer->flags, PEER_FLAG_CONFIG_NODE))
+ 			continue;
+ 
+@@ -8387,6 +8392,26 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 					json_object_string_add(json_peer, "domainname",
+ 							       peer->domainname);
+ 
++                                if (peer->desc)
++                                        json_object_string_add(json_peer, "description",
++                                                               peer->desc);
++
++                                /*
++                                 * advertised prefixes
++                                 */
++                                table = bgp->rib[afi][safi];
++                                for (rn = bgp_table_top(table); rn; rn = bgp_route_next(rn)) {
++                                        RB_FOREACH (adj, bgp_adj_out_rb, &rn->adj_out)
++                                                SUBGRP_FOREACH_PEER (adj->subgroup, paf) {
++                                                if (paf->peer != peer)
++                                                       continue;
++                                                if (adj->attr) {
++                                                       output_count++;
++                                                }
++                                        }
++                                }
++
++                                json_object_int_add(json_peer, "advertisedPrefixes", output_count);
+ 				json_object_int_add(json_peer, "remoteAs", peer->as);
+ 				json_object_int_add(json_peer, "version", 4);
+ 				json_object_int_add(json_peer, "msgRcvd",
+-- 
+2.18.0
+
