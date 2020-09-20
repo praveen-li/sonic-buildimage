@@ -5,19 +5,21 @@ HWSKU_DIR=/usr/share/sonic/hwsku
 
 SYNCD_SOCKET_FILE=/var/run/sswsyncd/sswsyncd.socket
 
-# Function: wait until syncd has created the socket for bcmcmd to connect to
+# Function: wait until syncd has created the socket and bcmshell is ready
 wait_syncd() {
     while true; do
         if [ -e ${SYNCD_SOCKET_FILE} ]; then
-            break
+            # wait until bcm shell is ready to process requests
+            if bcmcmd -t 1 "a"; then
+                echo "bcmcmd is ready to process requests"
+                break
+            else
+                echo "bcmcmd is not ready to process requests, wait again"
+            fi
         fi
         sleep 1
     done
-
-    # wait until bcm sdk is ready to get a request
-    sleep 3
 }
-
 
 # Remove stale files if they exist
 rm -f /var/run/rsyslogd.pid
@@ -39,49 +41,22 @@ fi
 rm -f /var/run/sswsyncd/sswsyncd.socket
 supervisorctl start syncd
 
-# Function: wait until syncd has created the socket for bcmcmd to connect to
-wait_syncd() {
-    while true; do
-        if [ -e /var/run/sswsyncd/sswsyncd.socket ]; then
-            # wait until bcm shell is ready to process requests
-            if bcmcmd -t 1 "a"; then
-                echo "bcmcmd is ready to process requests"
-                break
-            else
-                echo "bcmcmd is not ready to process requests, wait again"
-            fi
-        fi
-        sleep 1
-    done
-}
+# always wait for syncd to be ready
+wait_syncd
 
-wait_done=0
 # If this platform has an initialization file for the Broadcom LED microprocessor, load it
 if [[ -r ${PLATFORM_DIR}/led_proc_init.soc && ! -f /var/warmboot/warm-starting ]]; then
-    wait_syncd
-    wait_done=1
     supervisorctl start ledinit
 fi
 
 if [[ -r ${HWSKU_DIR}/FecSetting_Rs544.c && ! -f /var/warmboot/warm-starting ]]; then
-    if [ $wait_done == 0]; then
-        wait_syncd
-        wait_done=1
-    fi
     bcmcmd "cint ${HWSKU_DIR}/FecSetting_Rs544.c"
 fi
 
 if [[ -r ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc && ! -f /var/warmboot/warm-starting ]]; then
-    if [ $wait_done == 0]; then
-        wait_syncd
-        wait_done=1
-    fi
     bcmcmd "rcload ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc"
 fi
 
 if [ -x ${PLATFORM_DIR}/i2c_init.sh ]; then
-    if [ $wait_done == 0]; then
-        wait_syncd
-    fi
     supervisorctl start i2cinit
 fi
