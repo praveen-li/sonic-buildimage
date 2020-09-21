@@ -59,12 +59,12 @@ fi
 TELEMETRY_ARGS+=" --port $PORT"
 
 CLIENT_AUTH=$(echo $GNMI | jq -r '.client_auth')
-if [ -z $CLIENT_AUTH ] || [ $CLIENT_AUTH == "false" ]; then
+if [ -z $CLIENT_AUTH ] || [ $CLIENT_AUTH == "false" ] || [ $CLIENT_AUTH == "null" ]; then
     TELEMETRY_ARGS+=" --allow_no_client_auth"
 fi
 
 LOG_LEVEL=$(echo $GNMI | jq -r '.log_level')
-if [ ! -z $LOG_LEVEL ]; then
+if [ ! -z $LOG_LEVEL ] && [ $LOG_LEVEL != "null" ]; then
     TELEMETRY_ARGS+=" -v=$LOG_LEVEL"
 else
     TELEMETRY_ARGS+=" -v=2"
