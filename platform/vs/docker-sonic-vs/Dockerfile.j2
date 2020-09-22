@@ -100,9 +100,9 @@ COPY python-wheels/{{ whl }}  python-wheels/
 # use py3 to find python3 package, which is forced by wheel as of now
 {%- for whl in docker_sonic_vs_whls.split(' ') %}
 {%- if 'py3' in whl %}
-RUN pip3 install python-wheels/{{ whl }}{{ '\n' }}
-{% else -%}
-RUN pip install python-wheels/{{ whl }}{{ '\n' }}
+RUN pip3 install python-wheels/{{ whl }}
+{%- else %}
+RUN pip install python-wheels/{{ whl }}
 {%- endif %}
 {%- endfor %}
 {% endif %}
