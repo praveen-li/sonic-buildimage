@@ -49,10 +49,6 @@ if [[ -r ${PLATFORM_DIR}/led_proc_init.soc && ! -f /var/warmboot/warm-starting ]
     supervisorctl start ledinit
 fi
 
-if [[ -r ${HWSKU_DIR}/FecSetting_Rs544.c && ! -f /var/warmboot/warm-starting ]]; then
-    bcmcmd "cint ${HWSKU_DIR}/FecSetting_Rs544.c"
-fi
-
 if [[ -r ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc && ! -f /var/warmboot/warm-starting ]]; then
     bcmcmd "rcload ${HWSKU_DIR}/pre_emphasis_PAM4_optics.soc"
 fi
