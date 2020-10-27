@@ -25,7 +25,7 @@
  */
 
 #ifndef TEST_MODE
-#define MOD_VERSION "1.2.0"
+#define MOD_VERSION "1.2.1"
 #else
 #define MOD_VERSION "TEST"
 #endif
@@ -1647,12 +1647,12 @@ static struct platform_device silverstone_dev = {
 };
 
 /**
- * Board info for QSFP/SFP+ eeprom.
+ * Board info for QSFPDD/SFP+ eeprom.
  * Note: Using OOM optoe as I2C eeprom driver.
  * https://www.opencompute.org/wiki/Networking/SpecsAndDesigns#Open_Optical_Monitoring
  */
 static struct i2c_board_info sff8436_eeprom_info[] = {
-    { I2C_BOARD_INFO("optoe1", 0x50) }, //For QSFP w/ sff8436
+    { I2C_BOARD_INFO("optoe3", 0x50) }, //For QSFPDD w/ cmis
     { I2C_BOARD_INFO("optoe2", 0x50) }, //For SFP+ w/ sff8472
 };
 
