@@ -943,6 +943,12 @@ typedef struct bkn_filter_s {
 } bkn_filter_t;
 
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29))
+#define BKN_NETDEV_TX_BUSY      NETDEV_TX_BUSY
+#else
+#define BKN_NETDEV_TX_BUSY      1
+#endif
+
 /*
  * Multiple instance support in KNET
  */
