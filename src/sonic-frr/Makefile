@@ -15,6 +15,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	patch -p1  < ../patch/0001-zebra-kernel-level-graceful-restart.patch
 	patch -p1  < ../patch/0002-bgp-vty-show-sum.patch
 	patch -p1  < ../patch/0003-Fix-the-issue-when-bgp-docker-warm-restarted.patch
+	patch -p1  < ../patch/0004-FRR-log-Stop-FRR-log-inside-the-docker.patch
 
 	# clean up the previous build
 	rm -rf debian
