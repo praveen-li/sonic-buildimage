@@ -16,7 +16,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	patch -p1  < ../patch/0002-bgp-vty-show-sum.patch
 	patch -p1  < ../patch/0003-Fix-the-issue-when-bgp-docker-warm-restarted.patch
 	patch -p1  < ../patch/0004-FRR-log-Stop-FRR-log-inside-the-docker.patch
-
+	patch -p1  < ../patch/0005-bgp-vty-summary-connectionEstablished.patch
 	# clean up the previous build
 	rm -rf debian
 	rm -f frr*.tar.gz
