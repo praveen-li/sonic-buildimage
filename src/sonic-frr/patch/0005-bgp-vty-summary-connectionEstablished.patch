@@ -1,0 +1,15 @@
+diff --git a/bgpd/bgp_vty.c b/bgpd/bgp_vty.c
+index 32b0ecffd..c3703141a 100644
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -7148,6 +7148,10 @@ static int bgp_show_summary(struct vty *vty, struct bgp *bgp, int afi, int safi,
+ 					json_peer, "state",
+ 					lookup_msg(bgp_status_msg, peer->status,
+ 						   NULL));
++			json_object_int_add(json_peer, "connectionsEstablished",
++					    peer->established);
++			json_object_int_add(json_peer, "connectionsDropped",
++					    peer->dropped);
+ 
+ 			if (peer->conf_if)
+ 				json_object_string_add(json_peer, "idType",
