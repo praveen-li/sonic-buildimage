@@ -8,3 +8,6 @@ PYTHONPATH : "$INNOVIUM_DIR:$INNOVIUM_DIR/cmds:$INNOVIUM_DIR/scripts:$INNOVIUM_D
 PLATFORM_LIBRARY : "/usr/lib/libinn_intf.so"
 AVG_IPG_RESERVED_SIZE: "1518"
 AVG_QUEUE_RESERVED_SIZE: "1518"
+BDC_ENABLE: "true"
+HDC_ENABLE: "true"
+ISAI_CB_UDS: "/etc/sonic/ivm-flashlight-sock"

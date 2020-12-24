@@ -43,3 +43,8 @@ else
 fi
 
 supervisorctl start syncd
+
+if [ -f /usr/bin/fcd.py ]; then
+supervisorctl start fcd
+fi
+
