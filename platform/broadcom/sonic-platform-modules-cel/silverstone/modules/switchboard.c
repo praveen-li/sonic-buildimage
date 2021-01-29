@@ -25,7 +25,7 @@
  */
 
 #ifndef TEST_MODE
-#define MOD_VERSION "1.2.1"
+#define MOD_VERSION "1.3.0"
 #else
 #define MOD_VERSION "TEST"
 #endif
@@ -193,7 +193,6 @@ PORT XCVR       0x00004000 - 0x00004FFF.
 */
 #define INTR_INT_N      5
 #define INTR_PRESENT    4
-#define INTR_TXFAULT    2
 #define INTR_RXLOS      1
 #define INTR_MODABS     0
 
@@ -208,7 +207,6 @@ PORT XCVR       0x00004000 - 0x00004FFF.
 */
 #define MASK_INT_N      5
 #define MASK_PRESENT    4
-#define MASK_TXFAULT    2
 #define MASK_RXLOS      1
 #define MASK_MODABS     0
 
@@ -555,14 +553,14 @@ static struct attribute_group fpga_attr_grp = {
     .attrs = fpga_attrs,
 };
 
-static ssize_t cpld1_version_show(struct device *dev, 
+static ssize_t cpld1_version_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
     u8 version;
     int err;
-    err = fpga_i2c_access(fpga_data->i2c_adapter[SW_I2C_CPLD_INDEX], 
-                          CPLD1_SLAVE_ADDR, 0x00, I2C_SMBUS_READ, 0x00, 
-                          I2C_SMBUS_BYTE_DATA, 
+    err = fpga_i2c_access(fpga_data->i2c_adapter[SW_I2C_CPLD_INDEX],
+                          CPLD1_SLAVE_ADDR, 0x00, I2C_SMBUS_READ, 0x00,
+                          I2C_SMBUS_BYTE_DATA,
                           (union i2c_smbus_data *)&version);
     if (err < 0)
         return err;
@@ -667,14 +665,14 @@ static struct attribute_group cpld1_attr_grp = {
     .attrs = cpld1_attrs,
 };
 
-static ssize_t cpld2_version_show(struct device *dev, 
+static ssize_t cpld2_version_show(struct device *dev,
                                   struct device_attribute *attr, char *buf)
 {
     u8 version;
     int err;
-    err = fpga_i2c_access(fpga_data->i2c_adapter[SW_I2C_CPLD_INDEX], 
-                          CPLD2_SLAVE_ADDR, 0x00, I2C_SMBUS_READ, 0x00, 
-                          I2C_SMBUS_BYTE_DATA, 
+    err = fpga_i2c_access(fpga_data->i2c_adapter[SW_I2C_CPLD_INDEX],
+                          CPLD2_SLAVE_ADDR, 0x00, I2C_SMBUS_READ, 0x00,
+                          I2C_SMBUS_BYTE_DATA,
                           (union i2c_smbus_data *)&version);
     if (err < 0)
         return err;
@@ -929,6 +927,106 @@ static ssize_t qsfp_reset_store(struct device *dev, struct device_attribute *att
 }
 DEVICE_ATTR_RW(qsfp_reset);
 
+static ssize_t qsfp_isr_flags_show(struct device *dev,
+                                   struct device_attribute *attr, char *buf)
+{
+    u8 data;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_STATUS_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_INT_N) | BIT(INTR_PRESENT);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    data = (u8) ioread32(fpga_dev.data_base_addr + REGISTER);
+    mutex_unlock(&fpga_data->fpga_lock);
+
+    /*
+     * Unify the return pattern to 2-bit
+     *  [1] : module interrupt
+     *  [0] : presence
+     */
+    data = data & valid_bits;
+    data = data >> 4;
+
+    return sprintf(buf, "0x%2.2x\n", data);
+}
+
+static ssize_t qsfp_isr_flags_store(struct device *dev,
+                                    struct device_attribute *attr,
+                                    const char *buf, size_t count)
+{
+    ssize_t status;
+    u32 value;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_STATUS_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_INT_N) | BIT(INTR_PRESENT);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    status = kstrtou32(buf, 0, &value);
+    if (status == 0) {
+        value = value << 4;
+        value = value & valid_bits;
+        iowrite32(value, fpga_dev.data_base_addr + REGISTER);
+        status = count;
+    }
+    mutex_unlock(&fpga_data->fpga_lock);
+    return status;
+}
+DEVICE_ATTR_RW(qsfp_isr_flags);
+
+static ssize_t qsfp_isr_mask_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    u32 data;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_MASK_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_INT_N) | BIT(INTR_PRESENT);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    data = ioread32(fpga_dev.data_base_addr + REGISTER);
+    mutex_unlock(&fpga_data->fpga_lock);
+
+    /*
+     * Unify the return pattern to 2-bit
+     *  [1] : module interrupt
+     *  [0] : presence
+     */
+    data = data & valid_bits;
+    data = data >> 4;
+
+    return sprintf(buf, "0x%2.2x\n", data);
+}
+
+static ssize_t qsfp_isr_mask_store(struct device *dev,
+                                   struct device_attribute *attr,
+                                   const char *buf, size_t count)
+{
+    ssize_t status;
+    u32 value;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_MASK_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_INT_N) | BIT(INTR_PRESENT);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    status = kstrtou32(buf, 0, &value);
+    if (status == 0) {
+        value = value << 4;
+        value = value & valid_bits;
+        iowrite32(value, fpga_dev.data_base_addr + REGISTER);
+        status = count;
+    }
+    mutex_unlock(&fpga_data->fpga_lock);
+    return status;
+}
+DEVICE_ATTR_RW(qsfp_isr_mask);
+
 static ssize_t sfp_txdisable_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
     u32 data;
@@ -967,15 +1065,105 @@ static ssize_t sfp_txdisable_store(struct device *dev, struct device_attribute *
 }
 DEVICE_ATTR_RW(sfp_txdisable);
 
+static ssize_t sfp_isr_flags_show(struct device *dev,
+                                  struct device_attribute *attr, char *buf)
+{
+    u8 data;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_STATUS_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_RXLOS) | BIT(INTR_MODABS);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    data = (u8) ioread32(fpga_dev.data_base_addr + REGISTER);
+    mutex_unlock(&fpga_data->fpga_lock);
+
+    data = data & valid_bits;
+
+    return sprintf(buf, "0x%2.2x\n", data);
+}
+
+static ssize_t sfp_isr_flags_store(struct device *dev,
+                                   struct device_attribute *attr,
+                                   const char *buf, size_t count)
+{
+    ssize_t status;
+    u32 value;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_STATUS_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_INT_N) | BIT(INTR_PRESENT);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    status = kstrtou32(buf, 0, &value);
+    if (status == 0) {
+        value = value & valid_bits;
+        iowrite32(value, fpga_dev.data_base_addr + REGISTER);
+        status = count;
+    }
+    mutex_unlock(&fpga_data->fpga_lock);
+    return status;
+}
+DEVICE_ATTR_RW(sfp_isr_flags);
+
+static ssize_t sfp_isr_mask_show(struct device *dev,
+                                 struct device_attribute *attr, char *buf)
+{
+    u32 data;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_MASK_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_RXLOS) | BIT(INTR_MODABS);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    data = ioread32(fpga_dev.data_base_addr + REGISTER);
+    mutex_unlock(&fpga_data->fpga_lock);
+
+    data = data & valid_bits;
+
+    return sprintf(buf, "0x%2.2x\n", data);
+}
+
+static ssize_t sfp_isr_mask_store(struct device *dev,
+                                  struct device_attribute *attr,
+                                  const char *buf, size_t count)
+{
+    ssize_t status;
+    u32 value;
+    u8 valid_bits;
+    struct sff_device_data *dev_data = dev_get_drvdata(dev);
+    unsigned int portid = dev_data->portid;
+    unsigned int REGISTER = SFF_PORT_INT_MASK_BASE + (portid - 1) * 0x10;
+    valid_bits = BIT(INTR_RXLOS) | BIT(INTR_MODABS);
+
+    mutex_lock(&fpga_data->fpga_lock);
+    status = kstrtou32(buf, 0, &value);
+    if (status == 0) {
+        value = value & valid_bits;
+        iowrite32(value, fpga_dev.data_base_addr + REGISTER);
+        status = count;
+    }
+    mutex_unlock(&fpga_data->fpga_lock);
+    return status;
+}
+DEVICE_ATTR_RW(sfp_isr_mask);
+
 static struct attribute *sff_attrs[] = {
     &dev_attr_qsfp_modirq.attr,
     &dev_attr_qsfp_modprs.attr,
     &dev_attr_qsfp_lpmode.attr,
     &dev_attr_qsfp_reset.attr,
+    &dev_attr_qsfp_isr_flags.attr,
+    &dev_attr_qsfp_isr_mask.attr,
     &dev_attr_sfp_txfault.attr,
     &dev_attr_sfp_rxlos.attr,
     &dev_attr_sfp_modabs.attr,
     &dev_attr_sfp_txdisable.attr,
+    &dev_attr_sfp_isr_flags.attr,
+    &dev_attr_sfp_isr_mask.attr,
     NULL,
 };
 
@@ -1036,9 +1224,9 @@ static ssize_t port_led_color_show(struct device *dev, struct device_attribute *
     if (err < 0)
         return err;
     return sprintf(buf, "%s %s\n",
-                   led_color1 == 0x07 ? "off" : led_color1 == 0x06 ? "green" : led_color1 == 0x05 ?  "red" : led_color1 == 0x04 ? 
+                   led_color1 == 0x07 ? "off" : led_color1 == 0x06 ? "green" : led_color1 == 0x05 ?  "red" : led_color1 == 0x04 ?
                     "yellow" : led_color1 == 0x03 ? "blue" : led_color1 == 0x02 ?  "cyan" : led_color1 == 0x01 ?  "magenta" : "white",
-                   led_color1 == 0x07 ? "off" : led_color1 == 0x06 ? "green" : led_color1 == 0x05 ?  "red" : led_color1 == 0x04 ? 
+                   led_color1 == 0x07 ? "off" : led_color1 == 0x06 ? "green" : led_color1 == 0x05 ?  "red" : led_color1 == 0x04 ?
                     "yellow" : led_color1 == 0x03 ? "blue" : led_color1 == 0x02 ?  "cyan" : led_color1 == 0x01 ?  "magenta" : "white");
 }
 
@@ -1137,7 +1325,7 @@ static int i2c_wait_ack(struct i2c_adapter *a, unsigned long timeout, int writin
     timeout = jiffies + msecs_to_jiffies(timeout);
     while (1) {
         Status = ioread8(pci_bar + REG_SR0);
-        if (jiffies > timeout) {
+        if (!time_is_after_jiffies(timeout)) {
             info("Status %2.2X", Status);
             info("Error Timeout");
             error = -ETIMEDOUT;
@@ -1152,6 +1340,7 @@ static int i2c_wait_ack(struct i2c_adapter *a, unsigned long timeout, int writin
         if (writing == 0 && (Status & (1 << I2C_SR_BIT_MCF))) {
             break;
         }
+        schedule();
     }
     Status = ioread8(pci_bar + REG_SR0);
     iowrite8(0, pci_bar + REG_SR0);
@@ -1242,7 +1431,11 @@ static int smbus_access(struct i2c_adapter *adapter, u16 addr,
         goto Done;
     }
 
+#if 1 /* 100 kHz */
+    iowrite8(portid | 0x40, pci_bar + REG_ID0);
+#else
     iowrite8(portid, pci_bar + REG_ID0);
+#endif
 
     ////[S][ADDR/R]
     //Clear status register
@@ -1503,7 +1696,7 @@ static int fpga_i2c_access(struct i2c_adapter *adapter, u16 addr,
             }
             if(retry == 0)
                 goto release_unlock;
-            // update lasted port
+            // update latest port
             fpga_i2c_lasted_access_port[master_bus - 1] = switch_addr << 8 | channel;
 
         } else {
@@ -1934,7 +2127,9 @@ static int fpga_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
     printk(KERN_INFO "");
     fpga_version = ioread32(fpga_dev.data_base_addr);
     printk(KERN_INFO "FPGA VERSION : %8.8x\n", fpga_version);
-    fpgafw_init();
+    if ((err = fpgafw_init()) < 0){
+        goto pci_release;
+    }
     platform_device_register(&silverstone_dev);
     platform_driver_register(&silverstone_drv);
     return 0;
@@ -1943,7 +2138,7 @@ pci_release:
     pci_release_regions(pdev);
 pci_disable:
     pci_disable_device(pdev);
-    return -EBUSY;
+    return err;
 }
 
 static void fpga_pci_remove(struct pci_dev *pdev)
@@ -2077,7 +2272,6 @@ static int fpgafw_init(void) {
 
 static void fpgafw_exit(void) {
     device_destroy(fpgafwclass, MKDEV(majorNumber, 0));     // remove the device
-    class_unregister(fpgafwclass);                          // unregister the device class
     class_destroy(fpgafwclass);                             // remove the device class
     unregister_chrdev(majorNumber, DEVICE_NAME);            // unregister the major number
     printk(KERN_INFO "Goodbye!\n");
