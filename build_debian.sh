@@ -30,7 +30,7 @@ set -x -e
 
 ## docker engine version (with platform)
 DOCKER_VERSION=5:18.09.8~3-0~debian-stretch
-LINUX_KERNEL_VERSION=4.9.0-9
+LINUX_KERNEL_VERSION=4.9.0-14-1
 
 ## Working directory to prepare the file system
 FILESYSTEM_ROOT=./fsroot
@@ -366,8 +366,9 @@ set /files/etc/sysctl.conf/net.ipv6.conf.default.keep_addr_on_down 1
 set /files/etc/sysctl.conf/net.ipv6.conf.all.keep_addr_on_down 1
 set /files/etc/sysctl.conf/net.ipv6.conf.eth0.keep_addr_on_down 1
 
-set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_ra_defrtr 0
-set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_ra 0
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_ra_defrtr 1
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_ra 1
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.ra_defrtr_metric 4261413864
 
 set /files/etc/sysctl.conf/net.core.rmem_max 2097152
 set /files/etc/sysctl.conf/net.core.wmem_max 2097152
