@@ -1,0 +1,110 @@
+#!/usr/bin/python
+
+"""
+    sonic-metrics
+    metrics update daemon for SONiC
+"""
+
+try:
+    import os
+    import signal
+    import string
+    import sys
+    import threading
+    import time
+    import syslog
+
+    from swsssdk import SonicV2Connector
+    from metrics import util
+
+except ImportError as e:
+    raise ImportError(str(e) + " - required module not found")
+
+#
+# Constants ====================================================================
+#
+
+SYSLOG_IDENTIFIER = "sonic_metricsd"
+REDIS_HOSTNAME = "localhost"
+REDIS_PORT = 6379
+REDIS_TIMEOUT_MSECS = 0
+METRICSD_MAIN_THREAD_SLEEP_SECS = 60
+
+#
+# Daemon =======================================================================
+#
+class DaemonMetricsd():
+    """
+    A daemon that run as a service to collect metrics with a configurable interval
+    and store the check result to redis.
+    """
+    def __init__(self):
+        """
+        Constructor of DaemonMetricsd.
+        """
+        # Connect to STATE_DB and create SSD, syslog and process info tables
+        self._db = SonicV2Connector(host='127.0.0.1')
+        self._db.connect(self._db.STATE_DB, False)   # Make one attempt only
+
+        self.timeout = METRICSD_MAIN_THREAD_SLEEP_SECS
+        self.stop_event = threading.Event()
+
+    # Signal handler
+    def signal_handler(self, sig, frame):
+        if sig == signal.SIGHUP:
+            util.log_info("Caught SIGHUP - ignoring...")
+        elif sig == signal.SIGINT:
+            util.log_info("Caught SIGINT - exiting...")
+            self.stop_event.set()
+        elif sig == signal.SIGTERM:
+            util.log_info("Caught SIGTERM - exiting...")
+            self.stop_event.set()
+        else:
+            util.log_info("Caught unhandled signal '" + sig + "'")
+
+    # Initialize daemon
+    def init(self):
+        util.log_info("Start daemon init...")
+
+    # Deinitialize daemon
+    def deinit(self):
+        util.log_info("Start daemon deinit...")
+
+    def process_data(self):
+        #TBD
+        return
+
+    # Run daemon
+    def run(self):
+        util.log_info("Starting up...")
+
+        # Start daemon initialization sequence
+        self.init()
+
+        # Start syslog info update thread
+
+        # Start process info update thread
+
+        # Start main loop
+        util.log_info("Start daemon main loop")
+
+        while not self.stop_event.wait(self.timeout):
+           self.process_data()
+
+        # Start daemon deinitialization sequence
+        self.deinit()
+
+        util.log_info("Shutting down...")
+
+#
+# Main =========================================================================
+#
+
+# This is our main entry point for sonic-metricsd script
+def main():
+    metricsd = DaemonMetricsd()
+    metricsd.run()
+
+
+if __name__ == '__main__':
+    main()

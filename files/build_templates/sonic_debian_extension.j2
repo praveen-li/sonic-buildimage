@@ -101,6 +101,12 @@ sudo cp {{platform_common_py2_wheel_path}} $FILESYSTEM_ROOT/$PLATFORM_COMMON_PY2
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $PLATFORM_COMMON_PY2_WHEEL_NAME
 sudo rm -rf $FILESYSTEM_ROOT/$PLATFORM_COMMON_PY2_WHEEL_NAME
 
+# Install sonic-metricd Python 2 package
+SONIC_METRICS_PY2_WHEEL_NAME=$(basename {{sonic_metrics_py2_wheel_path}})
+sudo cp {{sonic_metrics_py2_wheel_path}} $FILESYSTEM_ROOT/$SONIC_METRICS_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $SONIC_METRICS_PY2_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_METRICS_PY2_WHEEL_NAME
+
 # Install built Python Click package (and its dependencies via 'apt-get -y install -f')
 # Do this before installing sonic-utilities so that it doesn't attempt to install
 # an older version as part of its dependencies
@@ -170,6 +176,11 @@ sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable rsyslog-config.service
 sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog-config.sh $FILESYSTEM_ROOT/usr/bin/
 sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog.conf.j2 $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/
 sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog.d/* $FILESYSTEM_ROOT/etc/rsyslog.d/
+
+# Copy sonic-metrics files
+sudo LANG=C cp $IMAGE_CONFIGS/sonic-metrics/sonic_metrics.sh $FILESYSTEM_ROOT/usr/local/bin/sonic_metrics.sh
+sudo cp $IMAGE_CONFIGS/sonic-metrics/sonic-metrics.service  $FILESYSTEM_ROOT/etc/systemd/system/
+sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable sonic-metrics.service
 
 # Copy logrotate.d configuration files
 sudo cp -f $IMAGE_CONFIGS/logrotate/logrotate.d/* $FILESYSTEM_ROOT/etc/logrotate.d/

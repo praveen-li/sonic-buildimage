@@ -1,0 +1,11 @@
+[Unit]
+Description=SONiC metrics
+After=swss.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sonic_metricsd
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
