@@ -28,14 +28,12 @@ def run_command(command):
     output, error = process.communicate()
     return output, error
 
-
 def log_info(msg, also_print_to_console=False):
     syslog.openlog(SYSLOG_IDENTIFIER)
     syslog.syslog(syslog.LOG_INFO, msg)
     syslog.closelog()
     if also_print_to_console:
         print msg
-
 
 def log_warning(msg, also_print_to_console=False):
     syslog.openlog(SYSLOG_IDENTIFIER)
@@ -44,7 +42,6 @@ def log_warning(msg, also_print_to_console=False):
 
     if also_print_to_console:
         print msg
-
 
 def log_error(msg, also_print_to_console=False):
     syslog.openlog(SYSLOG_IDENTIFIER)
