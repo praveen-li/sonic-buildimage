@@ -352,7 +352,6 @@ RUN pip3 install "PyYAML==5.3.1"
 RUN pip2 install "lxml==4.6.2"
 RUN pip3 install "lxml==4.6.2"
 
-
 # For sonic-platform-common testing
 RUN pip3 install redis
 
@@ -373,6 +372,9 @@ RUN pip3 install pyang==2.4.0
 
 # For mgmt-framework build
 RUN pip2 install mmh3
+
+# For sonic_metrics build
+RUN pip2 install psutil==5.7.0
 
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
