@@ -15,6 +15,7 @@ try:
     import syslog
 
     from swsssdk import SonicV2Connector
+    from metrics.process_metrics import ProcessInfoUpdateTask
     from metrics import util
 
 except ImportError as e:
@@ -48,6 +49,15 @@ class DaemonMetricsd():
 
         self.timeout = METRICSD_MAIN_THREAD_SLEEP_SECS
         self.stop_event = threading.Event()
+
+        # Register our default signal handlers, unless the signal already has a
+        # handler registered, most likely from a subclass implementation
+        if not signal.getsignal(signal.SIGHUP):
+            signal.signal(signal.SIGHUP, self.signal_handler)
+        if not signal.getsignal(signal.SIGINT):
+            signal.signal(signal.SIGINT, self.signal_handler)
+        if not signal.getsignal(signal.SIGTERM):
+            signal.signal(signal.SIGTERM, self.signal_handler)
 
     # Signal handler
     def signal_handler(self, sig, frame):
@@ -84,12 +94,19 @@ class DaemonMetricsd():
         # Start syslog info update thread
 
         # Start process info update thread
+        process_info_update = ProcessInfoUpdateTask()
+        process_info_update.task_run(self._db)
 
         # Start main loop
         util.log_info("Start daemon main loop")
 
         while not self.stop_event.wait(self.timeout):
            self.process_data()
+
+        util.log_info("Stop daemon main loop")
+
+        # Stop process info update thread
+        process_info_update.task_stop()
 
         # Start daemon deinitialization sequence
         self.deinit()

@@ -296,6 +296,9 @@ RUN pip install setuptools==40.8.0
 # For sonic-swss-common testing
 RUN pip install Pympler==0.8
 
+# For sonic_metrics build
+RUN pip2 install psutil==5.7.0
+
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
 

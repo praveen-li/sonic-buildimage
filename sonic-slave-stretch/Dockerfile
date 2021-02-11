@@ -234,6 +234,9 @@ RUN pip install meld3 mock
 RUN pip2 install redis==2.10.6
 RUN pip3 install redis==2.10.6
 
+# For sonic_metrics build
+RUN pip2 install psutil==5.7.0
+
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
 
