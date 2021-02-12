@@ -1,4 +1,11 @@
+from imp import load_source
+
 from swsssdk import ConfigDBConnector
+
+# Using load_source to 'import /usr/local/bin/sonic-cfggen as sonic_cfggen'
+# since /usr/local/bin/sonic-cfggen does not have .py extension.
+load_source('sonic_cfggen', '/usr/local/bin/sonic-cfggen')
+from sonic_cfggen import deep_update, FormatConverter
 
 '''
     These file contains libraries exposed to network operation teams to interact
@@ -25,11 +32,16 @@ class DbCommon(ConfigDBConnector):
         return
 
     def get_all_tables(self):
-        return self.get_config()
+        return self.format_convertor(self.get_config())
 
     def get_all_table_names(self):
-        t = self.get_config()
+        t = self.format_convertor(self.get_config())
         return list(t.keys())
+
+    def format_convertor(self, table):
+        data = dict()
+        deep_update(data, FormatConverter.db_to_output(table))
+        return dict(FormatConverter.to_serialized(data))
 
     '''
         Override all functions which should not be exposed.
@@ -101,28 +113,36 @@ class AppDb(DbCommon):
         return
 
     def get_neigh_table(self):
-        return self.get_table('NEIGH_TABLE')
+        return {'NEIGH_TABLE': \
+            self.format_convertor(self.get_table('NEIGH_TABLE'))}
 
     def get_route_table(self):
-        return self.get_table('ROUTE_TABLE')
+        return {'ROUTE_TABLE': \
+            self.format_convertor(self.get_table('ROUTE_TABLE'))}
 
     def get_sflow_table(self):
-        return self.get_table('SFLOW_TABLE')
+        return {'SFLOW_TABLE': \
+            self.format_convertor(self.get_table('SFLOW_TABLE'))}
 
     def get_sflow_session_table(self):
-        return self.get_table('SFLOW_SESSION_TABLE')
+        return {'SFLOW_SESSION_TABLE': \
+            self.format_convertor(self.get_table('SFLOW_SESSION_TABLE'))}
 
     def get_port_table(self):
-        return self.get_table('PORT_TABLE')
+        return {'PORT_TABLE': \
+            self.format_convertor(self.get_table('PORT_TABLE'))}
 
     def get_copp_table(self):
-        return self.get_table('COPP_TABLE')
+        return {'COPP_TABLE': \
+            self.format_convertor(self.get_table('COPP_TABLE'))}
 
     def get_lldp_entry_table(self):
-        return self.get_table('LLDP_ENTRY_TABLE')
+        return {'LLDP_ENTRY_TABLE': \
+            self.format_convertor(self.get_table('LLDP_ENTRY_TABLE'))}
 
     def get_intf_table(self):
-        return self.get_table('INTF_TABLE')
+        return {'INTF_TABLE': \
+            self.format_convertor(self.get_table('INTF_TABLE'))}
 
     # end of class AppDb
 
@@ -135,10 +155,12 @@ class ConfigDb(DbCommon):
         return
 
     def get_port_table(self):
-        return self.get_table('PORT')
+        return {'PORT': \
+            self.format_convertor(self.get_table('PORT'))}
 
     def get_interface_table(self):
-        return self.get_table('INTERFACE')
+        return {'INTERFACE': \
+            self.format_convertor(self.get_table('INTERFACE'))}
 
     # end of class ConfigDb
 
@@ -151,7 +173,8 @@ class CounterDb(DbCommon):
         return
 
     def get_counters_table(self):
-        return self.get_table('COUNTERS')
+        return {'COUNTERS': \
+            self.format_convertor(self.get_table('COUNTERS'))}
 
     # end of class CounterDb
 
@@ -164,7 +187,8 @@ class FlexCountDb(DbCommon):
         return
 
     def get_flex_counter_table(self):
-        return self.get_table('FLEX_COUNTER_TABLE')
+        return {'FLEX_COUNTER_TABLE': \
+            self.format_convertor(self.get_table('FLEX_COUNTER_TABLE'))}
 
     # end of class FlexCountDb
 
@@ -177,13 +201,16 @@ class StateDb(DbCommon):
         return
 
     def get_warm_restart_table(self):
-        return self.get_table('WARM_RESTART_TABLE')
+        return {'WARM_RESTART_TABLE': \
+            self.format_convertor(self.get_table('WARM_RESTART_TABLE'))}
 
     def get_port_table(self):
-        return self.get_table('PORT_TABLE')
+        return {'PORT_TABLE': \
+            self.format_convertor(self.get_table('PORT_TABLE'))}
 
     def get_interface_table(self):
-        return self.get_table('INTERFACE_TABLE')
+        return {'INTERFACE_TABLE': \
+            self.format_convertor(self.get_table('INTERFACE_TABLE'))}
 
     # end of class StateDb
 
