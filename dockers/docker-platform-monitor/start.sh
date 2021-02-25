@@ -69,3 +69,5 @@ fi
 supervisorctl start ledd
 
 supervisorctl start xcvrd
+
+supervisorctl start ssdd
