@@ -178,7 +178,6 @@ sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog.conf.j2 $FILESYSTEM_ROOT_USR_SHARE_SONIC_
 sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog.d/* $FILESYSTEM_ROOT/etc/rsyslog.d/
 
 # Copy sonic-metrics files
-sudo LANG=C cp $IMAGE_CONFIGS/sonic-metrics/sonic_metrics.sh $FILESYSTEM_ROOT/usr/local/bin/sonic_metrics.sh
 sudo cp $IMAGE_CONFIGS/sonic-metrics/sonic-metrics.service  $FILESYSTEM_ROOT/etc/systemd/system/
 sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable sonic-metrics.service
 
