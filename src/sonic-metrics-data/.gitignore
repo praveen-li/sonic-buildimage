@@ -1,0 +1,6 @@
+debian/*.debhelper
+debian/debhelper-build-stamp
+debian/sonic-metrics-data/
+sonic-metrics-data_*.buildinfo
+sonic-metrics-data_*.changes
+sonic-metrics-data_*.deb

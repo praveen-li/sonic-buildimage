@@ -231,6 +231,10 @@ sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install thrift
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install thrift==0.13.0
 {% endif %}
 
+# Install SONiC metrics data files (and any dependencies via 'apt-get -y install -f')
+sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/sonic-metrics-data_*.deb || \
+    sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
+
 # Install system-health Python 3 package
 SYSTEM_HEALTH_PY3_WHEEL_NAME=$(basename {{system_health_py3_wheel_path}})
 sudo cp {{system_health_py3_wheel_path}} $FILESYSTEM_ROOT/$SYSTEM_HEALTH_PY3_WHEEL_NAME
