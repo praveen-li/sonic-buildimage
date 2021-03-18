@@ -1,0 +1,7 @@
+# This file describes the maintainers for sonic-metrics-data
+# See the SONiC project governance document for more information
+
+Name = "Sangita Maity"
+Email = "samaity@linkedin.com"
+Github = samaity
+Mailinglist = sonicproject@googlegroups.com

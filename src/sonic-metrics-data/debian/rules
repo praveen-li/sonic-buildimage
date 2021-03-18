@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+build:
+
+%:
+	dh $@ --with=systemd
+
+override_dh_installinit:
+	dh_systemd_enable -psonic-metrics-data --name=sonic-metrics sonic-metrics.service
+	dh_installinit -psonic-metrics-data --name=sonic-metrics

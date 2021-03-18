@@ -1,0 +1,11 @@
+Source: sonic-metrics-data
+Maintainer: Sangita Maity <samaity@linkedin.com>
+Section: misc
+Priority: optional
+Standards-Version: 0.1
+Build-Depends: debhelper (>=9), dh-systemd (>= 1.5)
+
+Package: sonic-metrics-data
+Architecture: all
+Depends: ${misc:Depends}
+Description: Data files required for SONiC metrics
