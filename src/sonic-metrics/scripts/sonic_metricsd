@@ -16,6 +16,7 @@ try:
 
     from swsssdk import SonicV2Connector
     from metrics.process_metrics import ProcessInfoUpdateTask
+    from metrics.system_metrics import SystemInfoUpdateTask
     from metrics import util
 
 except ImportError as e:
@@ -97,6 +98,10 @@ class DaemonMetricsd():
         process_info_update = ProcessInfoUpdateTask()
         process_info_update.task_run(self._db)
 
+        # Start system info update thread
+        system_info_update = SystemInfoUpdateTask()
+        system_info_update.task_run(self._db)
+
         # Start main loop
         util.log_info("Start daemon main loop")
 
@@ -107,6 +112,9 @@ class DaemonMetricsd():
 
         # Stop process info update thread
         process_info_update.task_stop()
+
+        # Stop system info update thread
+        system_info_update.task_stop()
 
         # Start daemon deinitialization sequence
         self.deinit()
