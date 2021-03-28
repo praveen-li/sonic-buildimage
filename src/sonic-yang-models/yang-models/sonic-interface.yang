@@ -38,9 +38,6 @@ module sonic-interface {
 
 				key "port_name";
 
-				ext:key-regex-configdb-to-yang "^(Ethernet[0-9]+)$";
-
-				ext:key-regex-yang-to-configdb "<port_name>";
 
 				leaf port_name {
 					type leafref {
@@ -62,10 +59,6 @@ module sonic-interface {
 				description "INTERFACE part of config_db.json with ip-prefix";
 
 				key "port_name ip-prefix";
-
-				ext:key-regex-configdb-to-yang "^(Ethernet[0-9]+)|([a-fA-F0-9:./]+)$";
-
-				ext:key-regex-yang-to-configdb "<port_name>|<ip-prefix>";
 
 				leaf port_name {
 					/* This node must be present in INTERFACE_LIST */
