@@ -11,9 +11,7 @@ high_performance_deps = [
 setup(
     name='sonic_metrics',
     version='1.0',
-    packages=[
-        'metrics'
-    ],
+    packages=['metrics'],
     scripts=[
         'scripts/sonic_metricsd',
     ],
@@ -23,13 +21,6 @@ setup(
     maintainer="lnos-coders",
     maintainer_email='lnos-coders@linkedin.com',
     description='SONiC metrics python scripts',
-    install_requires = [
-        'psutil'
-    ],
-    package_data = {
-        'metrics': ['data/critical_process_file.json']
-    },
-    include_package_data=True,
     classifiers=[
         'Intended Audience :: Developers',
         'Operating System :: Linux',
