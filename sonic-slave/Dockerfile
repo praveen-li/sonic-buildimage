@@ -280,6 +280,10 @@ RUN pip install meld3 mock
 # For vs image build
 RUN pip install pexpect==4.6.0
 
+# For swsssdk build
+RUN pip2 install redis==2.10.6
+RUN pip3 install redis==2.10.6
+
 # Install dependencies for isc-dhcp-relay build
 RUN apt-get -y build-dep isc-dhcp
 
