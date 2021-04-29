@@ -288,6 +288,7 @@ RUN pip3 install redis==2.10.6
 RUN pip3 install python-arptable>=0.0.1 psutil==5.7.0
 
 # For sonic-utilities build
+RUN pip install nose==1.3.7
 RUN pip install mockredispy==2.9.3
 RUN pip install pytest-runner==4.4
 RUN pip install setuptools==40.8.0
