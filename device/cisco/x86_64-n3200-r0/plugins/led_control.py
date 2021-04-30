@@ -64,7 +64,7 @@ class LedControl(LedControlBase):
 
         # SONiC port nums are 0-based and increment by 4
         # QSFP indices are 1-based and increment by 1
-        if (sonic_port_num < self.NON_BREAKOUT_PORT_START):
+        if (port_number < self.NON_BREAKOUT_PORT_START):
             return (int(port_number/4) + 1)
         else:
             return (port_number - self.NON_BREAKOUT_PORT_START + self.SFP_START_IDX)
