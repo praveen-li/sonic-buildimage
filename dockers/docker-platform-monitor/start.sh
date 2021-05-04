@@ -45,7 +45,13 @@ if [ -e /usr/share/sonic/platform/fancontrol ]; then
         sed -i "s/$CONF_I2C_BUSID\/i2c-/$REAL_I2C_BUSID\/i2c-/g" /etc/fancontrol
     fi
 
-    supervisorctl start fancontrol
+    # If platform is from cisco and has cisco fancontrol daemon, run it
+    if [ -e /usr/share/sonic/platform/plugins/cisco_fancontrol.sh ]; then
+        supervisorctl start cisco_fancontrol
+    # otherwise, run regular fancontrol daemon
+    else
+        supervisorctl start fancontrol
+    fi
 fi
 
 

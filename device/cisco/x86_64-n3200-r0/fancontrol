@@ -1,0 +1,14 @@
+#N3232C doesn't have any temp. sensors near to ASIC but added here as dummy for fancontrol script to work
+ASICTEMP=/sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/temp1_input
+FRONTPORTTEMP=/sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/temp1_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/temp2_input
+FANSIDETEMP=/sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/temp3_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/temp4_input
+FCPWMS=/sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/pwm1 /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/pwm2 /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/pwm3 /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/pwm4
+FCFANS=/sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan1_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan2_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan3_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan4_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan5_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan6_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan7_input /sys/class/i2c-adapter/i2c-31/31-0058/hwmon/hwmon?/fan8_input
+FAN_PRESENCE=/sys/class/gpio/gpio500/value /sys/class/gpio/gpio501/value /sys/class/gpio/gpio502/value /sys/class/gpio/gpio503/value
+FAN_DIRECTION=/sys/class/gpio/gpio496/value /sys/class/gpio/gpio497/value /sys/class/gpio/gpio498/value /sys/class/gpio/gpio499/value
+INTERVAL=5
+MINTEMP=55
+MAXTEMP=85
+MINPWM=154
+MAXPWM=255
+
