@@ -108,7 +108,7 @@ sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install $SONIC_
 sudo rm -rf $FILESYSTEM_ROOT/$SONIC_METRICS_PY2_WHEEL_NAME
 
 # Install SONiC metrics data files (and any dependencies via 'apt-get -y install -f')
-sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/sonic-metrics-data_*.deb || \
+sudo dpkg --root=$FILESYSTEM_ROOT -i target/debs/sonic-metrics-data_*.deb || \
     sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
 
 # Install built Python Click package (and its dependencies via 'apt-get -y install -f')
