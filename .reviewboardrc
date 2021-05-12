@@ -1,3 +1,8 @@
 REPOSITORY = "sonic-buildimage"
 REVIEWBOARD_URL = "https://rb.corp.linkedin.com"
 TARGET_GROUPS = "lnos-reviewers"
+
+SLACK_CONFIGS = [{
+    "channels": ['sdi-reviews'],
+    "extra_info_template": '{PARTICIPANTS}'
+}]
