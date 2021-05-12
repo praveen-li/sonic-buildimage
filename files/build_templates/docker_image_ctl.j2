@@ -150,6 +150,9 @@ start() {
 {%- if '--log-driver=json-file' in docker_image_run_opt or '--log-driver' not in docker_image_run_opt %}
         --log-opt max-size=2M --log-opt max-file=5 \
 {%- endif %}
+{%- if docker_container_name == "telemetry" %}
+        --cpus="0.3" --memory="400m" --oom-kill-disable \
+{%- endif %}
 {%- if docker_container_name == "syncd" and sonic_asic_platform == "mellanox" %}
         -e SX_SNIFFER_ENABLE \
         -e SX_SNIFFER_TARGET \
