@@ -230,3 +230,4 @@ pbmp_gport_stack
 reglist_enable
 scache_filename
 host_as_route_disable
+oversubscribe_mixed_sister_25_50_enable

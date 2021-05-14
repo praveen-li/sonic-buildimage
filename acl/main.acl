@@ -1,0 +1,3 @@
+owners: [ pchaudha, pmao, arajure, samaity, zxu ]
+paths: [ '.*' ]
+exclude_paths: [ 'src/.*', 'files/.*', 'platform/.*', 'release_version.json', 'rules/sonic-utilities.mk' ]

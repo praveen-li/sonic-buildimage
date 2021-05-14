@@ -296,6 +296,14 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     sysfsutils              \
     squashfs-tools          \
     grub2-common            \
+    gdb                     \
+    patch                   \
+    wget                    \
+    strace                  \
+    htop                    \
+    valgrind                \
+    smartmontools           \
+    sshpass                 \
     rsyslog                 \
     screen                  \
     hping3                  \
@@ -402,6 +410,54 @@ set /files/etc/sysctl.conf/kernel.panic 10
 set /files/etc/sysctl.conf/kernel.hung_task_timeout_secs 300
 set /files/etc/sysctl.conf/vm.panic_on_oom 2
 set /files/etc/sysctl.conf/fs.suid_dumpable 2
+
+set /files/etc/sysctl.conf/net.ipv4.conf.default.forwarding 1
+set /files/etc/sysctl.conf/net.ipv4.conf.all.forwarding 1
+set /files/etc/sysctl.conf/net.ipv4.conf.eth0.forwarding 0
+
+set /files/etc/sysctl.conf/net.ipv4.conf.default.arp_accept 0
+set /files/etc/sysctl.conf/net.ipv4.conf.default.arp_announce 0
+set /files/etc/sysctl.conf/net.ipv4.conf.default.arp_filter 0
+set /files/etc/sysctl.conf/net.ipv4.conf.default.arp_notify 0
+set /files/etc/sysctl.conf/net.ipv4.conf.default.arp_ignore 0
+set /files/etc/sysctl.conf/net.ipv4.conf.all.arp_accept 0
+set /files/etc/sysctl.conf/net.ipv4.conf.all.arp_announce 1
+set /files/etc/sysctl.conf/net.ipv4.conf.all.arp_filter 0
+set /files/etc/sysctl.conf/net.ipv4.conf.all.arp_notify 1
+set /files/etc/sysctl.conf/net.ipv4.conf.all.arp_ignore 2
+
+set /files/etc/sysctl.conf/net.ipv4.neigh.default.base_reachable_time_ms 60000
+set /files/etc/sysctl.conf/net.ipv4.neigh.default.gc_stale_time 1800
+
+set /files/etc/sysctl.conf/net.ipv6.neigh.default.base_reachable_time_ms 60000
+set /files/etc/sysctl.conf/net.ipv6.neigh.default.gc_stale_time 1800
+
+set /files/etc/sysctl.conf/net.ipv4.neigh.default.gc_thresh1 1024
+set /files/etc/sysctl.conf/net.ipv6.neigh.default.gc_thresh1 1024
+set /files/etc/sysctl.conf/net.ipv4.neigh.default.gc_thresh2 2048
+set /files/etc/sysctl.conf/net.ipv6.neigh.default.gc_thresh2 2048
+set /files/etc/sysctl.conf/net.ipv4.neigh.default.gc_thresh3 4096
+set /files/etc/sysctl.conf/net.ipv6.neigh.default.gc_thresh3 4096
+
+set /files/etc/sysctl.conf/net.ipv6.conf.default.forwarding 1
+set /files/etc/sysctl.conf/net.ipv6.conf.all.forwarding 1
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.forwarding 0
+
+set /files/etc/sysctl.conf/net.ipv6.conf.default.accept_dad 0
+set /files/etc/sysctl.conf/net.ipv6.conf.all.accept_dad 0
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.accept_dad 0
+
+set /files/etc/sysctl.conf/net.ipv6.conf.default.keep_addr_on_down 1
+set /files/etc/sysctl.conf/net.ipv6.conf.all.keep_addr_on_down 1
+set /files/etc/sysctl.conf/net.ipv6.conf.eth0.keep_addr_on_down 1
+
+set /files/etc/sysctl.conf/net.ipv4.tcp_l3mdev_accept 1
+set /files/etc/sysctl.conf/net.ipv4.udp_l3mdev_accept 1
+
+set /files/etc/sysctl.conf/net.core.rmem_max 2097152
+set /files/etc/sysctl.conf/net.core.wmem_max 2097152
+
+set /files/etc/sysctl.conf/net.netfilter.nf_conntrack_checksum 0
 " -r $FILESYSTEM_ROOT
 
 sysctl_net_cmd_string=""
@@ -430,6 +486,10 @@ sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install 'docke
 
 # Install scapy
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install 'scapy==2.4.4'
+
+# Get package to support Dynamic Port Breakout
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install xmltodict==0.12.0
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip install jsondiff==1.2.0
 
 ## Note: keep pip installed for maintainance purpose
 
@@ -494,8 +554,10 @@ fi
 ## Organization specific extensions such as Configuration & Scripts for features like AAA, ZTP...
 if [ "${enable_organization_extensions}" = "y" ]; then
    if [ -f files/build_templates/organization_extensions.sh ]; then
-      sudo chmod 755 files/build_templates/organization_extensions.sh
-      ./files/build_templates/organization_extensions.sh -f $FILESYSTEM_ROOT -h $HOSTNAME
+      sudo chmod 755 files/build_templates/organization_extensions.sh 
+      ./files/build_templates/organization_extensions.sh -f $FILESYSTEM_ROOT \
+                                                         -h $HOSTNAME \
+                                                         -p $PASSWORD_ENCRYPTED
    fi
 fi
 

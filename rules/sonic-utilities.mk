@@ -1,6 +1,6 @@
 # sonic utilities package
 
-SONIC_UTILITIES_PY3 = sonic_utilities-1.2-py3-none-any.whl
+SONIC_UTILITIES_PY3 = sonic_utilities-3.0.1-py3-none-any.whl
 $(SONIC_UTILITIES_PY3)_SRC_PATH = $(SRC_PATH)/sonic-utilities
 $(SONIC_UTILITIES_PY3)_PYTHON_VERSION = 3
 $(SONIC_UTILITIES_PY3)_DEPENDS += $(SONIC_PY_COMMON_PY3) \

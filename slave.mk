@@ -61,6 +61,8 @@ export CONFIGURED_ARCH
 export PYTHON_WHEELS_PATH
 export IMAGE_DISTRO
 export IMAGE_DISTRO_DEBS_PATH
+export STRETCH_DEBS_PATH
+export PYTHON_WHEELS_PATH
 
 ###############################################################################
 ## Utility rules

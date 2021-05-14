@@ -1,0 +1,3 @@
+REPOSITORY = "sonic-buildimage"
+REVIEWBOARD_URL = "https://rb.corp.linkedin.com"
+TARGET_GROUPS = "lnos-reviewers"

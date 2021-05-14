@@ -20,6 +20,7 @@ debs/
 
 ## TODO: add kmod into Depends
 RUN apt-get install -yf kmod
+RUN apt-get install -yf libprotobuf10
 
 ## BRCM uses ethtool to set host interface speed
 RUN apt-get install -y ethtool

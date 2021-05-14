@@ -1063,6 +1063,7 @@ def parse_xml(filename, platform=None, port_config_file=None, asic_name=None, hw
     port_config_file -- port config file name
     asic_name -- asic name; to parse multi-asic device minigraph to 
     generate asic specific configuration.
+    hwsku_config_file -- Hardware SKU config file name.
      """
 
     root = ET.parse(filename).getroot()

@@ -31,7 +31,7 @@ function updateSyslogConf()
 {
     # On multiNPU platforms, change the syslog target ip to docker0 ip to allow logs from containers
     # running on the namespace to reach the rsyslog service running on the host
-    # Also update the container name  
+    # Also update the container name
     if [[ ($NUM_ASIC -gt 1) ]]; then
         TARGET_IP=$(docker network inspect bridge --format={{ "'{{(index .IPAM.Config 0).Gateway}}'" }})
         CONTAINER_NAME="$DOCKERNAME"
@@ -427,6 +427,12 @@ stop() {
     {%- elif docker_container_name == "teamd" %}
     # Longer timeout of 60 sec to wait for Portchannels to be cleaned.
     /usr/local/bin/container stop -t 60 $DOCKERNAME
+    {%- elif docker_container_name == "bgp" %}
+    # Before stopping the BGP docker, kill watchfrr, zebra and bgpd to help the bgp graceful restart procedure
+    echo "Stopping bgp ..."
+    docker exec -i bgp pkill -9 watchfrr || [ $? == 1 ]
+    docker exec -i bgp pkill -9 zebra
+    docker exec -i bgp pkill -9 bgpd || [ $? == 1 ]
     {%- else %}
     /usr/local/bin/container stop $DOCKERNAME
     {%- endif %}

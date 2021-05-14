@@ -93,7 +93,12 @@ iface eth0 {{ 'inet' if prefix | ipv4 else 'inet6' }} static
 {% endfor %}
 {% else %}
 iface eth0 inet dhcp
-    metric 202
+    # FRR interprets below metric value as admin distance of 254 and metric 1000
+    # 4261413864 = 0xFE0003E8, FRR takes first byte as AD and last 3 bytes as metric
+    # this allows default route learned via BGP (AD 200) to be preferred over
+    # DHCP learned default route on management interface (default AD 0)
+    metric 4261413864
+    # upstream metric 202
 {% if (MGMT_VRF_CONFIG) and (MGMT_VRF_CONFIG['vrf_global']['mgmtVrfEnabled'] == "true") %}
     vrf mgmt
 {% endif %}

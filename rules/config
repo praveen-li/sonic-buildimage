@@ -40,7 +40,7 @@ DEFAULT_BUILD_LOG_TIMESTAMP = none
 DEFAULT_USERNAME = admin
 
 # DEFAULT_PASSWORD - default password for installer build
-DEFAULT_PASSWORD = YourPaSsWoRd
+DEFAULT_PASSWORD = admin123
 
 # ENABLE_DHCP_GRAPH_SERVICE - specify the source of minigraph to generate configuration file.
 # If set to y SONiC will get the minigraph from graph service. Graph service URL need to be
@@ -127,7 +127,7 @@ INCLUDE_ICCPD = n
 INCLUDE_SFLOW = y
 
 # INCLUDE_MGMT_FRAMEWORK - build docker-sonic-mgmt-framework for CLI and REST server support
-INCLUDE_MGMT_FRAMEWORK = y
+INCLUDE_MGMT_FRAMEWORK = n
 
 # INCLUDE_HOST_SERVICE - build sonic-host-services for mgmt-framework and/or
 # telemetry containers to access host functionality
@@ -137,7 +137,7 @@ INCLUDE_HOST_SERVICE = n
 INCLUDE_RESTAPI = n
 
 # INCLUDE_NAT - build docker-nat for nat support
-INCLUDE_NAT = y
+INCLUDE_NAT = n
 
 # TELEMETRY_WRITABLE - Enable write/config operations via the gNMI interface.
 # Uncomment to enable:

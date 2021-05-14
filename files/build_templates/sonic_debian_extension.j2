@@ -593,7 +593,33 @@ sudo chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS info
 {% set imagefilename = image.split('/')|last -%}
 {% set imagename = imagefilename.split('.')|first -%}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS load -i {{image}}
+{% if 'docker-snmp-sv2' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-dhcp-relay' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-orchagent' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-lldp-sv2' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-platform-monitor' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-sflow' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-database' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-sonic-telemetry' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-fpm-frr' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-router-advertiser' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-teamd' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% elif 'docker-syncd' in imagename %}
+sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
+{% else %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:"${SONIC_IMAGE_VERSION}"
+{% endif %}
 {% if imagename.endswith('-dbg') %}
 {% set imagebasename = imagename.replace('-dbg', '') -%}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagebasename}}:"${SONIC_IMAGE_VERSION}"

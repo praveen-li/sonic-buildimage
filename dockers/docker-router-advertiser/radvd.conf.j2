@@ -8,29 +8,30 @@
 # See man page for radvd.conf for descriptions of all available options
 #
 
+# The template will be manged by outside agent, below is commented example
 {# If our configuration has VLAN interfaces... #}
 {% if VLAN_INTERFACE %}
-{% for (name, prefix) in VLAN_INTERFACE|pfx_filter %}
-{# If this VLAN has an IPv6 address... #}
-{% if prefix | ipv6 %}
-interface {{ name }}
-{
-    IgnoreIfMissing on;
-    AdvSendAdvert on;
-    MinRtrAdvInterval 200;
-    MaxRtrAdvInterval 600;
-    AdvManagedFlag on;
-    AdvOtherConfigFlag off;
-    AdvLinkMTU 9100;
-    AdvHomeAgentFlag off;
-    prefix {{ prefix | network }}/{{ prefix | prefixlen }} {
-        AdvOnLink on;
-        AdvAutonomous off;
-        AdvRouterAddr off;
-        AdvValidLifetime infinity;
-        AdvPreferredLifetime infinity;
-    };
-};
+{% for (name, prefix) in VLAN_INTERFACE %}
+{# If this VLAN has an IPv6 address, not including link local... #}
+{% if prefix | ipv6 and prefix | network != 'fe80::' %}
+#interface {{ name }}
+#{
+#    IgnoreIfMissing on;
+#    AdvSendAdvert on;
+#    MinRtrAdvInterval 200;
+#    MaxRtrAdvInterval 600;
+#    AdvManagedFlag on;
+#    AdvOtherConfigFlag off;
+#    AdvLinkMTU 9100;
+#    AdvHomeAgentFlag off;
+#    prefix {{ prefix | network }}/{{ prefix | prefixlen }} {
+#        AdvOnLink on;
+#        AdvAutonomous off;
+#        AdvRouterAddr off;
+#        AdvValidLifetime infinity;
+#        AdvPreferredLifetime infinity;
+#    };
+#};
 
 {% endif %}
 {% endfor %}

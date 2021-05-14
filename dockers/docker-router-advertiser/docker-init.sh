@@ -4,6 +4,7 @@ mkdir -p /etc/supervisor/conf.d
 
 # Generate supervisord router advertiser config, /etc/radvd.conf config file, and
 # the script that waits for pertinent interfaces to come up and make it executable
+# LinkedIn: It is up to NASA to config the radvd.conf and decide starting RA or not
 CFGGEN_PARAMS=" \
     -d \
     -t /usr/share/sonic/templates/docker-router-advertiser.supervisord.conf.j2,/etc/supervisor/conf.d/supervisord.conf \

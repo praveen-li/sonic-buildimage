@@ -9,7 +9,9 @@ include $(PLATFORM_PATH)/platform-modules-inventec.mk
 include $(PLATFORM_PATH)/platform-modules-cel.mk
 include $(PLATFORM_PATH)/platform-modules-delta.mk
 include $(PLATFORM_PATH)/platform-modules-quanta.mk
+include $(PLATFORM_PATH)/platform-modules-n9200.mk
 #include $(PLATFORM_PATH)/platform-modules-mitac.mk
+include $(PLATFORM_PATH)/platform-modules-linkedin.mk
 include $(PLATFORM_PATH)/platform-modules-juniper.mk
 include $(PLATFORM_PATH)/platform-modules-brcm-xlr-gts.mk
 include $(PLATFORM_PATH)/docker-syncd-brcm.mk

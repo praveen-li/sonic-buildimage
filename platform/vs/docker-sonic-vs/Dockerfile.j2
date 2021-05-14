@@ -84,6 +84,10 @@ RUN pip2 install monotonic==1.5
 RUN pip2 install urllib3
 RUN pip2 install requests
 RUN pip2 install crontab
+RUN pip install click==7.0.0
+RUN pip install ijson
+RUN pip install jsondiff
+RUN pip install xmltodict
 
 # For sonic-config-engine Python 3 package
 # Install pyangbind here, outside sonic-config-engine dependencies, as pyangbind causes enum34 to be installed.
@@ -160,6 +164,7 @@ COPY ["buffermgrd.sh", "/usr/bin/"]
 
 COPY ["platform.json", "/usr/share/sonic/device/x86_64-kvm_x86_64-r0/"]
 COPY ["hwsku.json", "/usr/share/sonic/device/x86_64-kvm_x86_64-r0/Force10-S6000/"]
+COPY ["platform.json", "/usr/share/sonic/platform/"]
 
 # Workaround the tcpdump issue
 RUN mv /usr/sbin/tcpdump /usr/bin/tcpdump
