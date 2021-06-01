@@ -319,7 +319,7 @@ def main():
         if not ports:
             print('Failed to get port config', file=sys.stderr)
             sys.exit(1)
-        for port, v in ports.iteritems():
+        for port, v in iter(ports.items()):
             ports[port]['admin_status'] = 'up'
         deep_update(data, {'PORT': ports})
 
