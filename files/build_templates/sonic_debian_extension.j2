@@ -593,13 +593,13 @@ sudo chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS info
 {% set imagefilename = image.split('/')|last -%}
 {% set imagename = imagefilename.split('.')|first -%}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS load -i {{image}}
-{% if 'docker-snmp-sv2' in imagename %}
+{% if 'docker-snmp' in imagename %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
 {% elif 'docker-dhcp-relay' in imagename %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
 {% elif 'docker-orchagent' in imagename %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
-{% elif 'docker-lldp-sv2' in imagename %}
+{% elif 'docker-lldp' in imagename %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
 {% elif 'docker-platform-monitor' in imagename %}
 sudo LANG=C chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS tag {{imagename}}:latest {{imagename}}:lnos_v3.0.1
