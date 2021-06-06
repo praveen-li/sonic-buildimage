@@ -22,6 +22,7 @@ try:
 
     from swsssdk import SonicV2Connector, ConfigDBConnector
     from metrics import util
+    from metrics.logger import Logger
 
 except ImportError as e:
     raise ImportError(str(e) + " - required module not found")
@@ -30,6 +31,10 @@ except ImportError as e:
 #
 # ====================== Constants =======================================
 #
+
+SYSLOG_IDENTIFIER = "system_metrics"
+log = Logger(SYSLOG_IDENTIFIER)
+log.set_priority_info()
 
 SYSTEM_INFO_TABLE = 'SYSTEM_INFO'
 SYSTEM_INFO_UPDATE_PERIOD_SECS = 60
@@ -111,7 +116,7 @@ class SystemInfoUpdateTask(object):
             return output
 
         except Exception as e:
-            util.log_error("Cannot get Uptime with error {}".format(e))
+            log.error("Cannot get Uptime with error {}".format(e))
             return
 
 
@@ -135,12 +140,12 @@ class SystemInfoUpdateTask(object):
             debian_version = sys_build_info['debian_version']
             kernel_version = sys_build_info['kernel_version']
         else:
-            util.log_error("Error occurred while parsing build data")
+            log.error("Error occurred while parsing build data")
             return
 
         hwsku = self.get_hwsku()
         if not hwsku:
-            util.log_error("Error occurred while parsing hwsku data")
+            log.error("Error occurred while parsing hwsku data")
             return
 
         # Get Description of the system and sw running
@@ -158,7 +163,7 @@ class SystemInfoUpdateTask(object):
         if os.path.isfile(RUN_CFG_FILE):
             last_modified_time = os.stat(RUN_CFG_FILE).st_mtime
         else:
-            util.log_error("{} file not Exist".format(RUN_CFG_FILE))
+            log.error("{} file not Exist".format(RUN_CFG_FILE))
         return last_modified_time
 
 
@@ -166,14 +171,12 @@ class SystemInfoUpdateTask(object):
         '''
         Update system information and uptime to state DB under SYSTEM_INFO_TABLE table
         '''
-        util.log_info("Start updating system Info")
-
         stat_key =  SYSTEM_INFO_TABLE + "|{}".format(STAT_KEY)
 
         # Get system uptime
         output = self.get_sys_uptime()
         if not output:
-            util.log_error("Error occurred while parsing uptime data")
+            log.error("Error occurred while parsing uptime data")
             return
         sys_uptime = output.strip()
 
@@ -183,7 +186,7 @@ class SystemInfoUpdateTask(object):
         # Get system Name
         sysName_res = self.get_hostname()
         if not sysName_res:
-            util.log_error("Error occurred while parsing system Naming data")
+            log.error("Error occurred while parsing system Naming data")
             return
         sysName = sysName_res.strip()
 
@@ -196,7 +199,7 @@ class SystemInfoUpdateTask(object):
 
         sys_desc_info = self.get_sys_desc()
         if not sys_desc_info:
-            util.log_error("Unable to get system description info")
+            log.error("Unable to get system description info")
             return
         self._db.set(self._db.STATE_DB, stat_key, SYS_DESC_FIELD, sys_desc_info)
 
@@ -207,7 +210,7 @@ class SystemInfoUpdateTask(object):
             fv_map[field] = sys_build_info[field]
 
         if len(fv_map.keys()) == 0:
-            util.log_error("Key Value is missing. Available keys:{}".format(fv_map.keys()))
+            log.error("Key Value is missing. Available keys:{}".format(fv_map.keys()))
             return
 
         # Store system build info to 'SYSTEM_INFO' table.
@@ -220,7 +223,7 @@ class SystemInfoUpdateTask(object):
         if modified_time:
             changed_time = cur_time - modified_time
         else:
-            util.log_error("Unable to get modified time info")
+            log.error("Unable to get modified time info")
             return
 
         # Store the value of sysUpTime when the running configuration was last changed
@@ -229,18 +232,17 @@ class SystemInfoUpdateTask(object):
 
     def task_worker(self):
         # Start loop to update system info in DB periodically
-        util.log_info("Start system info update loop")
+        log.info("Start system info update loop")
 
         while not self.task_stopping_event.wait(SYSTEM_INFO_UPDATE_PERIOD_SECS):
             self.update_system_info()
 
-        util.log_info("Stop system info update loop")
+        log.info("Stop system info update loop")
 
         # Remove all entries in 'SYSTEM_INFO' table.
         self.deinit()
 
         self._db.close(self._db.STATE_DB)
-        util.log_info("Stop system info update loop")
 
 
     def task_run(self, db):

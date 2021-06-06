@@ -27,6 +27,7 @@ try:
 
     from swsssdk import SonicV2Connector
     from metrics import util
+    from metrics.logger import Logger
 
 except ImportError as e:
     raise ImportError(str(e) + " - required module not found")
@@ -36,6 +37,9 @@ except ImportError as e:
 # ====================== Constants =======================================
 #
 
+SYSLOG_IDENTIFIER = "process_metrics"
+log = Logger(SYSLOG_IDENTIFIER)
+log.set_priority_info()
 
 CRITICAL_PROCESSES_FILE = os.path.join(os.path.dirname(__file__), 'data/critical_process_file.json')
 
@@ -78,12 +82,12 @@ class ProcessInfoUpdateTask(object):
                 try:
                     data = json.load(fp)
                 except Exception as e:
-                    util.log_error("error occurred while parsing json: {}".format(e))
+                    log.error("error occurred while parsing json: {}".format(e))
                     return
             data_dict = ast.literal_eval(json.dumps(data))
             return data_dict
         except Exception as e:
-            util.log_error("Json file {} does not exist".format(filename))
+            log.error("Json file {} does not exist".format(filename))
             return
 
 
@@ -127,17 +131,16 @@ class ProcessInfoUpdateTask(object):
         """
         Update crtical process status and uptime to state DB under PROCESS_INFO_TABLE table
         """
-        util.log_info("Start Critical Processs Monitoring loop")
 
         critical_process_info = self.readJson(CRITICAL_PROCESSES_FILE)
         if not critical_process_info:
-            util.log_error("oerror occurred while parsing json file {}".format(CRITICAL_PROCESSES_FILE))
+            log.error("oerror occurred while parsing json file {}".format(CRITICAL_PROCESSES_FILE))
             return
 
         rel, major, minor = util.check_version()
-        util.log_info("SONiC Release {}, manjor {}, minor {} version".format(rel, major, minor))
+        log.debug("SONiC Release {}, manjor {}, minor {} version".format(rel, major, minor))
         if not rel:
-            util.log_error("Unable to get release version")
+            log.error("Unable to get release version")
             return
 
         ver_key = "v_{}.x".format(rel)
@@ -153,7 +156,7 @@ class ProcessInfoUpdateTask(object):
 
         process_dict = self.checkProcesses(pro_list)
         if not process_dict:
-            util.log_error("Unable to get process info")
+            log.error("Unable to get process info")
             return
 
         for process in process_dict.keys():
@@ -167,7 +170,7 @@ class ProcessInfoUpdateTask(object):
 
             if status == STATE_RUNNING:
                 if pid is None:
-                    util.log_error("Unable to get PID info")
+                    log.error("Unable to get PID info")
                     return
                 p = psutil.Process(pid)
                 elapsedTime = time.time() - p.create_time()
@@ -180,18 +183,17 @@ class ProcessInfoUpdateTask(object):
 
     def task_worker(self):
         # Start loop to update critical process info in DB periodically
-        util.log_info("Start process info update loop")
+        log.info("Start process info update loop")
 
         while not self.task_stopping_event.wait(PROCESS_INFO_UPDATE_PERIOD_SECS):
             self.update_process_info()
 
-        util.log_info("Stop process info update loop")
+        log.info("Stop process info update loop")
 
         # Remove all entries in 'PROCESS_INFO' table.
         self.deinit()
 
         self._db.close(self._db.STATE_DB)
-        util.log_info("Stop process info update loop")
 
 
     def task_run(self, db):
