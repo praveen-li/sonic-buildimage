@@ -874,6 +874,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         $(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CTRMGRD)) \
         $(addprefix $(FILES_PATH)/,$($(SONIC_CTRMGRD)_FILES)) \
         $(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_YANG_MGMT_PY3)) \
+        $(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_NETOPS_UTIL_PY2)) \
         $(addprefix $(PYTHON_WHEELS_PATH)/,$(SYSTEM_HEALTH)) \
         $(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_HOST_SERVICES_PY3))
 	$(HEADER)
@@ -920,6 +921,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
 	export sonic_yang_models_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_YANG_MODELS_PY3))"
 	export sonic_ctrmgmt_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CTRMGRD))"
 	export sonic_yang_mgmt_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_YANG_MGMT_PY3))"
+	export sonic_netops_util_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_NETOPS_UTIL_PY2))"
 	export multi_instance="false"
 	export python_swss_debs="$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$($(LIBSWSSCOMMON)_RDEPENDS))"
 	export python_swss_debs+=" $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(LIBSWSSCOMMON)) $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(PYTHON_SWSSCOMMON)) $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(PYTHON3_SWSSCOMMON))"

@@ -134,6 +134,12 @@ sudo cp {{swsssdk_py2_wheel_path}} $FILESYSTEM_ROOT/$SWSSSDK_PY2_WHEEL_NAME
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install $SWSSSDK_PY2_WHEEL_NAME
 sudo rm -rf $FILESYSTEM_ROOT/$SWSSSDK_PY2_WHEEL_NAME
 
+# Install sonic_netops_util Python2 package
+SONIC_NETOPS_UTIL_PY2_WHEEL_NAME=$(basename {{sonic_netops_util_py2_wheel_path}})
+sudo cp {{sonic_netops_util_py2_wheel_path}} $FILESYSTEM_ROOT/$SONIC_NETOPS_UTIL_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install $SONIC_NETOPS_UTIL_PY2_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_NETOPS_UTIL_PY2_WHEEL_NAME
+
 # Install sonic-py-common Python 2 package
 SONIC_PY_COMMON_PY2_WHEEL_NAME=$(basename {{sonic_py_common_py2_wheel_path}})
 sudo cp {{sonic_py_common_py2_wheel_path}} $FILESYSTEM_ROOT/$SONIC_PY_COMMON_PY2_WHEEL_NAME
