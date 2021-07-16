@@ -67,8 +67,9 @@ if [ -z "$CONFIG_TYPE" ] || [ "$CONFIG_TYPE" == "separated" ]; then
     echo "no service integrated-vtysh-config" > /etc/frr/vtysh.conf
     rm -f /etc/frr/frr.conf
 elif [ "$CONFIG_TYPE" == "split" ]; then
-    echo "no service integrated-vtysh-config" > /etc/frr/vtysh.conf
-    rm -f /etc/frr/frr.conf
+    echo "service integrated-vtysh-config" > /etc/frr/vtysh.conf
+    rm -f /etc/frr/bgpd.conf /etc/frr/zebra.conf /etc/frr/staticd.conf \
+          /etc/frr/bfdd.conf /etc/frr/ospfd.conf /etc/frr/pimd.conf
 elif [ "$CONFIG_TYPE" == "unified" ]; then
     CFGGEN_PARAMS=" \
         -d \
