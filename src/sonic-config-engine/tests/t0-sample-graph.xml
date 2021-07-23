@@ -185,6 +185,22 @@
           </a:Prefix>
           <a:PrefixStr>10.10.0.99/32</a:PrefixStr>
         </a:LoopbackIPInterface>
+        <a:LoopbackIPInterface>
+          <Name>LoopbackIP2</Name>
+          <AttachTo>Loopback2</AttachTo>
+          <a:Prefix xmlns:b="Microsoft.Search.Autopilot.Evolution">
+            <b:IPPrefix>10.21.0.64/32</b:IPPrefix>
+          </a:Prefix>
+          <a:PrefixStr>10.21.0.64/32</a:PrefixStr>
+        </a:LoopbackIPInterface>
+        <a:LoopbackIPInterface>
+          <Name>LoopbackIP3</Name>
+          <AttachTo>Loopback3</AttachTo>
+          <a:Prefix xmlns:b="Microsoft.Search.Autopilot.Evolution">
+            <b:IPPrefix>10.21.64.2/32</b:IPPrefix>
+          </a:Prefix>
+          <a:PrefixStr>10.21.64.2/32</a:PrefixStr>
+        </a:LoopbackIPInterface>
        </LoopbackIPInterfaces>
       <ManagementIPInterfaces xmlns:a="http://schemas.datacontract.org/2004/07/Microsoft.Search.Autopilot.Evolution">
         <a:ManagementIPInterface>
@@ -435,7 +451,6 @@
       </DeviceLinkBase>
       <DeviceLinkBase>
         <ElementType>DeviceInterfaceLink</ElementType>
-        <AutoNegotiation>true</AutoNegotiation>
         <Bandwidth>100000</Bandwidth>
         <EndDevice>switch-t0</EndDevice>
         <EndPort>fortyGigE0/4</EndPort>
@@ -503,6 +518,11 @@
         <a:Name i:nil="true"/>
         <a:Properties>
           <a:DeviceProperty>
+            <a:Name>AutoNegotiation</a:Name>
+            <a:Reference i:nil="true"/>
+            <a:Value>True</a:Value>
+          </a:DeviceProperty>
+          <a:DeviceProperty>
             <a:Name>FECDisabled</a:Name>
             <a:Reference i:nil="true"/>
             <a:Value>True</a:Value>
@@ -513,6 +533,11 @@
       <a:LinkMetadata>
         <a:Name i:nil="true"/>
         <a:Properties>
+          <a:DeviceProperty>
+            <a:Name>AutoNegotiation</a:Name>
+            <a:Reference i:nil="true"/>
+            <a:Value>False</a:Value>
+          </a:DeviceProperty>
           <a:DeviceProperty>
             <a:Name>FECDisabled</a:Name>
             <a:Reference i:nil="true"/>

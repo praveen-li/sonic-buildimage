@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #############################################################################
 # Mellanox
 #
@@ -73,6 +71,7 @@ class Chassis(ChassisBase):
         self.sfp_event_initialized = False
         self.reboot_cause_initialized = False
         self.sdk_handle = None
+        self.deinitialize_sdk_handle = None
         logger.log_info("Chassis loaded successfully")
 
 
@@ -80,9 +79,8 @@ class Chassis(ChassisBase):
         if self.sfp_event_initialized:
             self.sfp_event.deinitialize()
 
-        if self.sdk_handle:
-            from sonic_platform.sfp import deinitialize_sdk_handle
-            deinitialize_sdk_handle(self.sdk_handle)
+        if self.deinitialize_sdk_handle:
+            self.deinitialize_sdk_handle(self.sdk_handle)
 
 
     def initialize_psu(self):
@@ -112,7 +110,6 @@ class Chassis(ChassisBase):
                 fan = Fan(fan_index, drawer, index + 1)
                 fan_index += 1
                 drawer._fan_list.append(fan)
-                self._fan_list.append(fan)
 
 
     def initialize_sfp(self):
@@ -140,10 +137,12 @@ class Chassis(ChassisBase):
 
     def get_sdk_handle(self):
         if not self.sdk_handle:
-            from sonic_platform.sfp import initialize_sdk_handle
+            from sonic_platform.sfp import initialize_sdk_handle, deinitialize_sdk_handle
             self.sdk_handle = initialize_sdk_handle()
             if self.sdk_handle is None:
                 logger.log_error('Failed to open SDK handle')
+            else:
+                self.deinitialize_sdk_handle = deinitialize_sdk_handle
         return self.sdk_handle
 
 

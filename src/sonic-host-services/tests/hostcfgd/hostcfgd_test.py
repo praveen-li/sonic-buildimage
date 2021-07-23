@@ -1,13 +1,13 @@
-import importlib.machinery
-import importlib.util
 import os
 import sys
 import swsssdk
 
 from parameterized import parameterized
+from sonic_py_common.general import load_module_from_source
 from unittest import TestCase, mock
-from tests.hostcfgd.test_vectors import HOSTCFGD_TEST_VECTOR
-from tests.hostcfgd.mock_configdb import MockConfigDb
+
+from .test_vectors import HOSTCFGD_TEST_VECTOR
+from .mock_configdb import MockConfigDb
 
 
 swsssdk.ConfigDBConnector = MockConfigDb
@@ -18,11 +18,7 @@ sys.path.insert(0, modules_path)
 
 # Load the file under test
 hostcfgd_path = os.path.join(scripts_path, 'hostcfgd')
-loader = importlib.machinery.SourceFileLoader('hostcfgd', hostcfgd_path)
-spec = importlib.util.spec_from_loader(loader.name, loader)
-hostcfgd = importlib.util.module_from_spec(spec)
-loader.exec_module(hostcfgd)
-sys.modules['hostcfgd'] = hostcfgd
+hostcfgd = load_module_from_source('hostcfgd', hostcfgd_path)
 
 
 class TestHostcfgd(TestCase):
@@ -69,6 +65,11 @@ class TestHostcfgd(TestCase):
         """
         MockConfigDb.set_config_db(test_data["config_db"])
         with mock.patch("hostcfgd.subprocess") as mocked_subprocess:
+            popen_mock = mock.Mock()
+            attrs = test_data["popen_attributes"]
+            popen_mock.configure_mock(**attrs)
+            mocked_subprocess.Popen.return_value = popen_mock
+
             host_config_daemon = hostcfgd.HostConfigDaemon()
             host_config_daemon.update_all_feature_states()
             assert self.__verify_table(

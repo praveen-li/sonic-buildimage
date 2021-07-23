@@ -27,7 +27,9 @@ setup(
         'wheel'
     ],
     tests_require = [
+        'parameterized',
         'pytest',
+        'sonic-py-common'
     ],
     classifiers = [
         'Development Status :: 3 - Alpha',

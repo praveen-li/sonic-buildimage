@@ -1,8 +1,8 @@
-{%- if CONFIGURED_ARCH == "armhf" %}
+{%- if CONFIGURED_ARCH == "armhf" and MULTIARCH_QEMU_ENVIRON == "y" %}
 FROM multiarch/qemu-user-static:x86_64-arm-5.0.0-2 as qemu
 FROM multiarch/debian-debootstrap:armhf-buster
 COPY --from=qemu /usr/bin/qemu-arm-static /usr/bin
-{%- elif CONFIGURED_ARCH == "arm64" %}
+{%- elif CONFIGURED_ARCH == "arm64" and MULTIARCH_QEMU_ENVIRON == "y" %}
 FROM multiarch/debian-debootstrap:arm64-buster
 {%- else -%}
 FROM debian:buster
@@ -145,6 +145,7 @@ RUN apt-get update && apt-get install -y \
         bison \
         expat \
         libexpat1-dev \
+        aspell-en \
         dpatch \
         libdb-dev \
         iptables-dev \
@@ -342,6 +343,9 @@ RUN apt-get update && apt-get install -y \
        # Aspell is unable to locate the language dictionaries.
        # Re-installing aspell-en dictionary to fix it.
        RUN apt-get install --reinstall -y aspell-en
+
+       # workaround because of https://bugs.launchpad.net/qemu/+bug/1805913, just disable aspell
+       RUN cp /bin/true /usr/bin/aspell
 {%- endif %}
 
 ## Config dpkg
@@ -431,8 +435,7 @@ RUN pip2 install Pympler==0.8
 RUN pip3 install Pympler==0.8
 
 # For sonic_yang_model build
-RUN pip2 install pyang==2.1.1
-RUN pip3 install pyang==2.1.1
+RUN pip3 install pyang==2.4.0
 
 # For mgmt-framework build
 RUN pip2 install mmh3==2.5.1
@@ -476,7 +479,7 @@ RUN add-apt-repository \
            stable"
 RUN apt-get update
 RUN apt-get install -y docker-ce=5:18.09.5~3-0~debian-buster docker-ce-cli=5:18.09.5~3-0~debian-buster
-RUN echo "DOCKER_OPTS=\"--experimental --storage-driver=vfs\"" >> /etc/default/docker
+RUN echo "DOCKER_OPTS=\"--experimental --storage-driver=vfs {{ DOCKER_EXTRA_OPTS }}\"" >> /etc/default/docker
 RUN update-alternatives --set iptables /usr/sbin/iptables-legacy
 
 # Install m2crypto package, needed by SWI tools

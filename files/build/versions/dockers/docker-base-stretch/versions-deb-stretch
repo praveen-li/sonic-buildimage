@@ -1,8 +1,8 @@
-ca-certificates==20200601~deb9u1
-curl==7.52.1-5+deb9u13
+ca-certificates==20200601~deb9u2
+curl==7.52.1-5+deb9u14
 jq==1.5+dfsg-1.3
 less==481-2.1
-libcurl3==7.52.1-5+deb9u13
+libcurl3==7.52.1-5+deb9u14
 libdaemon0==0.14-6
 libdbus-1-3==1.10.32-0+deb9u1
 libestr0==0.1.10-2
@@ -33,9 +33,9 @@ libpgm-5.2-0==5.2.122~dfsg-2
 libprocps6==2:3.3.12-3+deb9u1
 libpsl5==0.17.0-3
 libpython-stdlib==2.7.13-2
-libpython2.7==2.7.13-2+deb9u4
-libpython2.7-minimal==2.7.13-2+deb9u4
-libpython2.7-stdlib==2.7.13-2+deb9u4
+libpython2.7==2.7.13-2+deb9u5
+libpython2.7-minimal==2.7.13-2+deb9u5
+libpython2.7-stdlib==2.7.13-2+deb9u5
 libreadline7==7.0-3
 librtmp1==2.4+20151223.gitfa8646d.1-1+b1
 libsasl2-2==2.1.27~101-g0780600+dfsg-3+deb9u1
@@ -60,8 +60,8 @@ python==2.7.13-2
 python-minimal==2.7.13-2
 python-pip==9.0.1-2+deb9u2
 python-pip-whl==9.0.1-2+deb9u2
-python2.7==2.7.13-2+deb9u4
-python2.7-minimal==2.7.13-2+deb9u4
+python2.7==2.7.13-2+deb9u5
+python2.7-minimal==2.7.13-2+deb9u5
 readline-common==7.0-3
 redis-tools==5:6.0.6-1~bpo10+1
 rsyslog==8.1901.0-1~bpo9+1
