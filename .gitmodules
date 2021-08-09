@@ -62,10 +62,29 @@
 	url = https://github.com/aristanetworks/sonic
 [submodule "platform/mellanox/hw-management/hw-mgmt"]
 	path = platform/mellanox/hw-management/hw-mgmt
-	url = https://github.com/Mellanox/hw-mgmt/
+	url = https://github.com/Mellanox/hw-mgmt
 [submodule "src/redis-dump-load"]
 	path = src/redis-dump-load
 	url = https://github.com/p/redis-dump-load.git
+[submodule "platform/mellanox/mlnx-sai/SAI-Implementation"]
+	path = platform/mellanox/mlnx-sai/SAI-Implementation
+	url = https://github.com/Mellanox/SAI-Implementation
+[submodule "src/sonic-mgmt-framework"]
+	path = src/sonic-mgmt-framework
+	url = https://github.com/Azure/sonic-mgmt-framework
 [submodule "src/sonic-telemetry"]
 	path = src/sonic-telemetry
 	url = ssh://git.corp.linkedin.com:29418/sonic/sonic-telemetry
+[submodule "Switch-SDK-drivers"]
+	path = platform/mellanox/sdk-src/sx-kernel/Switch-SDK-drivers
+	url = https://github.com/Mellanox/Switch-SDK-drivers
+[submodule "src/sonic-ztp"]
+	path = src/sonic-ztp
+	url = https://github.com/Azure/sonic-ztp
+[submodule "src/sonic-restapi"]
+	path = src/sonic-restapi
+	url = https://github.com/Azure/sonic-restapi.git
+	branch = master
+[submodule "src/sonic-mgmt-common"]
+	path = src/sonic-mgmt-common
+	url = https://github.com/Azure/sonic-mgmt-common.git
