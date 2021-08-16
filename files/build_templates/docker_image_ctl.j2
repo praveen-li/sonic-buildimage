@@ -31,7 +31,7 @@ function updateSyslogConf()
 {
     # On multiNPU platforms, change the syslog target ip to docker0 ip to allow logs from containers
     # running on the namespace to reach the rsyslog service running on the host
-    # Also update the container name
+    # Also update the container name 
     if [[ ($NUM_ASIC -gt 1) ]]; then
         TARGET_IP=$(docker network inspect bridge --format={{ "'{{(index .IPAM.Config 0).Gateway}}'" }})
         CONTAINER_NAME="$DOCKERNAME"
