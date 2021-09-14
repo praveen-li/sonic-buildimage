@@ -11,7 +11,7 @@
 # The template will be manged by outside agent, below is commented example
 {# If our configuration has VLAN interfaces... #}
 {% if VLAN_INTERFACE %}
-{% for (name, prefix) in VLAN_INTERFACE %}
+{% for (name, prefix) in VLAN_INTERFACE|pfx_filter %}
 {# If this VLAN has an IPv6 address, not including link local... #}
 {% if prefix | ipv6 and prefix | network != 'fe80::' %}
 #interface {{ name }}
