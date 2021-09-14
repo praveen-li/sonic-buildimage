@@ -1472,6 +1472,10 @@ def parse_xml(filename, platform=None, port_config_file=None, asic_name=None, hw
     if is_storage_device:
         results['DEVICE_METADATA']['localhost']['storage_device'] = "true"
 
+    # clean vlan members field before final assignment
+    for vlan_name in vlans.keys():
+        if 'members' in vlans[vlan_name]:
+            del vlans[vlan_name]['members']
     results['VLAN'] = vlans
     results['VLAN_MEMBER'] = vlan_members
 
