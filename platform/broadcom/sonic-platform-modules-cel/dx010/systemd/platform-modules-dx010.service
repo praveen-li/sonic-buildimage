@@ -2,7 +2,7 @@
 [Unit]
 Description=Celestica Seastone dx010 platform modules
 After=local-fs.target
-Before=pmon.service
+Before=pmon.service  process-reboot-cause.service determine-reboot-cause.service
 
 [Service]
 Type=oneshot
