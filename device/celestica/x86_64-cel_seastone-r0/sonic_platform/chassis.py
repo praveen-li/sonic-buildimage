@@ -345,7 +345,7 @@ class Chassis(ChassisBase):
         """
         status = self._api_helper.read_txt_file(STATUS_LED_PATH)
         status_str = {
-            '255': self.STATUS_LED_COLOR_GREEN,
+            '1': self.STATUS_LED_COLOR_GREEN,
             '0': self.STATUS_LED_COLOR_OFF
         }.get(status, None)
 
