@@ -1,0 +1,7 @@
+0001-config-patch-for-n3132.patch
+0002-config-patch-for-n9200.patch
+0003-sonic-linux-kernel-new-patch-files-upto-cisco-4.3.patch
+0004-sonic-linux-kernel-Enabling-Intel-PCH-SPI-driver.patch
+0005-adt7470-driver-fix-for-cisco-platforms.patch
+0090-Overrides-for-kconfig-inclusions-exclusion.patch
+0100-apply-patch-series.patch

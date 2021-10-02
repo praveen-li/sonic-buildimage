@@ -1,0 +1,20 @@
+{
+	"chassis":{
+		"N3K-C3232C":{
+			"component":{
+				"IOFPGA":{
+				},
+				"MIFPGA-1":{
+				},
+				"Golden BIOS":{
+				},
+				"Primary BIOS":{
+			    }
+
+
+			}
+
+		}
+	}
+
+}

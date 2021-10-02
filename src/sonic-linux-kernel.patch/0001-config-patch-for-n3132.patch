@@ -1,0 +1,55 @@
+From b6564127c6bec8a26433d5bb6d5f0f91866b7e2d Mon Sep 17 00:00:00 2001
+From: abhiaga2 <abhiaga2@cisco.com>
+Date: Tue, 9 Mar 2021 09:53:26 -0800
+Subject: [PATCH 1/4] config patch for n3132
+
+Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
+---
+ patch/config-cisco-n3132-gx.patch | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 patch/config-cisco-n3132-gx.patch
+
+diff --git a/patch/config-cisco-n3132-gx.patch b/patch/config-cisco-n3132-gx.patch
+new file mode 100644
+index 0000000..87e8c84
+--- /dev/null
++++ b/patch/config-cisco-n3132-gx.patch
+@@ -0,0 +1,35 @@
++From dd95860c1b4f2cd00a858ccf8be8535cbc58ad03 Mon Sep 17 00:00:00 2001
++From: abhiaga2 <abhiaga2@cisco.com>
++Date: Tue, 9 Mar 2021 09:37:00 -0800
++Subject: [PATCH] Cisco N2200 AC/DC Controllers CONFIG_SENSORS_CISCO_N2200=m
++
++Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
++---
++ debian/build/build_amd64_none_amd64/.config | 4 +++-
++ 1 file changed, 3 insertions(+), 1 deletion(-)
++
++diff --git a/debian/build/build_amd64_none_amd64/.config b/debian/build/build_amd64_none_amd64/.config
++index ab1f054..b0e1ce3 100644
++--- a/debian/build/build_amd64_none_amd64/.config
+++++ b/debian/build/build_amd64_none_amd64/.config
++@@ -3753,7 +3753,7 @@ CONFIG_DEVMEM=y
++ CONFIG_SERIAL_EARLYCON=y
++ CONFIG_SERIAL_8250=y
++ # CONFIG_SERIAL_8250_DEPRECATED_OPTIONS is not set
++-CONFIG_SERIAL_8250_PNP=y
+++# CONFIG_SERIAL_8250_PNP is not set
++ CONFIG_SERIAL_8250_FINTEK=y
++ CONFIG_SERIAL_8250_CONSOLE=y
++ CONFIG_SERIAL_8250_DMA=y
++@@ -4267,6 +4267,8 @@ CONFIG_SENSORS_NCT7904=m
++ CONFIG_SENSORS_NPCM7XX=m
++ CONFIG_SENSORS_PCF8591=m
++ # CONFIG_PMBUS is not set
+++CONFIG_SENSORS_TPS40422=m
+++CONFIG_SENSORS_CISCO_N2200=m
++ # CONFIG_SENSORS_SHT15 is not set
++ CONFIG_SENSORS_SHT21=m
++ # CONFIG_SENSORS_SHT3x is not set
++-- 
++2.7.4
++
+-- 
+2.7.4
+

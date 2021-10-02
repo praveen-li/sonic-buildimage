@@ -1,5 +1,4 @@
-# sonic broadcom one image installer
-
+# sonic broadcom one image installer 
 SONIC_ONE_IMAGE = sonic-broadcom.bin
 $(SONIC_ONE_IMAGE)_MACHINE = broadcom
 $(SONIC_ONE_IMAGE)_IMAGE_TYPE = onie
@@ -58,6 +57,7 @@ $(SONIC_ONE_IMAGE)_LAZY_INSTALLS += $(DELL_S6000_PLATFORM_MODULE) \
                                $(MITAC_LY1200_32X_PLATFORM_MODULE) \
                                $(ALPHANETWORKS_SNH60A0_320FV2_PLATFORM_MODULE) \
                                $(ALPHANETWORKS_SNH60B0_640F_PLATFORM_MODULE) \
+                               $(CISCO_N9200_PLATFORM_MODULE) \
                                $(BRCM_XLR_GTS_PLATFORM_MODULE) \
                                $(DELTA_AG9032V2A_PLATFORM_MODULE) \
                                $(JUNIPER_QFX5210_PLATFORM_MODULE) \

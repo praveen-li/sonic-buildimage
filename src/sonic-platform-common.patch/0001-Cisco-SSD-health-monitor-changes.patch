@@ -1,0 +1,72 @@
+Index: sonic-platform-common/sonic_platform_base/sonic_ssd/ssd_generic.py
+===================================================================
+--- sonic-platform-common.orig/sonic_platform_base/sonic_ssd/ssd_generic.py
++++ sonic-platform-common/sonic_platform_base/sonic_ssd/ssd_generic.py
+@@ -33,7 +33,7 @@ class SsdUtil(SsdBase):
+     ssd_info = NOT_AVAILABLE
+     vendor_ssd_info = NOT_AVAILABLE
+ 
+-    def __init__(self, diskdev):
++    def __init__(self, diskdev, ssdinfo=None):
+         self.vendor_ssd_utility = {
+             "Generic"  : { "utility" : SMARTCTL, "parser" : self.parse_generic_ssd_info },
+             "InnoDisk" : { "utility" : INNODISK, "parser" : self.parse_innodisk_info },
+@@ -43,22 +43,35 @@ class SsdUtil(SsdBase):
+         }
+ 
+         self.dev = diskdev
+-        # Generic part
+-        self.fetch_generic_ssd_info(diskdev)
+-        self.parse_generic_ssd_info()
+-
+-        # Known vendor part
+-        if self.model:
+-            model_short = self.model.split()[0]
+-            if model_short in self.vendor_ssd_utility:
+-                self.fetch_vendor_ssd_info(diskdev, model_short)
+-                self.parse_vendor_ssd_info(model_short)
++        self.ssdinfo = None
++
++        if ssdinfo is None:	
++            # Generic part
++            self.fetch_generic_ssd_info(diskdev)
++            self.parse_generic_ssd_info()
++            
++            # Known vendor part
++            if self.model:
++                model_short = self.model.split()[0]
++                if model_short in self.vendor_ssd_utility:
++                    self.fetch_vendor_ssd_info(diskdev, model_short)
++                    self.parse_vendor_ssd_info(model_short)
++                else:
++                    # No handler registered for this disk model
++                    pass
+             else:
+-                # No handler registered for this disk model
+-                pass
++                # Failed to get disk model
++                self.model = "Unknown"
++
+         else:
+-            # Failed to get disk model
+-            self.model = "Unknown"
++            self.dev = diskdev
++            self.model = ssdinfo.model
++            self.serial = ssdinfo.serial
++            self.firmware = ssdinfo.firmware
++            self.vendor = ssdinfo.vendor
++            self.health = ssdinfo.health
++            self.temperature = ssdinfo.temperature
++            self.ssdinfo = ssdinfo
+ 
+     def _execute_shell(self, cmd):
+         process = subprocess.Popen(cmd.split(), universal_newlines=True, stdout=subprocess.PIPE)
+@@ -150,4 +163,7 @@ class SsdUtil(SsdBase):
+         Returns:
+             A string holding some vendor specific disk information
+         """
+-        return self.vendor_ssd_info
++        if self.ssdinfo is not None:
++            return self.vendor
++        else:
++            return self.vendor_ssd_info

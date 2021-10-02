@@ -1,0 +1,30 @@
+From 53bb82eef3daebd75c61265674224b51c495b718 Mon Sep 17 00:00:00 2001
+From: aaliv <aaliv@cisco.com>
+Date: Mon, 12 Jul 2021 02:27:26 -0700
+Subject: [PATCH] Overrides-for-kconfig-inclusions-exclusion
+
+Signed-off-by: aaliv <aaliv@cisco.com>
+---
+ patch/kconfig-inclusions | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/patch/kconfig-inclusions b/patch/kconfig-inclusions
+index c7fb4de..5e991e3 100644
+--- a/patch/kconfig-inclusions
++++ b/patch/kconfig-inclusions
+@@ -54,6 +54,12 @@ CONFIG_MELLANOX_PLATFORM=y
+ CONFIG_MLXREG_HOTPLUG=m
+ CONFIG_MLXREG_IO=m
+ CONFIG_MAX1363=m
++CONFIG_MTD=y
++CONFIG_MTD_SPI_NOR=y
++CONFIG_MTD_SPI_NOR_USE_4K_SECTORS=y
++CONFIG_SPI_INTEL_SPI=y
++CONFIG_SPI_INTEL_SPI_PCI=y
++CONFIG_SPI_INTEL_SPI_PLATFORM=y
+ 
+ [arm64]
+ 
+-- 
+2.7.4
+
