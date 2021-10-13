@@ -1,6 +1,6 @@
 {
 	"chassis":{
-		"N3K-C3232C":{
+		"x86_64-n3200-r0":{
 			"component":{
 				"IOFPGA":{
 				},

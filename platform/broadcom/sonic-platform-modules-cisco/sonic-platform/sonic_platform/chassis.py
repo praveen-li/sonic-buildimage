@@ -52,6 +52,7 @@ class Chassis(ChassisBase):
         
         # Initialize Platform name
         self.platform_name = device_info.get_platform()
+        self.name = self.platform_name
         self.sfp_init_done = False
         self._watchdog = None
         self._eeprom = None
@@ -63,8 +64,8 @@ class Chassis(ChassisBase):
         self.initialize_fan()
         self.initialize_eeprom()
         self.initialize_thermals()
-        #ledd daemon uses ledControl from plugins
-        #self.initialize_port_leds() 
+        #anyways ledd daemon uses ledControl from plugins
+        self.initialize_port_leds() 
         self.initialize_sfps()
         self.initizalize_system_led()
 
@@ -112,8 +113,7 @@ class Chassis(ChassisBase):
         # Initialize EEPROM
         self._eeprom = Eeprom()
         if self._eeprom is not None:
-            # Get chassis name and model from eeprom
-            self.name = self._eeprom.get_product_name()
+            # Get chassis model, serial and board MAC from eeprom
             self.model = self._eeprom.get_part_number()
             self.serial = self._eeprom.get_serial_number()
             self.base_mac = self._eeprom.get_base_mac()
