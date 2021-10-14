@@ -103,13 +103,11 @@ class TestCfgGenCaseInsensitive(TestCase):
                        'alias': 'ab1',
                        'dhcp_servers': ['192.0.0.1', '192.0.0.2'],
                        'vlanid': '1000',
-                       'mac': '00:aa:bb:cc:dd:ee',
-                       'members': ['Ethernet8']
+                       'mac': '00:aa:bb:cc:dd:ee'
                        },
                    'Vlan2000': {
                        'alias': 'ab2',
                        'dhcp_servers': ['192.0.0.1'],
-                       'members': ['Ethernet4'],
                        'vlanid': '2000'
                        }
                    }
