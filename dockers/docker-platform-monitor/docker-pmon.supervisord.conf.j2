@@ -149,3 +149,16 @@ startsecs=10
 dependent_startup=true
 dependent_startup_wait_for=rsyslogd:running
 {% endif %}
+
+{% if not skip_ssdd %}
+[program:ssdd]
+command=/usr/local/bin/ssdd
+priority=11
+autostart=false
+autorestart=unexpected
+stdout_logfile=syslog
+stderr_logfile=syslog
+startsecs=10
+dependent_startup=true
+dependent_startup_wait_for=rsyslogd:running
+{% endif %}
