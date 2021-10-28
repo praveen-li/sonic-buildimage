@@ -24,6 +24,9 @@ RUN apt-get install -yf kmod
 ## BRCM uses ethtool to set host interface speed
 RUN apt-get install -y ethtool
 
+# install BRCM SAI library dependencies
+RUN apt-get install -y libprotobuf17 libyaml-0-2
+
 COPY ["files/dsserve", "files/bcmcmd", "start.sh", "start_led.sh", "bcmsh", "/usr/bin/"]
 RUN chmod +x /usr/bin/dsserve /usr/bin/bcmcmd
 
