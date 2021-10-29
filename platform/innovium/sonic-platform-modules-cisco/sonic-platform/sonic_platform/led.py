@@ -5,8 +5,8 @@ LED_PATH = "/sys/class/leds/"
 
 class SystemLed():
     def __init__(self):
-        self._green_led_path = os.path.join(LED_PATH, "status\:green/brightness")
-        self._red_led_path = os.path.join(LED_PATH, "status\:red/brightness")
+        self._green_led_path = os.path.join(LED_PATH, "status:green/brightness")
+        self._red_led_path = os.path.join(LED_PATH, "status:red/brightness")
 
     def get_green_led_path(self):
         return self._green_led_path

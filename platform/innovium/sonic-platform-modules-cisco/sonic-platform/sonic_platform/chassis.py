@@ -10,6 +10,7 @@
 
 try:
     import sys
+    import os.path
     from sonic_platform_base.chassis_base import ChassisBase
     import sonic_platform.utils as pltm_utils
     from sonic_py_common.logger import Logger
@@ -19,6 +20,7 @@ try:
     from sonic_platform.eeprom import Eeprom
     from sonic_platform.component import *
     from sonic_platform.globals import PlatformGlobalData
+    from sonic_platform.utils import read_str_from_file
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
 
@@ -55,8 +57,10 @@ class Chassis(ChassisBase):
         self.initialize_fan()
         self.initialize_eeprom()
         self.initialize_thermals()
-        self.initialize_port_leds()
+        #ledd daemon uses ledControl from plugins
+        #self.initialize_port_leds()
         self.initialize_sfps()
+        self.initizalize_system_led()
 
         logger.log_info("Chassis loaded successfully")
 
@@ -187,18 +191,15 @@ class Chassis(ChassisBase):
             self._component_list.append(ComponentBIOS(bios_inst))
 
     def get_change_event(self, timeout=0):
-        p_dict = {}
+        p_dict = {'sfp':{}}
 
         if self.sfp_init_done is False:
-           return True,{}
+           return True, p_dict
+
         status, p_pres_dict = self.platform_sfputil.get_transceiver_change_event(timeout)
         if status is True and  len(p_pres_dict) != 0 :
-            p_dict.update({'sfp' : p_pres_dict})
-            #for keys in p_pres_dict:
-                #if p_pres_dict[key] == '1':
-                    #self.get_sfp(int(key)-1).re_init()
-            return status, p_dict
-        return status,{}
+            p_dict['sfp'] = p_pres_dict
+        return status, p_dict
 
     def initizalize_system_led(self):
         from sonic_platform.led import SystemLed
@@ -245,15 +246,24 @@ class Chassis(ChassisBase):
         return bootstatus
 
     def get_reboot_cause(self):
-        reboot_cause = self.REBOOT_CAUSE_HARDWARE_OTHER
-        reboot_cause_desc = "Unknown"
+        try:
+            self.prev_reboot_path = "/host/reboot-cause/reboot-cause.txt"
+            if os.path.exists(self.prev_reboot_path) :
+                reason = read_str_from_file (self.prev_reboot_path)
+                if "reboot" in reason or "Kernel Panic" in reason:
+                    return self.REBOOT_CAUSE_NON_HARDWARE, ""
+        except Exception as e:
+            logger.log_info("Failed to get the reboot.txt file due to {}".format(repr(e)))
+        self.bootstatus = self.get_bootstatus()
 
-        if self.get_bootstatus() == 0x04:
+        if self.bootstatus & 0x04:
             return self.REBOOT_CAUSE_WATCHDOG, "Reboot caused by hardware watchdog reset"
-        elif self.get_bootstatus() == 0x00 or self.get_bootstatus() == 0x01:
+        elif self.bootstatus == 0x00 or self.bootstatus == 0x01:
             return self.REBOOT_CAUSE_NON_HARDWARE, ""
-
-        return reboot_cause, reboot_cause_desc
+        elif self.bootstatus == 0x80000000:
+            return self.REBOOT_CAUSE_POWER_LOSS, "PSU shutdown or powercycle"
+        else:
+            return self.REBOOT_CAUSE_HARDWARE_OTHER, "Unknown"
 
     def set_status_led(self, color):
         """
