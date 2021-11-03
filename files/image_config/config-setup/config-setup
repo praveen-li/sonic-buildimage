@@ -140,7 +140,11 @@ function copy_config_files_and_directories()
     for file_dir in $@; do
         if [ -f /etc/sonic/old_config/${file_dir} ] || [ -d /etc/sonic/old_config/${file_dir} ]; then
             echo "Copying SONiC configuration ${file_dir} ..."
-            cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/
+            if [ -d /etc/sonic/${file_dir} ]; then
+                cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/
+            else
+                cp -ar /etc/sonic/old_config/${file_dir} /etc/sonic/${file_dir}
+            fi
         else
             echo "Missing SONiC configuration ${file_dir} ..."
         fi
@@ -303,7 +307,7 @@ check_all_config_db_present()
 do_config_migration()
 {
     # Identify list of files to migrate
-    copy_list="minigraph.xml snmp.yml acl.json port_config.json frr telemetry"
+    copy_list="minigraph.xml snmp.yml acl.json port_config.json frr/frr.conf telemetry"
 
     # Migrate all configuration files from old to new
     copy_config_files_and_directories $copy_list
