@@ -19,6 +19,12 @@ ipv6_lpm_128b_enable=1
 #Use MMU lossy configuration
 mmu_lossless=0
 
+# disables bcmALPMDH (ALPM distributed hitbit) thread.  This thread is purely for debug purpose
+l3_alpm_hit_skip=1
+
+# Disable Counting ACL Drop towards interface RX_DRP counter
+sai_adjust_acl_drop_in_rx_drop=1
+
 ###################################################################################
 # SeaStone customized configuration
 ###################################################################################
@@ -883,3 +889,4 @@ serdes_preemphasis_lane1_130=0x2d3f04
 serdes_preemphasis_lane2_130=0x2b4104
 serdes_preemphasis_lane3_130=0x2b4104
 
+mmu_init_config="LI-TH-Tier1"

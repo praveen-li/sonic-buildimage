@@ -164,18 +164,32 @@ dport_map_port_14=94
 dport_map_port_15=95
 dport_map_port_16=96
 
-# 100G/40G ports
 dport_map_port_17=97
+dport_map_port_18=98
+
 dport_map_port_21=101
+dport_map_port_22=102
+
 dport_map_port_25=105
+dport_map_port_26=106
+
 dport_map_port_29=109
+dport_map_port_30=110
+
 dport_map_port_118=113
+dport_map_port_119=114
+
 dport_map_port_122=117
+dport_map_port_123=118
+
 dport_map_port_126=121
+dport_map_port_127=122
+
 dport_map_port_130=125
+dport_map_port_131=126
 
 
-# port/lane mapping, 96x25G + 8x100G
+# port/lane mapping, 96x25G + 16x50G
 portmap_68=65:25
 portmap_69=66:25
 portmap_70=67:25
@@ -297,14 +311,29 @@ portmap_15=15:25
 portmap_16=16:25
 
 
-portmap_17=17:100:4
-portmap_21=21:100:4
-portmap_25=25:100:4
-portmap_29=29:100:4
-portmap_118=113:100:4
-portmap_122=117:100:4
-portmap_126=121:100:4
-portmap_130=125:100:4
+portmap_17=17:50:2
+portmap_18=19:50:2
+
+portmap_21=21:50:2
+portmap_22=23:50:2
+
+portmap_25=25:50:2
+portmap_26=27:50:2
+
+portmap_29=29:50:2
+portmap_30=31:50:2
+
+portmap_118=113:50:2
+portmap_119=115:50:2
+
+portmap_122=117:50:2
+portmap_123=119:50:2
+
+portmap_126=121:50:2
+portmap_127=123:50:2
+
+portmap_130=125:50:2
+portmap_131=127:50:2
 
 #portmap_66=129:10
 #portmap_100=131:10
@@ -555,34 +584,50 @@ xgxs_rx_lane_map_16=0x1032
 #WC4
 xgxs_tx_lane_map_17=0x2310
 xgxs_rx_lane_map_17=0x3210
+xgxs_tx_lane_map_18=0x2310
+xgxs_rx_lane_map_18=0x3210
 
 #WC5
 xgxs_tx_lane_map_21=0x2301
 xgxs_rx_lane_map_21=0x3120
+xgxs_tx_lane_map_22=0x2301
+xgxs_rx_lane_map_22=0x3120
 
 #WC6
 xgxs_tx_lane_map_25=0x3201
 xgxs_rx_lane_map_25=0x0213
+xgxs_tx_lane_map_26=0x3201
+xgxs_rx_lane_map_26=0x0213
 
 #WC7
 xgxs_tx_lane_map_29=0x1302
 xgxs_rx_lane_map_29=0x1023
+xgxs_tx_lane_map_30=0x1302
+xgxs_rx_lane_map_30=0x1023
 
 #WC28
 xgxs_tx_lane_map_118=0x1320
 xgxs_rx_lane_map_118=0x1302
+xgxs_tx_lane_map_119=0x1320
+xgxs_rx_lane_map_119=0x1302
 
 #WC29
 xgxs_tx_lane_map_122=0x1032
 xgxs_rx_lane_map_122=0x1023
+xgxs_tx_lane_map_123=0x1032
+xgxs_rx_lane_map_123=0x1023
 
 #WC30
 xgxs_tx_lane_map_126=0x3120
 xgxs_rx_lane_map_126=0x3120
+xgxs_tx_lane_map_127=0x3120
+xgxs_rx_lane_map_127=0x3120
 
 #WC31
 xgxs_tx_lane_map_130=0x1302
 xgxs_rx_lane_map_130=0x2310
+xgxs_tx_lane_map_131=0x1302
+xgxs_rx_lane_map_131=0x2310
 
 
 #Polarity flip settings
@@ -828,36 +873,52 @@ phy_xaui_tx_polarity_flip_16=0x0001
 phy_xaui_rx_polarity_flip_16=0x0000
 
 #WC4
-phy_xaui_tx_polarity_flip_17=0x0007
+phy_xaui_tx_polarity_flip_17=0x0003
 phy_xaui_rx_polarity_flip_17=0x0000
+phy_xaui_tx_polarity_flip_18=0x0001
+phy_xaui_rx_polarity_flip_18=0x0000
 
 #WC5
 phy_xaui_tx_polarity_flip_21=0x0000
 phy_xaui_rx_polarity_flip_21=0x0000
+phy_xaui_tx_polarity_flip_22=0x0000
+phy_xaui_rx_polarity_flip_22=0x0000
 
 #WC6
 phy_xaui_tx_polarity_flip_25=0x0002
-phy_xaui_rx_polarity_flip_25=0x0005
+phy_xaui_rx_polarity_flip_25=0x0001
+phy_xaui_tx_polarity_flip_26=0x0000
+phy_xaui_rx_polarity_flip_26=0x0001
 
 #WC7
 phy_xaui_tx_polarity_flip_29=0x0002
 phy_xaui_rx_polarity_flip_29=0x0000
+phy_xaui_tx_polarity_flip_30=0x0000
+phy_xaui_rx_polarity_flip_30=0x0000
 
 #WC28
-phy_xaui_tx_polarity_flip_118=0x000F
-phy_xaui_rx_polarity_flip_118=0x000F
+phy_xaui_tx_polarity_flip_118=0x0003
+phy_xaui_rx_polarity_flip_118=0x0003
+phy_xaui_tx_polarity_flip_119=0x0003
+phy_xaui_rx_polarity_flip_119=0x0003
 
 #WC29
-phy_xaui_tx_polarity_flip_122=0x0004
+phy_xaui_tx_polarity_flip_122=0x0000
 phy_xaui_rx_polarity_flip_122=0x0000
+phy_xaui_tx_polarity_flip_123=0x0001
+phy_xaui_rx_polarity_flip_123=0x0000
 
 #WC30
-phy_xaui_tx_polarity_flip_126=0x000F
+phy_xaui_tx_polarity_flip_126=0x0003
 phy_xaui_rx_polarity_flip_126=0x0000
+phy_xaui_tx_polarity_flip_127=0x0003
+phy_xaui_rx_polarity_flip_127=0x0000
 
 #WC31
-phy_xaui_tx_polarity_flip_130=0x0006
+phy_xaui_tx_polarity_flip_130=0x0002
 phy_xaui_rx_polarity_flip_130=0x0000
+phy_xaui_tx_polarity_flip_131=0x0001
+phy_xaui_rx_polarity_flip_131=0x0000
 
 # Serdes Settings
 
@@ -869,81 +930,81 @@ serdes_preemphasis=0x0a6402
 #port24
 serdes_driver_current_lane0_17=0x0a
 serdes_driver_current_lane1_17=0x0a
-serdes_driver_current_lane2_17=0x0a
-serdes_driver_current_lane3_17=0x0a
+serdes_driver_current_lane0_18=0x0a
+serdes_driver_current_lane1_18=0x0a
 serdes_preemphasis_lane0_17=0x254902
 serdes_preemphasis_lane1_17=0x294403
-serdes_preemphasis_lane2_17=0x294403
-serdes_preemphasis_lane3_17=0x294403
+serdes_preemphasis_lane0_18=0x294403
+serdes_preemphasis_lane1_18=0x294403
 
 #port25
 serdes_driver_current_lane0_21=0x0a
 serdes_driver_current_lane1_21=0x0a
-serdes_driver_current_lane2_21=0x0a
-serdes_driver_current_lane3_21=0x0a
+serdes_driver_current_lane0_22=0x0a
+serdes_driver_current_lane1_22=0x0a
 serdes_preemphasis_lane0_21=0x294403
 serdes_preemphasis_lane1_21=0x294403
-serdes_preemphasis_lane2_21=0x294403
-serdes_preemphasis_lane3_21=0x254902
+serdes_preemphasis_lane0_22=0x294403
+serdes_preemphasis_lane1_22=0x254902
 
 #port26
 serdes_driver_current_lane0_25=0x0b
 serdes_driver_current_lane1_25=0x0b
-serdes_driver_current_lane2_25=0x0b
-serdes_driver_current_lane3_25=0x0b
+serdes_driver_current_lane0_26=0x0b
+serdes_driver_current_lane1_26=0x0b
 serdes_preemphasis_lane0_25=0x2b4104
 serdes_preemphasis_lane1_25=0x2b4104
-serdes_preemphasis_lane2_25=0x2b4104
-serdes_preemphasis_lane3_25=0x2d3f04
+serdes_preemphasis_lane0_26=0x2b4104
+serdes_preemphasis_lane1_26=0x2d3f04
 
 #port27
 serdes_driver_current_lane0_29=0x0b
 serdes_driver_current_lane1_29=0x0b
-serdes_driver_current_lane2_29=0x0b
-serdes_driver_current_lane3_29=0x0a
+serdes_driver_current_lane0_30=0x0b
+serdes_driver_current_lane1_30=0x0a
 serdes_preemphasis_lane0_29=0x2d3f04
 serdes_preemphasis_lane1_29=0x2d3f04
-serdes_preemphasis_lane2_29=0x2b4104
-serdes_preemphasis_lane3_29=0x294403
+serdes_preemphasis_lane0_30=0x2b4104
+serdes_preemphasis_lane1_30=0x294403
 
 #port28
 serdes_driver_current_lane0_118=0x0a
 serdes_driver_current_lane1_118=0x0a
-serdes_driver_current_lane2_118=0x0a
-serdes_driver_current_lane3_118=0x0a
+serdes_driver_current_lane0_119=0x0a
+serdes_driver_current_lane1_119=0x0a
 serdes_preemphasis_lane0_118=0x254902
 serdes_preemphasis_lane1_118=0x294403
-serdes_preemphasis_lane2_118=0x294403
-serdes_preemphasis_lane3_118=0x254902
+serdes_preemphasis_lane0_119=0x294403
+serdes_preemphasis_lane1_119=0x254902
 
 #port29
 serdes_driver_current_lane0_122=0x0a
 serdes_driver_current_lane1_122=0x0a
-serdes_driver_current_lane2_122=0x0a
-serdes_driver_current_lane3_122=0x0a
+serdes_driver_current_lane0_123=0x0a
+serdes_driver_current_lane1_123=0x0a
 serdes_preemphasis_lane0_122=0x294403
 serdes_preemphasis_lane1_122=0x294403
-serdes_preemphasis_lane2_122=0x294403
-serdes_preemphasis_lane3_122=0x294403
+serdes_preemphasis_lane0_123=0x294403
+serdes_preemphasis_lane1_123=0x294403
 
 #port30
 serdes_driver_current_lane0_126=0x0a
 serdes_driver_current_lane1_126=0x0a
-serdes_driver_current_lane2_126=0x0b
-serdes_driver_current_lane3_126=0x0b
+serdes_driver_current_lane0_127=0x0b
+serdes_driver_current_lane1_127=0x0b
 serdes_preemphasis_lane0_126=0x294403
 serdes_preemphasis_lane1_126=0x294403
-serdes_preemphasis_lane2_126=0x2b4104
-serdes_preemphasis_lane3_126=0x2b4104
+serdes_preemphasis_lane0_127=0x2b4104
+serdes_preemphasis_lane1_127=0x2b4104
 
 #port31
 serdes_driver_current_lane0_130=0x0b
 serdes_driver_current_lane1_130=0x0b
-serdes_driver_current_lane2_130=0x0b
-serdes_driver_current_lane3_130=0x0b
+serdes_driver_current_lane0_131=0x0b
+serdes_driver_current_lane1_131=0x0b
 serdes_preemphasis_lane0_130=0x2d3f04
 serdes_preemphasis_lane1_130=0x2d3f04
-serdes_preemphasis_lane2_130=0x2b4104
-serdes_preemphasis_lane3_130=0x2b4104
+serdes_preemphasis_lane0_131=0x2b4104
+serdes_preemphasis_lane1_131=0x2b4104
 
 mmu_init_config="LI-TH-Tier0"
