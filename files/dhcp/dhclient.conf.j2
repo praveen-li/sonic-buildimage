@@ -28,12 +28,15 @@ option provisioning-script-url code 239 = text;
 option dhcp6.user-class code 15 = text;
 option dhcp6.provisioning-script-url code 239 = text;
 option dhcp6.boot-file-url code 59 = text;
+option bootstrap-url code 227 = text;
+option dhcp6.bootstrap-url code 227 = text;
 
 send host-name = gethostname();
 request subnet-mask, broadcast-address, time-offset, routers,
         domain-name, domain-name-servers, domain-search, host-name,
         dhcp6.name-servers, dhcp6.domain-search, interface-mtu, dhcp6.fqdn,
         rfc3442-classless-static-routes, ntp-servers, log-servers,
+        bootstrap-url, dhcp6.bootstrap-url,
 {%- if ZTP is defined and ZTP_DHCP_DISABLED is not defined -%}bootfile-name, provisioning-script-url, tftp-server-name,
         dhcp6.provisioning-script-url, dhcp6.boot-file-url,{%- endif -%}
         snmp-community, minigraph-url, acl-url;
