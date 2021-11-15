@@ -28,7 +28,7 @@ MAX_Z9332F_FANTRAY = 7
 MAX_Z9332F_FAN = 2
 MAX_Z9332F_PSU = 2
 MAX_Z9332F_THERMAL = 14
-MAX_Z9332F_COMPONENT = 6 # BIOS,FPGA,BMC,BB CPLD and 2 Switch CPLDs
+MAX_Z9332F_COMPONENT = 8 # BIOS,FPGA,BMC,BB CPLD,2 Switch CPLDs,SSD and PCIe
 
 media_part_num_list = set([ \
 "8T47V","XTY28","MHVPK","GF76J","J6FGD","F1KMV","9DN5J","H4DHD","6MCNV","0WRX0","X7F70","5R2PT","WTRD1","WTRD1","WTRD1","WTRD1","5250G","WTRD1","C5RNH","C5RNH","FTLX8571D3BCL-FC",
@@ -110,11 +110,11 @@ class Chassis(ChassisBase):
             34: 2,
             }
 
-    reboot_reason_dict = { 0x11: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Power on reset"),
+    reboot_reason_dict = { 0x11: (ChassisBase.REBOOT_CAUSE_POWER_LOSS, "Power on reset"),
                            0x22: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Soft-set CPU warm reset"),
                            0x33: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Soft-set CPU cold reset"),
                            0x66: (ChassisBase.REBOOT_CAUSE_WATCHDOG, "GPIO watchdog reset"),
-                           0x77: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Power cycle reset"),
+                           0x77: (ChassisBase.REBOOT_CAUSE_POWER_LOSS, "Power cycle reset"),
                            0x88: (ChassisBase.REBOOT_CAUSE_WATCHDOG, "CPLD watchdog reset")
                         }
 
@@ -269,6 +269,15 @@ class Chassis(ChassisBase):
             A string containing the hardware serial number for this chassis.
         """
         return self._eeprom.serial_number_str()
+
+    def get_revision(self):
+        """
+        Retrieves the hardware revision of the device
+
+        Returns:
+            string: Revision value of device
+        """
+        return self._eeprom.revision_str()
 
     def get_system_eeprom_info(self):
         """

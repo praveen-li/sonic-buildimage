@@ -102,12 +102,18 @@ class TestCfgGenCaseInsensitive(TestCase):
                    'Vlan1000': {
                        'alias': 'ab1',
                        'dhcp_servers': ['192.0.0.1', '192.0.0.2'],
+                       'dhcpv6_servers': ['fc02:2000::1', 'fc02:2000::2'],
                        'vlanid': '1000',
                        'mac': '00:aa:bb:cc:dd:ee'
                        },
                    'Vlan2000': {
                        'alias': 'ab2',
                        'dhcp_servers': ['192.0.0.1'],
+<<<<<<< HEAD
+=======
+                       'dhcpv6_servers': ['fc02:2000::3', 'fc02:2000::4'],
+                       'members': ['Ethernet4'],
+>>>>>>> github-202012
                        'vlanid': '2000'
                        }
                    }
@@ -355,3 +361,41 @@ class TestCfgGenCaseInsensitive(TestCase):
             utils.to_dict(output.strip()),
             expected_table
         )
+    
+    def test_dhcp_table(self):
+        argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "DHCP_RELAY"'
+        expected = {
+                   'Vlan1000': {
+                       'dhcpv6_servers': [
+                           "fc02:2000::1",
+                           "fc02:2000::2"
+                       ]
+                    },
+                    'Vlan2000': {
+                       'dhcpv6_servers': [
+                           "fc02:2000::3",
+                           "fc02:2000::4"
+                       ]
+                    }
+        }
+        output = self.run_script(argument)
+        self.assertEqual(
+            utils.to_dict(output.strip()),
+            expected
+        )
+    
+    def test_minigraph_mirror_dscp(self):
+        result = minigraph.parse_xml(self.sample_graph, port_config_file=self.port_config)
+        self.assertTrue('EVERFLOW_DSCP' in result['ACL_TABLE'])
+        everflow_dscp_entry = result['ACL_TABLE']['EVERFLOW_DSCP']
+        
+        self.assertEqual(everflow_dscp_entry['type'], 'MIRROR_DSCP')
+        self.assertEqual(everflow_dscp_entry['stage'], 'ingress')
+        expected_ports = ['PortChannel01', 'Ethernet12', 'Ethernet8', 'Ethernet0']
+        self.assertEqual(
+            everflow_dscp_entry['ports'].sort(),
+            expected_ports.sort()
+        )
+
+
+    

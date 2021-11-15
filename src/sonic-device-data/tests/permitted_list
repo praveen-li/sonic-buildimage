@@ -223,6 +223,7 @@ sai_preinit_cmd_file
 sai_preinit_warmboot_cmd_file
 sai_postinit_cmd_file
 sai_postinit_warmboot_cmd_file
+sai_tunnel_global_sip_mask_enable
 help_cli_enable
 memlist_enable
 serdes_lane_config_dfe
@@ -237,3 +238,5 @@ buf.map.egress_pool0.ingress_pool
 buf.map.egress_pool1.ingress_pool
 buf.map.egress_pool2.ingress_pool
 sai_adjust_acl_drop_in_rx_drop
+sai_verify_incoming_chksum
+l3_alpm_hit_skip

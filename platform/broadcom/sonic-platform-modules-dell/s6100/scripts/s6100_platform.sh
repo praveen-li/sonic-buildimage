@@ -43,6 +43,8 @@ if [[ "$1" == "init" ]]; then
         /usr/local/bin/platform_watchdog_disable.sh
     fi
 
+    systemctl start --no-block s6100-ssd-upgrade-status.service
+
     is_fast_warm=$(cat /proc/cmdline | grep SONIC_BOOT_TYPE | wc -l)
 
     if [[ "$is_fast_warm" == "1" ]]; then
@@ -52,6 +54,7 @@ if [[ "$1" == "init" ]]; then
     fi
 
     install_python_api_package
+    monit reload
 
 elif [[ "$1" == "deinit" ]]; then
     /usr/local/bin/s6100_i2c_enumeration.sh deinit

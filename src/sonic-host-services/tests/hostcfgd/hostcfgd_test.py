@@ -1,16 +1,16 @@
 import os
 import sys
-import swsssdk
+import swsscommon
 
 from parameterized import parameterized
 from sonic_py_common.general import load_module_from_source
 from unittest import TestCase, mock
 
 from .test_vectors import HOSTCFGD_TEST_VECTOR
-from .mock_configdb import MockConfigDb
+from tests.common.mock_configdb import MockConfigDb
 
 
-swsssdk.ConfigDBConnector = MockConfigDb
+swsscommon.swsscommon.ConfigDBConnector = MockConfigDb
 test_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 modules_path = os.path.dirname(test_path)
 scripts_path = os.path.join(modules_path, "scripts")

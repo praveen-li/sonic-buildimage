@@ -235,7 +235,6 @@ then
     sudo LANG=C chroot $FILESYSTEM_ROOT apt-get -y install kubelet=${KUBERNETES_VERSION}-00
     sudo LANG=C chroot $FILESYSTEM_ROOT apt-get -y install kubectl=${KUBERNETES_VERSION}-00
     sudo LANG=C chroot $FILESYSTEM_ROOT apt-get -y install kubeadm=${KUBERNETES_VERSION}-00
-    # kubeadm package auto install kubelet & kubectl
 else
     echo '[INFO] Skipping Install kubernetes'
 fi
@@ -480,12 +479,17 @@ fi
 
 ## Version file
 sudo mkdir -p $FILESYSTEM_ROOT/etc/sonic
+if [ -f files/image_config/sonic_release ]; then
+    sudo cp files/image_config/sonic_release $FILESYSTEM_ROOT/etc/sonic/
+fi
 sudo tee $FILESYSTEM_ROOT/etc/sonic/sonic_version.yml > /dev/null <<EOF
 build_version: '${SONIC_IMAGE_VERSION}'
 debian_version: '$(cat $FILESYSTEM_ROOT/etc/debian_version)'
 kernel_version: '$kversion'
 asic_type: $sonic_asic_platform
 commit_id: '$(git rev-parse --short HEAD)'
+branch: '$(git rev-parse --abbrev-ref HEAD)'
+release: '$(if [ -f $FILESYSTEM_ROOT/etc/sonic/sonic_release ]; then cat $FILESYSTEM_ROOT/etc/sonic/sonic_release; else echo none; fi)'
 build_date: $(date -u)
 build_number: ${BUILD_NUMBER:-0}
 built_by: $USER@$BUILD_HOSTNAME

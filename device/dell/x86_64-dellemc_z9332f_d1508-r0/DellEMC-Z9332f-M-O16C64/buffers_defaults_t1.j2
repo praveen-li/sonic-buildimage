@@ -4,18 +4,18 @@
     {# Generate list of ports #}
     {%- for port_idx in range(0,12) %}
         {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8)) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 2) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 4) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 6) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 2) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 4) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 6) %}{%- endif %}
     {%- endfor %}
     {%- for port_idx in range(12,16) %}
         {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8)) %}{%- endif %}
     {%- endfor %}
     {%- for port_idx in range(16,20) %}
         {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8)) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 2) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 4) %}{%- endif %}
-        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 2) + 6) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 2) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 4) %}{%- endif %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8) + 6) %}{%- endif %}
     {%- endfor %}
     {%- for port_idx in range(20,32) %}
         {%- if PORT_ALL.append("Ethernet%d" % (port_idx * 8)) %}{%- endif %}
@@ -26,13 +26,13 @@
 {%- macro generate_buffer_pool_and_profiles() %}
     "BUFFER_POOL": {
         "ingress_lossless_pool": {
-            "size": "66800476",
+            "size": "66394076",
             "type": "ingress",
             "mode": "dynamic",
             "xoff": "8644128"
         },
         "egress_lossless_pool": {
-            "size": "66800476",
+            "size": "55921148",
             "type": "egress",
             "mode": "static"
         }
@@ -41,7 +41,7 @@
         "ingress_lossy_profile": {
             "pool":"[BUFFER_POOL|ingress_lossless_pool]",
             "size":"0",
-            "static_th":"66800476"
+            "static_th":"66394076"
         },
         "egress_lossless_profile": {
             "pool":"[BUFFER_POOL|egress_lossless_pool]",
