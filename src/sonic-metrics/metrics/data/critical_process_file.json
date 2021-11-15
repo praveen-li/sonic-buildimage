@@ -24,5 +24,23 @@
         "telemetry": ["telemetry", "dialout_client",
 	              "node_exporter", "bgp_metrics"],
         "host" : ["rsyslogd"]
+    },
+    "v_3.x": {
+        "database": ["redis-server"],
+        "syncd": ["syncd", "dsserve"],
+        "swss": ["orchagent", "portsyncd", "neighsyncd",
+                 "vrfmgrd", "vlanmgrd", "intfmgrd",
+                 "portmgrd", "buffermgrd", "nbrmgrd",
+                 "fdbsyncd", "coppmgrd", "vxlanmgrd", "tunnelmgrd"],
+        "bgp": ["zebra", "fpmsyncd", "bgpd",
+                "staticd", "bgpcfgd", "bgpmon"],
+        "lldp": ["lldp_syncd", "lldpmgrd", "lldpd"],
+        "snmp": ["snmpd", "sonic_ax_impl"],
+        "telemetry": ["telemetry", "dialout_client_cli",
+	              "node_exporter", "bgp_metrics"],
+        "pmon":  ["fancontrol", "xcvrd", "psud",
+                  "syseepromd",  "thermalctld", "pcied",
+                  "ssdd", "sensord", "thermalctld", "xcvrd"],
+        "host" : ["rsyslogd"]
     }
 }

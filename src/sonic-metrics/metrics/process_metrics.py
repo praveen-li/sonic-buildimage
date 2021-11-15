@@ -64,17 +64,6 @@ class ProcessInfoUpdateTask(object):
         self._db = None
 
 
-    def deinit(self):
-        """
-        Destructor. Remove all entries in 'PROCESS_INFO' table.
-        :return:
-        """
-        self._clear_process_info_table()
-
-    def _clear_process_info_table(self):
-        self._db.delete_all_by_pattern(self._db.STATE_DB, "PROCESS_INFO|*")
-
-
     def readJson(self, filename):
         # Read critical process file
         try:
@@ -189,11 +178,6 @@ class ProcessInfoUpdateTask(object):
             self.update_process_info()
 
         log.info("Stop process info update loop")
-
-        # Remove all entries in 'PROCESS_INFO' table.
-        self.deinit()
-
-        self._db.close(self._db.STATE_DB)
 
 
     def task_run(self, db):

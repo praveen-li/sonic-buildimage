@@ -59,18 +59,6 @@ class SystemInfoUpdateTask(object):
         self._db = None
 
 
-    def deinit(self):
-        """
-        Destructor. Remove all entries in 'SYSTEM_INFO' table.
-        :return:
-        """
-        self._clear_system_info_table()
-
-
-    def _clear_system_info_table(self):
-        self._db.delete_all_by_pattern(self._db.STATE_DB, "SYSTEM_INFO|*")
-
-
     def get_localhost_info(self,field):
         try:
             config_db = ConfigDBConnector()
@@ -238,11 +226,6 @@ class SystemInfoUpdateTask(object):
             self.update_system_info()
 
         log.info("Stop system info update loop")
-
-        # Remove all entries in 'SYSTEM_INFO' table.
-        self.deinit()
-
-        self._db.close(self._db.STATE_DB)
 
 
     def task_run(self, db):

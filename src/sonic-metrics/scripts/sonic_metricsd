@@ -46,9 +46,9 @@ class DaemonMetricsd():
         """
         Constructor of DaemonMetricsd.
         """
-        # Connect to STATE_DB and create SSD, syslog and process info tables
+        # Connect to STATE_DB and create system and process info tables
         self._db = SonicV2Connector(host='127.0.0.1')
-        self._db.connect(self._db.STATE_DB, False)   # Make one attempt only
+        self._db.connect(self._db.STATE_DB)
 
         self.timeout = METRICSD_MAIN_THREAD_SLEEP_SECS
         self.stop_event = threading.Event()
@@ -61,6 +61,7 @@ class DaemonMetricsd():
             signal.signal(signal.SIGINT, self.signal_handler)
         if not signal.getsignal(signal.SIGTERM):
             signal.signal(signal.SIGTERM, self.signal_handler)
+
 
     # Signal handler
     def signal_handler(self, sig, frame):
@@ -75,13 +76,32 @@ class DaemonMetricsd():
         else:
             log.info("Caught unhandled signal '" + sig + "'")
 
+
     # Initialize daemon
     def init(self):
         log.info("Start daemon init...")
 
+
+    # Remove all entries in 'SYSTEM_INFO' table.
+    def _clear_system_info_table(self):
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "SYSTEM_INFO|*")
+
+
+    # Remove all entries in 'PROCESS_INFO' table.
+    def _clear_process_info_table(self):
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "PROCESS_INFO|*")
+
+
     # Deinitialize daemon
     def deinit(self):
+        """
+        Destructor. Remove all entries in 'PROCESS_INFO' and 'SYSTEM_INFO' table.
+        :return:
+        """
         log.info("Start daemon deinit...")
+        self._clear_system_info_table()
+        self._clear_process_info_table()
+
 
     def process_data(self):
         #TBD
@@ -120,6 +140,7 @@ class DaemonMetricsd():
 
         # Start daemon deinitialization sequence
         self.deinit()
+        self._db.close(self._db.STATE_DB)
 
         log.info("Shutting down...")
 
