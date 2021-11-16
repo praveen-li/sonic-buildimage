@@ -109,11 +109,7 @@ class TestCfgGenCaseInsensitive(TestCase):
                    'Vlan2000': {
                        'alias': 'ab2',
                        'dhcp_servers': ['192.0.0.1'],
-<<<<<<< HEAD
-=======
                        'dhcpv6_servers': ['fc02:2000::3', 'fc02:2000::4'],
-                       'members': ['Ethernet4'],
->>>>>>> github-202012
                        'vlanid': '2000'
                        }
                    }
