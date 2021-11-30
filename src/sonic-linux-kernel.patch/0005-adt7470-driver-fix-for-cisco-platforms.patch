@@ -1,0 +1,54 @@
+From e91056a02d94f359cb903142b83188a4933d8d6e Mon Sep 17 00:00:00 2001
+From: uraghura <uraghura@contoso.com>
+Date: Wed, 17 Mar 2021 19:43:45 +0000
+Subject: [PATCH] adt7470 driver fix for cisco platforms
+
+Signed-off-by: uraghura <uraghura@contoso.com>
+---
+ patch/driver-hwmon-adt7470-cisco-fix.patch | 35 ++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+ create mode 100644 patch/driver-hwmon-adt7470-cisco-fix.patch
+
+diff --git a/patch/driver-hwmon-adt7470-cisco-fix.patch b/patch/driver-hwmon-adt7470-cisco-fix.patch
+new file mode 100644
+index 0000000..ce43ce1
+--- /dev/null
++++ b/patch/driver-hwmon-adt7470-cisco-fix.patch
+@@ -0,0 +1,35 @@
++driver-hwmon-adt7470-cisco-fix
++
++From: uraghura <uraghura@contoso.com>
++
++
++---
++ drivers/hwmon/adt7470.c |    8 ++++++++
++ 1 file changed, 8 insertions(+)
++
++diff --git a/drivers/hwmon/adt7470.c b/drivers/hwmon/adt7470.c
++index 6e60ca5..f58aeb8 100644
++--- a/drivers/hwmon/adt7470.c
+++++ b/drivers/hwmon/adt7470.c
++@@ -207,6 +207,10 @@ static int adt7470_read_temperatures(struct i2c_client *client,
++ 	int i;
++ 	u8 cfg, pwm[4], pwm_cfg[2];
++ 
+++	/* Only read temperatures if we have to */
+++	if (data->num_temp_sensors == 0)  /* -1 == probe */
+++		return 0;
+++
++ 	/* save pwm[1-4] config register */
++ 	pwm_cfg[0] = i2c_smbus_read_byte_data(client, ADT7470_REG_PWM_CFG(0));
++ 	pwm_cfg[1] = i2c_smbus_read_byte_data(client, ADT7470_REG_PWM_CFG(2));
++@@ -259,6 +263,10 @@ static int adt7470_read_temperatures(struct i2c_client *client,
++ 		if (data->temp[i])
++ 			data->num_temp_sensors = i + 1;
++ 	}
+++
+++	if (data->num_temp_sensors <= 0)    /* -1 == probe */
+++		data->num_temp_sensors = 0;
+++  
++ 	data->temperatures_probed = 1;
++ 	return 0;
++ }
+-- 
+2.1.4

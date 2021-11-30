@@ -820,6 +820,34 @@ sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install $MLNX_
 sudo rm -rf $FILESYSTEM_ROOT/$MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME
 {% endif %}
 
+{% if sonic_asic_platform == "innovium" %}
+# Install sonic-platform Python 2 package
+SONIC_PLATFORM_PY2_WHEEL_NAME=$(basename {{sonic_platform_py2_wheel_path}})
+sudo cp {{sonic_platform_py2_wheel_path}} $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install $SONIC_PLATFORM_PY2_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY2_WHEEL_NAME
+
+# Install sonic-platform Python 3 package
+SONIC_PLATFORM_PY3_WHEEL_NAME=$(basename {{sonic_platform_py3_wheel_path}})
+sudo cp {{sonic_platform_py3_wheel_path}} $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY3_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install $SONIC_PLATFORM_PY3_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY3_WHEEL_NAME
+{% endif %}
+
+{% if sonic_asic_platform == "broadcom" %}
+# Install sonic-platform Python 2 package
+SONIC_PLATFORM_PY2_WHEEL_NAME=$(basename {{sonic_platform_py2_wheel_path}})
+sudo cp {{sonic_platform_py2_wheel_path}} $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY2_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install $SONIC_PLATFORM_PY2_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY2_WHEEL_NAME
+
+# Install sonic-platform Python 3 package
+SONIC_PLATFORM_PY3_WHEEL_NAME=$(basename {{sonic_platform_py3_wheel_path}})
+sudo cp {{sonic_platform_py3_wheel_path}} $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY3_WHEEL_NAME
+sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install $SONIC_PLATFORM_PY3_WHEEL_NAME
+sudo rm -rf $FILESYSTEM_ROOT/$SONIC_PLATFORM_PY3_WHEEL_NAME
+{% endif %}
+
 {%- if SONIC_ROUTING_STACK == "frr" %}
 sudo mkdir $FILESYSTEM_ROOT/etc/sonic/frr
 sudo touch $FILESYSTEM_ROOT/etc/sonic/frr/frr.conf

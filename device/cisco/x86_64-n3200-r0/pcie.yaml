@@ -1,0 +1,397 @@
+- bus: '00'
+  dev: '00'
+  fn: '0'
+  id: 0e00
+  name: 'Host bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 DMI2 (rev 04)'
+- bus: '00'
+  dev: '01'
+  fn: '0'
+  id: 0e02
+  name: 'PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root
+    Port 1a (rev 04)'
+- bus: '00'
+  dev: '03'
+  fn: '0'
+  id: 0e08
+  name: 'PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root
+    Port 3a (rev 04)'
+- bus: '00'
+  dev: '03'
+  fn: '2'
+  id: 0e0a
+  name: 'PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root
+    Port 3c (rev 04)'
+- bus: '00'
+  dev: '03'
+  fn: '3'
+  id: 0e0b
+  name: 'PCI bridge: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 PCI Express Root
+    Port 3d (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '0'
+  id: 0e20
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 0 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '1'
+  id: 0e21
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 1 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '2'
+  id: 0e22
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 2 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '3'
+  id: 0e23
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 3 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '4'
+  id: 0e24
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 4 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '5'
+  id: 0e25
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 5 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '6'
+  id: 0e26
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 6 (rev 04)'
+- bus: '00'
+  dev: '04'
+  fn: '7'
+  id: 0e27
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Crystal
+    Beach DMA Channel 7 (rev 04)'
+- bus: '00'
+  dev: '05'
+  fn: '0'
+  id: 0e28
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 VTd/Memory
+    Map/Misc (rev 04)'
+- bus: '00'
+  dev: '05'
+  fn: '2'
+  id: 0e2a
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 IIO RAS
+    (rev 04)'
+- bus: '00'
+  dev: '05'
+  fn: '4'
+  id: 0e2c
+  name: 'PIC: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 IOAPIC (rev 04)'
+- bus: '00'
+  dev: 1c
+  fn: '0'
+  id: '2342'
+  name: 'PCI bridge: Intel Corporation DH89xxCC PCI Express Root Port #1 (rev 08)'
+- bus: '00'
+  dev: 1c
+  fn: '1'
+  id: '2344'
+  name: 'PCI bridge: Intel Corporation DH89xxCC PCI Express Root Port #2 (rev 08)'
+- bus: '00'
+  dev: 1c
+  fn: '2'
+  id: '2346'
+  name: 'PCI bridge: Intel Corporation DH89xxCC PCI Express Root Port #3 (rev 08)'
+- bus: '00'
+  dev: 1d
+  fn: '0'
+  id: '2334'
+  name: 'USB controller: Intel Corporation DH89xxCC USB2 Enhanced Host Controller
+    #1 (rev 08)'
+- bus: '00'
+  dev: 1f
+  fn: '0'
+  id: '2310'
+  name: 'ISA bridge: Intel Corporation DH89xxCC LPC Controller (rev 08)'
+- bus: '00'
+  dev: 1f
+  fn: '2'
+  id: '2323'
+  name: 'SATA controller: Intel Corporation DH89xxCC 4 Port SATA AHCI Controller (rev
+    08)'
+- bus: '00'
+  dev: 1f
+  fn: '3'
+  id: '2330'
+  name: 'SMBus: Intel Corporation DH89xxCC SMBus Controller (rev 08)'
+- bus: '00'
+  dev: 1f
+  fn: '7'
+  id: '2360'
+  name: 'System peripheral: Intel Corporation DH89xxCC Watchdog Timer (rev 08)'
+- bus: '01'
+  dev: '00'
+  fn: '0'
+  id: b960
+  name: 'Ethernet controller: Broadcom Limited Broadcom BCM56960 Switch ASIC (rev
+    11)'
+- bus: '01'
+  dev: '00'
+  fn: '1'
+  id: b960
+  name: 'Ethernet controller: Broadcom Limited Broadcom BCM56960 Switch ASIC (rev
+    11)'
+- bus: '02'
+  dev: '00'
+  fn: '0'
+  id: '0434'
+  name: 'Co-processor: Intel Corporation DH89XXCC Series QAT (rev 21)'
+- bus: '02'
+  dev: '00'
+  fn: '1'
+  id: 0438
+  name: 'Ethernet controller: Intel Corporation DH8900CC Series Gigabit Network Connection
+    (rev 21)'
+- bus: '02'
+  dev: '00'
+  fn: '2'
+  id: 0438
+  name: 'Ethernet controller: Intel Corporation DH8900CC Series Gigabit Network Connection
+    (rev 21)'
+- bus: '02'
+  dev: '00'
+  fn: '3'
+  id: 0438
+  name: 'Ethernet controller: Intel Corporation DH8900CC Series Gigabit Network Connection
+    (rev 21)'
+- bus: '02'
+  dev: '00'
+  fn: '4'
+  id: 0438
+  name: 'Ethernet controller: Intel Corporation DH8900CC Series Gigabit Network Connection
+    (rev 21)'
+- bus: '03'
+  dev: '00'
+  fn: '0'
+  id: '0104'
+  name: 'Non-VGA unclassified device: Cisco Systems Inc Device 0104 (rev 01)'
+- bus: '07'
+  dev: '00'
+  fn: '0'
+  id: '0103'
+  name: 'Non-VGA unclassified device: Cisco Systems Inc Device 0103 (rev 01)'
+- bus: ff
+  dev: 08
+  fn: '0'
+  id: 0e80
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link
+    0 (rev 04)'
+- bus: ff
+  dev: 09
+  fn: '0'
+  id: 0e90
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Link
+    1 (rev 04)'
+- bus: ff
+  dev: 0a
+  fn: '0'
+  id: 0ec0
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power
+    Control Unit 0 (rev 04)'
+- bus: ff
+  dev: 0a
+  fn: '1'
+  id: 0ec1
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power
+    Control Unit 1 (rev 04)'
+- bus: ff
+  dev: 0a
+  fn: '2'
+  id: 0ec2
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power
+    Control Unit 2 (rev 04)'
+- bus: ff
+  dev: 0a
+  fn: '3'
+  id: 0ec3
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Power
+    Control Unit 3 (rev 04)'
+- bus: ff
+  dev: 0b
+  fn: '0'
+  id: 0e1e
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers
+    (rev 04)'
+- bus: ff
+  dev: 0b
+  fn: '3'
+  id: 0e1f
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 UBOX Registers
+    (rev 04)'
+- bus: ff
+  dev: 0c
+  fn: '0'
+  id: 0ee0
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast
+    Registers (rev 04)'
+- bus: ff
+  dev: 0c
+  fn: '1'
+  id: 0ee2
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast
+    Registers (rev 04)'
+- bus: ff
+  dev: 0d
+  fn: '0'
+  id: 0ee1
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast
+    Registers (rev 04)'
+- bus: ff
+  dev: 0d
+  fn: '1'
+  id: 0ee3
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Unicast
+    Registers (rev 04)'
+- bus: ff
+  dev: 0e
+  fn: '0'
+  id: 0ea0
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Home Agent
+    0 (rev 04)'
+- bus: ff
+  dev: 0e
+  fn: '1'
+  id: 0e30
+  name: 'Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Home
+    Agent 0 (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '0'
+  id: 0ea8
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 Target Address/Thermal Registers (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '1'
+  id: 0e71
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 RAS Registers (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '2'
+  id: 0eaa
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 Channel Target Address Decoder Registers (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '3'
+  id: 0eab
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 Channel Target Address Decoder Registers (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '4'
+  id: 0eac
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 Channel Target Address Decoder Registers (rev 04)'
+- bus: ff
+  dev: 0f
+  fn: '5'
+  id: 0ead
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 0 Channel Target Address Decoder Registers (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '0'
+  id: 0eb0
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 Thermal Control 0 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '1'
+  id: 0eb1
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 Thermal Control 1 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '2'
+  id: 0eb2
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 ERROR Registers 0 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '3'
+  id: 0eb3
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 ERROR Registers 1 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '4'
+  id: 0eb4
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 Thermal Control 2 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '5'
+  id: 0eb5
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 Thermal Control 3 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '6'
+  id: 0eb6
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 ERROR Registers 2 (rev 04)'
+- bus: ff
+  dev: '10'
+  fn: '7'
+  id: 0eb7
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Integrated
+    Memory Controller 1 Channel 0-3 ERROR Registers 3 (rev 04)'
+- bus: ff
+  dev: '13'
+  fn: '0'
+  id: 0e1d
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe
+    (rev 04)'
+- bus: ff
+  dev: '13'
+  fn: '1'
+  id: 0e34
+  name: 'Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 R2PCIe
+    (rev 04)'
+- bus: ff
+  dev: '13'
+  fn: '4'
+  id: 0e81
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI Ring
+    Registers (rev 04)'
+- bus: ff
+  dev: '13'
+  fn: '5'
+  id: 0e36
+  name: 'Performance counters: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 QPI
+    Ring Performance Ring Monitoring (rev 04)'
+- bus: ff
+  dev: '16'
+  fn: '0'
+  id: 0ec8
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 System
+    Address Decoder (rev 04)'
+- bus: ff
+  dev: '16'
+  fn: '1'
+  id: 0ec9
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast
+    Registers (rev 04)'
+- bus: ff
+  dev: '16'
+  fn: '2'
+  id: 0eca
+  name: 'System peripheral: Intel Corporation Xeon E7 v2/Xeon E5 v2/Core i7 Broadcast
+    Registers (rev 04)'

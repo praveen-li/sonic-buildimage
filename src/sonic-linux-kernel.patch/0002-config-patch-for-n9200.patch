@@ -1,0 +1,45 @@
+From c9206ae93f772ea71fdefeecbae74c12c47ec572 Mon Sep 17 00:00:00 2001
+From: abhiaga2 <abhiaga2@cisco.com>
+Date: Tue, 9 Mar 2021 10:08:52 -0800
+Subject: [PATCH 2/4] config patch for n9200
+
+Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
+---
+ patch/config-cisco-n9200.patch | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100644 patch/config-cisco-n9200.patch
+
+diff --git a/patch/config-cisco-n9200.patch b/patch/config-cisco-n9200.patch
+new file mode 100644
+index 0000000..318dcd4
+--- /dev/null
++++ b/patch/config-cisco-n9200.patch
+@@ -0,0 +1,25 @@
++From a7aaf1d9b6489a9b5b7a8d7b9891546ae6a9c547 Mon Sep 17 00:00:00 2001
++From: abhiaga2 <abhiaga2@cisco.com>
++Date: Tue, 9 Mar 2021 10:06:56 -0800
++Subject: [PATCH] Add CONFIG_SENSORS_CISCO_PMBUS=m to .config file
++
++Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
++---
++ debian/build/build_amd64_none_amd64/.config | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/debian/build/build_amd64_none_amd64/.config b/debian/build/build_amd64_none_amd64/.config
++index b0e1ce3..68d0b63 100644
++--- a/debian/build/build_amd64_none_amd64/.config
+++++ b/debian/build/build_amd64_none_amd64/.config
++@@ -4269,6 +4269,7 @@ CONFIG_SENSORS_PCF8591=m
++ # CONFIG_PMBUS is not set
++ CONFIG_SENSORS_TPS40422=m
++ CONFIG_SENSORS_CISCO_N2200=m
+++CONFIG_SENSORS_CISCO_PMBUS=m
++ # CONFIG_SENSORS_SHT15 is not set
++ CONFIG_SENSORS_SHT21=m
++ # CONFIG_SENSORS_SHT3x is not set
++-- 
++2.7.4
++
+-- 
+2.7.4
+

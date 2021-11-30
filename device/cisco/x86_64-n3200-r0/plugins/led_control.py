@@ -5,11 +5,7 @@
 # Platform-specific LED control functionality for SONiC
 #
 
-try:
-    from sonic_led.led_control_base import LedControlBase
-except ImportError, e:
-    raise ImportError (str(e) + " - required module not found")
-
+from sonic_led.led_control_base import LedControlBase
 
 class LedControl(LedControlBase):
     """Platform specific LED control class"""
@@ -74,7 +70,7 @@ class LedControl(LedControlBase):
         port_number = self._port_name_to_port_number(port)
 
         # Ignore invalid QSFP indices
-        if port_number <= 0:
+        if port_number < 0:
             return
 
         qsfp_index = self._port_number_to_qsfp_index(port_number)

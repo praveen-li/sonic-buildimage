@@ -1,0 +1,29 @@
+From 8c959d58efa88dee30d840a0cc0eaba81aa7be2a Mon Sep 17 00:00:00 2001
+From: uraghura <uraghura@contoso.com>
+Date: Tue, 17 Aug 2021 12:54:54 +0000
+Subject: [PATCH 2/2] Apply patch series
+
+---
+ patch/series | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+Index: sonic-linux-kernel/patch/series
+===================================================================
+--- sonic-linux-kernel.orig/patch/series
++++ sonic-linux-kernel/patch/series
+@@ -80,3 +80,15 @@ driver-ixgbe-external-phy.patch
+ # Do not add any public patch below this marker
+ #
+ ############################################################
++driver-mfd-enable-dh89xxcc-gpio.patch
++driver-rtc-cmos-address-space-256.patch
++driver-hwmon-adt7462-fix-alarm-mask.patch
++driver-hwmon-pmbus-cisco_n2200.patch
++driver-hwmon-pmbus-cisco_n2200-update.patch
++driver-hwmon-pmbus-cisco-solvan.patch
++include-asm-generic-gpio-ARCH_NR_GPIOs-1024.patch
++config-cisco-n3132-gx.patch
++config-cisco-n9200.patch
++driver-hwmon-pmbus-cisco-solvan-update.patch
++driver-mfd-enable-dh89xxcc-intel-spi.patch
++driver-hwmon-adt7470-cisco-fix.patch

@@ -37,6 +37,10 @@ class PsuUtil(PsuBase):
         status = 0
         bus = self.psu_buses[index-1]
         filename = None
+
+        if not os.path.exists(self.psu_path.format(bus)):
+            return False
+
         for dirname in os.listdir(self.psu_path.format(bus)):
             if fnmatch.fnmatch(dirname, 'hwmon?'):
                 filename = self.psu_path.format(bus) + dirname + '/' + self.psu_oper_status

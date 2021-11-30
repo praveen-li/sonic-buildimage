@@ -1,4 +1,5 @@
 include $(PLATFORM_PATH)/invm-sai.mk
+include $(PLATFORM_PATH)/platform-modules-cisco.mk
 include $(PLATFORM_PATH)/platform-modules-cel.mk
 include $(PLATFORM_PATH)/platform-modules-delta.mk
 include $(PLATFORM_PATH)/docker-syncd-invm.mk
@@ -8,12 +9,13 @@ include $(PLATFORM_PATH)/libsaithrift-dev.mk
 include $(PLATFORM_PATH)/python-saithrift.mk
 
 SONIC_ALL += $(SONIC_INVM_ONE_IMAGE) \
+             $(SONIC_ONE_NBI_IMAGE) \
              $(DOCKER_FPM) \
              $(DOCKER_PTF_INVM) \
              $(DOCKER_SYNCD_INVM_RPC)
 
 # Inject invm sai into syncd
-$(SYNCD)_DEPENDS += $(INVM_HSAI) $(INVM_LIBSAI) $(LIBSAITHRIFT_DEV_INVM)
+$(SYNCD)_DEPENDS += $(INVM_HSAI) $(INVM_LIBSAI) $(INVM_CIS_DRV) $(LIBSAITHRIFT_DEV_INVM)
 $(SYNCD)_UNINSTALLS += $(INVM_HSAI)
 
 # Runtime dependency on invm sai is set only for syncd

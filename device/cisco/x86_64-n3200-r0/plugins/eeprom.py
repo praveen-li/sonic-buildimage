@@ -6,13 +6,16 @@ Uses the pfm_util in the platform-module-n9200
 to obtain the act2 eeprom information
 """
 
-import StringIO
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO ## for Python 3
 
 try:
     import os
-    import exceptions
+    #import exceptions
     import subprocess
-except ImportError, e:
+except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
 
 class board(object):
@@ -43,10 +46,11 @@ class board(object):
                                   shell=False, stderr=subprocess.STDOUT)
             cmdout = ph.communicate()[0]
             ph.wait()
-        except OSError, e:
+        except OSError as e:
             raise OSError("cannot access pfm_util")
 
-        lines = cmdout.splitlines()
+        str_img = cmdout.decode("utf-8", errors="ignore")
+        lines = str_img.splitlines()
 
         for line in lines:
             line = line.rstrip('\n\r')
@@ -67,11 +71,11 @@ class board(object):
         return self.read_eeprom_map()
 
     def decode_eeprom(self, e):
-        print "    Name                   Value    "
-        print "--------------------  ---------------"
+        print ("    Name                   Value    ")
+        print ("--------------------  ---------------")
         for name in self.name_map.keys():
             value = e[name];
-            print "%-20s  %s" % (name, value)
+            print ("%-20s  %s" % (name, value))
 
     def is_checksum_valid(self, e):
         return (True, 0)
@@ -87,3 +91,6 @@ class board(object):
 
     def check_status(self):
         return 'ok'
+
+    def modelstr(self,e):
+        return e["Product Name"]

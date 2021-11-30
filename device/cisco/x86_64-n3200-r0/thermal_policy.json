@@ -1,0 +1,151 @@
+{
+    "thermal_control_algorithm": {
+		"fan_speed_when_suspend": "100"
+    },
+    "info_types": [
+        {
+            "type": "chassis_info"
+        },
+        {
+            "type": "fan_info"
+        },
+        {
+            "type": "sensor_info"
+        }
+    ],
+    "policies": [
+        {
+            "name": "Any fan absence",
+            "conditions": [
+                {
+                    "type": "fan.any.absence"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "100"
+                }
+            ]
+        },
+        {
+            "name": "All fan absence",
+            "conditions": [
+                {
+                    "type": "fan.all.absence"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "switch.shutdown"
+                }
+            ]
+        },
+        {
+            "name": "Any fan broken",
+            "conditions": [
+                {
+                    "type": "fan.any.fault"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "100"
+                }
+            ]
+        },
+        {
+            "name": "All fans broken",
+            "conditions": [
+                {
+                    "type": "fan.all.fault"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "switch.shutdown"
+                }
+            ]
+        },
+        {
+            "name": "Any fan in different direction",
+            "conditions": [
+                {
+                    "type": "fan.all.differentdirection"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "100"
+                }
+            ]
+        },
+        {
+            "name": "temp over high critical threshold",
+            "conditions": [
+                {
+                    "type": "sensor.any.criticalalarm"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "switch.shutdown"
+                }
+            ]
+        },
+        {
+            "name": "Any thermal major alarm",
+            "conditions": [
+                {
+                    "type": "sensor.any.majoralarm"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "100"
+                }
+            ]
+        },
+        {
+            "name": "Any thermal minor alarm",
+            "conditions": [
+                {
+                    "type": "sensor.any.minoralarm"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "80"
+                }
+            ]
+        },
+        {
+            "name": "all fan presence / thermal no warning",
+            "conditions": [
+                {
+                    "type": "fan.all.presence"
+                },
+                {
+                    "type": "fan.all.samedirection"
+                },
+                {
+                    "type": "fan.all.good"
+                },
+                {
+                    "type": "sensor.all.good"
+                }
+            ],
+            "actions": [
+                {
+                    "type": "fan.all.set_speed",
+                    "speed": "60"
+                }
+            ]
+        }
+    ]
+}
+

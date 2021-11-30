@@ -17,6 +17,7 @@ debs/
 # Needed for Innovium Debug Shell
 RUN apt-get install -y net-tools
 RUN apt-get install -y libjansson4
+RUN apt-get install -y i2c-tools
 RUN apt-get install -y libyaml-dev
 
 RUN dpkg -i \
@@ -24,6 +25,8 @@ RUN dpkg -i \
 debs/{{ deb }}{{' '}}
 {%- endfor %}
 
+COPY ["start.sh", "/usr/bin/"]
+COPY ["ivm_start.sh", "/usr/bin/"]
 COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
 
 ## Clean up

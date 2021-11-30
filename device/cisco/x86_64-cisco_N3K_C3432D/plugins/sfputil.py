@@ -108,7 +108,7 @@ class SfpUtilCisco(SfpUtilBase):
                     xcvrs = [ int(c) for c in xcvr_status.strip() ]
                     
             except:
-                print "Failed to open", self.XCVR_PRESENCE_FILE
+                print ("Failed to open", self.XCVR_PRESENCE_FILE)
                 return False, {}
         
             if self._xcvr_presence is not None:

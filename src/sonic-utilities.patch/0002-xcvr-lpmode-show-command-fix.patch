@@ -1,0 +1,25 @@
+Index: sonic-utilities/sfputil/main.py
+===================================================================
+--- sonic-utilities.orig/sfputil/main.py
++++ sonic-utilities/sfputil/main.py
+@@ -266,6 +266,12 @@ def port_eeprom_data_raw_string_pretty(l
+ def load_platform_sfputil():
+     global platform_sfputil
+ 
++    import sonic_platform.platform
++    chassis = sonic_platform.platform.Platform().get_chassis()
++
++    platform_sfputil=chassis.get_platform_sfputil()
++
++    '''
+     # Load platform module from source
+     platform_path, _ = device_info.get_paths_to_platform_and_hwsku_dirs()
+ 
+@@ -282,6 +288,7 @@ def load_platform_sfputil():
+     except AttributeError as e:
+         log.log_error("Failed to instantiate '%s' class: %s" % (PLATFORM_SPECIFIC_CLASS_NAME, str(e)), True)
+         return -2
++    '''
+ 
+     return 0
+ 

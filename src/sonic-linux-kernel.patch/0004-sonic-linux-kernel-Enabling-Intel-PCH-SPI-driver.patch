@@ -1,0 +1,45 @@
+From f5f81e237680a4a210a025bf6b6a08e0412808c3 Mon Sep 17 00:00:00 2001
+From: abhiaga2 <abhiaga2@cisco.com>
+Date: Thu, 8 Jul 2021 23:37:22 -0700
+Subject: [PATCH] sonic-linux-kernel Enabling Intel PCH SPI driver
+
+Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
+---
+ patch/driver-mfd-enable-dh89xxcc-intel-spi.patch | 25 ++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100644 patch/driver-mfd-enable-dh89xxcc-intel-spi.patch
+
+diff --git a/patch/driver-mfd-enable-dh89xxcc-intel-spi.patch b/patch/driver-mfd-enable-dh89xxcc-intel-spi.patch
+new file mode 100644
+index 0000000..1e9e0d1
+--- /dev/null
++++ b/patch/driver-mfd-enable-dh89xxcc-intel-spi.patch
+@@ -0,0 +1,25 @@
++From 5e737cf2e8cdb07ac33df3a693492776bc67a8e6 Mon Sep 17 00:00:00 2001
++From: abhiaga2 <abhiaga2@cisco.com>
++Date: Thu, 8 Jul 2021 23:34:02 -0700
++Subject: [PATCH] Enabling Intel PCH SPI driver
++
++Signed-off-by: abhiaga2 <abhiaga2@cisco.com>
++---
++ drivers/mfd/lpc_ich.c | 1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/drivers/mfd/lpc_ich.c b/drivers/mfd/lpc_ich.c
++index bcb497c..3c61581 100644
++--- a/drivers/mfd/lpc_ich.c
+++++ b/drivers/mfd/lpc_ich.c
++@@ -498,6 +498,7 @@ static struct lpc_ich_info lpc_chipset_info[] = {
++ 		.name = "DH89xxCC",
++ 		.iTCO_version = 2,
++ 		.gpio_version = ICH_V5_GPIO,
+++        .spi_type = INTEL_SPI_LPT,
++ 	},
++ 	[LPC_PPT] = {
++ 		.name = "Panther Point",
++-- 
++2.7.4
++
+-- 
+2.7.4
+
