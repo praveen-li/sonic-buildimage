@@ -51,6 +51,7 @@ setup(
                          './yang-models/sonic-flex_counter.yang',
                          './yang-models/sonic-interface.yang',
                          './yang-models/sonic-loopback-interface.yang',
+                         './yang-models/sonic-mirror-session.yang',
                          './yang-models/sonic-port.yang',
                          './yang-models/sonic-portchannel.yang',
                          './yang-models/sonic-types.yang',
