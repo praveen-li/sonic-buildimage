@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+include /usr/share/dpkg/pkg-info.mk
+#export DH_VERBOSE = 1
+
+MAKE ?= make
+
+%:
+	dh $@ --with python2,python3 --buildsystem=pybuild
+	#dh $@ --with python2,python3,systemd --buildsystem=pybuild
+
+override_dh_auto_build:
+	$(MAKE) build
+
+override_dh_auto_install:
+	$(MAKE) install-py2 \
+	   DESTDIR=$(CURDIR)/debian/python-$(DEB_SOURCE) \
+	   PY_INSTALL_ARGS=--install-layout=deb
+	$(MAKE) install-py3 \
+	   DESTDIR=$(CURDIR)/debian/python3-$(DEB_SOURCE) \
+	   PY_INSTALL_ARGS=--install-layout=deb
+
+override_dh_clean:
+	$(MAKE) clean
+	dh_clean
