@@ -7,6 +7,6 @@ program:bfdd
 program:ospfd
 program:pimd
 program:frrcfgd
-{%- else %}
+{%- elif DEVICE_METADATA.localhost.docker_routing_config_mode is not defined or DEVICE_METADATA.localhost.docker_routing_config_mode != "split" %}
 program:bgpcfgd
 {%- endif %}
