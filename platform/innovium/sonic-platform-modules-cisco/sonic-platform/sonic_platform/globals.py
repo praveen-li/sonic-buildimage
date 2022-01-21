@@ -17,6 +17,7 @@ class PlatformGlobalData():
     KEY_MAX_BIOS = 'BIOS'
     KEY_FAN_SPEED_TOLERANCE = 'fan_speed_tolerance'
     KEY_FAN_PWM_PATH_FORMAT = 'fan_pwm_path_format'
+    KEY_FAN_DIRECTION_FORMAT = 'fan_direction_format'
     KEY_TEMP_SENSORS_PATH_FORMAT = 'sensors_path_format'
     KEY_FORWARD_FAN_CURVE_SLOPE = 'F_fan_curve_slope'
     KEY_REVERSE_FAN_CURVE_SLOPE = 'R_fan_curve_slope'

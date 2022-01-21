@@ -49,6 +49,7 @@ class Fan(FanBase):
         self.drawer_index = fan_drawer_index + 1
         self.fan_speed_tolerance = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_SPEED_TOLERANCE, 10)
         self.fan_pwm_path_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_PWM_PATH_FORMAT, 1)
+        self.fan_direction_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_DIRECTION_FORMAT, 0)
 
         if self.is_psu_fan:
             self.fan_path = self._fan_path.format(psu['bus'], psu['addr'])
@@ -90,9 +91,15 @@ class Fan(FanBase):
             return FanBase.FAN_DIRECTION_NOT_APPLICABLE
         else:
             if not os.path.exists(self.dir_path):
-                return False
+                return FanBase.FAN_DIRECTION_NOT_APPLICABLE
+
             direction = read_int_from_file(self.dir_path)
-            return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
+            if self.fan_direction_format:
+                #fan direction 0 - b2f ; 1 - f2b
+                return FanBase.FAN_DIRECTION_INTAKE if (direction) else FanBase.FAN_DIRECTION_EXHAUST
+            else:
+                #fan direction 0 - f2b ; 1 - b2f
+                return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
 
     def get_status(self):
         status = 0
