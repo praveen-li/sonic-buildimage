@@ -639,6 +639,8 @@ class ControlPlaneAclManager(daemon_base.DaemonBase):
         if num_ctrl_plane_acl_rules > 0:
             iptables_cmds.append(self.iptables_cmd_ns_prefix[namespace] + "iptables -A INPUT -j DROP")
             iptables_cmds.append(self.iptables_cmd_ns_prefix[namespace] + "ip6tables -A INPUT -j DROP")
+        else:
+            iptables_cmds = []
 
         return iptables_cmds, service_to_source_ip_map
 
@@ -649,6 +651,11 @@ class ControlPlaneAclManager(daemon_base.DaemonBase):
         commands and runs them.
         """
         iptables_cmds, service_to_source_ip_map  = self.get_acl_rules_and_translate_to_iptables_commands(namespace)
+
+        if len(iptables_cmds) == 0:
+            self.log_info("No iptables commands to run for ACL update")
+            return
+
         self.log_info("Issuing the following iptables commands:")
         for cmd in iptables_cmds:
             self.log_info("  " + cmd)

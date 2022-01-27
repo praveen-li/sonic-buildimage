@@ -481,6 +481,9 @@ fi
 sudo cp ${files_path}/remote_ctr.config.json ${FILESYSTEM_ROOT_ETC_SONIC}/
 
 # Remote container management service files
+### Note that, as defined in the Unit section, ctrmgrd.service is dependent on caclmgrd.service.
+### Both services are not needed by LNOS now, hence neither is included or enabled.
+### If later ctrmgrd is needed (with kubernetes support), the dependency on caclmgrd must be addressed.
 sudo cp ${files_path}/ctrmgrd.service ${FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM}/
 sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable ctrmgrd.service
 
