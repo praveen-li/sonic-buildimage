@@ -6,6 +6,7 @@
 #
 
 try:
+    import os
     import fnmatch, subprocess, time
     from sonic_platform_base.sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_platform_base.sonic_sfp.sff8472 import sff8472InterfaceId
@@ -159,17 +160,55 @@ class SfpUtil(SfpUtilBase):
         else:
             return False #invalid port
     
+    def trigger_cmis_init(self, port_num):
+        cmis_init_file="/sys/class/mifpga/mifpga/xcvr_cmis_init"
+
+        if not self._is_valid_port(port_num):
+            return True
+
+        if not os.path.exists(cmis_init_file):
+            return True
+
+        try:
+            with open(cmis_init_file, "r+") as xcvr_cmis_init_fp:
+
+                xcvr_cmis_init = xcvr_cmis_init_fp.read().replace("\n",'')
+                xcvr_cmis_init_list = [ int(c) for c in xcvr_cmis_init.strip() ]
+                xcvr_cmis_init_list[port_num] = 1
+                xcvr_cmis_init_string = "".join(map(str,xcvr_cmis_init_list))
+                xcvr_cmis_init_fp.seek(0)
+                xcvr_cmis_init_fp.write(xcvr_cmis_init_string)
+                xcvr_cmis_init_fp.flush()
+
+                time.sleep(2) #large enough for syncd/csaipd to pick this request and start cmis init
+
+                xcvr_cmis_init_list[port_num] = 0
+                xcvr_cmis_init_string = "".join(map(str,xcvr_cmis_init_list))
+                xcvr_cmis_init_fp.seek(0)
+                xcvr_cmis_init_fp.write(xcvr_cmis_init_string)
+                xcvr_cmis_init_fp.flush()
+        except:
+            return False
+
+        return True
+
+
     def reset(self, port_num):
         # Check for valid port_num
         if self._is_valid_port(port_num) :
+
             port_reset="/sys/class/mifpga/mifpga/qsfp_%d_reset/value" % (port_num+1)
+
             with open(port_reset, "w") as x_p_fp:
                 x_p_fp.write("1")
-                x_p_fp.close()
-                time.sleep(1)
+
+            time.sleep(1)
+
             with open(port_reset, "w") as x_p_fp:
                 x_p_fp.write("0")
-                x_p_fp.close()
+
+            self.trigger_cmis_init(port_num)
+
             return True
         else:
             return False #invalid port
