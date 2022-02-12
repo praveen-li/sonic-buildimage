@@ -2,6 +2,7 @@
 include /usr/share/dpkg/pkg-info.mk
 #export DH_VERBOSE = 1
 
+MOD_SRC_DIR:= $(shell pwd)
 MAKE ?= make
 
 %:
@@ -9,16 +10,8 @@ MAKE ?= make
 	#dh $@ --with python2,python3,systemd --buildsystem=pybuild
 
 override_dh_auto_build:
-	$(MAKE) build
-
-override_dh_auto_install:
-	$(MAKE) install-py2 \
-	   DESTDIR=$(CURDIR)/debian/python-$(DEB_SOURCE) \
-	   PY_INSTALL_ARGS=--install-layout=deb
-	$(MAKE) install-py3 \
-	   DESTDIR=$(CURDIR)/debian/python3-$(DEB_SOURCE) \
-	   PY_INSTALL_ARGS=--install-layout=deb
+	python2.7 setup.py bdist_wheel -d $(MOD_SRC_DIR); \
+	python3 setup.py bdist_wheel -d $(MOD_SRC_DIR);
 
 override_dh_clean:
-	$(MAKE) clean
 	dh_clean

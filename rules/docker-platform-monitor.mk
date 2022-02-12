@@ -64,8 +64,6 @@ $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /var/run/platform_cache:/var/run/platfo
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/share/sonic/device/pddf:/usr/share/sonic/device/pddf:ro
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/local/bin/pfm_util:/usr/local/bin/pfm_util:ro
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/local/bin/act2_util:/usr/local/bin/act2_util:ro
-$(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python2.7/dist-packages/sonic_platform:/usr/lib/python2.7/dist-packages/sonic_platform:ro
-$(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python3/dist-packages/sonic_platform:/usr/lib/python3/dist-packages/sonic_platform:ro
 
 # Mount Arista python library on Aboot images to be used by plugins
 $(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/libsfp-eeprom.so:/usr/lib/libsfp-eeprom.so:ro
