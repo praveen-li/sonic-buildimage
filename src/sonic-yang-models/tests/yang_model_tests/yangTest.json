@@ -824,6 +824,24 @@
         }
     },
 
+    "DEVICE_METADATA_x509_CERT": {
+        "sonic-device_metadata:sonic-device_metadata": {
+            "sonic-device_metadata:DEVICE_METADATA": {
+                "sonic-device_metadata:localhost": {
+                    "docker_routing_config_mode": "separated",
+                    "platform": "Stone-DX010",
+                    "hostname": "DUT-ASW",
+                    "bgp_asn": "65000"
+                },
+                "sonic-device_metadata:x509": {
+                    "ca_crt": "/etc/sonic/telemetry/dsmsroot.cer",
+                    "server_crt": "/etc/sonic/telemetry/streamingtelemetryserver.cer",
+                    "server_key": "/etc/sonic/telemetry/streamingtelemetryserver.key"
+                }
+            }
+        }
+    },
+
     "DEVICE_METADATA_DEFAULT_BGP_STATUS": {
         "sonic-device_metadata:sonic-device_metadata": {
             "sonic-device_metadata:DEVICE_METADATA": {
@@ -1233,6 +1251,11 @@
 				"hostname": "asw.dc",
 				"bgp_asn": "64850",
 				"hwsku": "Stone"
+			},
+			"x509": {
+				"ca_crt": "/etc/sonic/telemetry/dsmsroot.cer",
+				"server_crt": "/etc/sonic/telemetry/streamingtelemetryserver.cer",
+				"server_key": "/etc/sonic/telemetry/streamingtelemetryserver.key"
 			}
 		},
 		"VLAN": {

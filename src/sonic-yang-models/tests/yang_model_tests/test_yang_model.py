@@ -202,6 +202,10 @@ class Test_yang_models:
                 'desc': 'VERSIONS_WITH_INCORRECT_PATTERN pattern failure.',
                 'eStr': self.defaultYANGFailure['Pattern']
             },
+            'DEVICE_METADATA_x509_CERT': {
+                'desc': 'VALID DEVICE_METADATA_x509_CERT Config.',
+                'eStr': self.defaultYANGFailure['None']
+            },
             'DEVICE_METADATA_DEFAULT_BGP_STATUS': {
                 'desc': 'DEVICE_METADATA DEFAULT VALUE FOR BGP_STATUS FIELD.',
                 'eStr': self.defaultYANGFailure['Verify'],
