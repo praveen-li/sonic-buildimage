@@ -839,3 +839,6 @@ sudo cp $BUILD_SCRIPTS_DIR/mask_disabled_services.py $FILESYSTEM_ROOT/tmp/
 sudo chmod a+x $FILESYSTEM_ROOT/tmp/mask_disabled_services.py
 sudo LANG=C chroot $FILESYSTEM_ROOT /tmp/mask_disabled_services.py
 sudo rm -rf $FILESYSTEM_ROOT/tmp/mask_disabled_services.py
+
+# Install ssd tool for Intel SSD
+sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/intelmas_1.6.122-0_amd64.deb
