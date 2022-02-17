@@ -4,6 +4,7 @@
 #
 
 try:
+    import os
     import time
     from sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_eeprom import eeprom_dts
@@ -94,6 +95,58 @@ class SfpUtilCisco(SfpUtilBase):
         port_reset="/sys/class/mifpga/mifpga/qsfp_%d_reset/value" % (port_num+1)
         with open(port_reset, "w") as x_p_fp:
             x_p_fp.write("0")
+        return True
+
+    def trigger_cmis_init(self, port_num):
+        cmis_init_file="/sys/class/mifpga/mifpga/xcvr_cmis_init"
+
+        if not self._is_valid_port(port_num):
+            return True
+
+        if not os.path.exists(cmis_init_file):
+            return True
+
+        try:
+            with open(cmis_init_file, "r+") as xcvr_cmis_init_fp:
+
+                xcvr_cmis_init = xcvr_cmis_init_fp.read().replace("\n",'')
+                xcvr_cmis_init_list = [ int(c) for c in xcvr_cmis_init.strip() ]
+                xcvr_cmis_init_list[port_num] = 1
+                xcvr_cmis_init_string = "".join(map(str,xcvr_cmis_init_list))
+                xcvr_cmis_init_fp.seek(0)
+                xcvr_cmis_init_fp.write(xcvr_cmis_init_string)
+                xcvr_cmis_init_fp.flush()
+
+                time.sleep(2) #large enough for syncd/csaipd to pick this request and start cmis init
+
+                xcvr_cmis_init_list[port_num] = 0
+                xcvr_cmis_init_string = "".join(map(str,xcvr_cmis_init_list))
+                xcvr_cmis_init_fp.seek(0)
+                xcvr_cmis_init_fp.write(xcvr_cmis_init_string)
+                xcvr_cmis_init_fp.flush()
+        except:
+            return False
+
+        return True
+
+
+
+    def reset(self, port_num):
+        # Check for invalid port_num
+        if port_num < self.port_start or port_num > self.port_end:
+            return False
+
+        port_reset="/sys/class/mifpga/mifpga/qsfp_%d_reset/value" % (port_num+1)
+        with open(port_reset, "w") as x_p_fp:
+            x_p_fp.write("1")
+
+        time.sleep(1)
+
+        with open(port_reset, "w") as x_p_fp:
+            x_p_fp.write("0")
+
+        self.trigger_cmis_init(port_num)
+
         return True
 
     def get_transceiver_change_event(self, timeout=0):
@@ -343,14 +396,8 @@ class SfpUtil(SfpUtilCisco):
 
 
     def reset(self, port_num):
-        # Check for invalid port_num
-        if port_num < self.QSFP_PORT_START or port_num > self.QSFP_PORT_END:
-            return False
-
-        port_reset="/sys/class/mifpga/mifpga/qsfp_%d_reset/value" % (port_num+1)
-        with open(port_reset, "w") as x_p_fp:
-            x_p_fp.write("1")
-        return True
+        status = super(SfpUtil, self).reset(port_num)
+        return status
 
     def get_low_power_mode(self, port_num):
         # Check for invalid port_num

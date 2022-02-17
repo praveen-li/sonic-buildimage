@@ -49,6 +49,7 @@ class Fan(FanBase):
         self.drawer_index = fan_drawer_index + 1
         self.fan_speed_tolerance = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_SPEED_TOLERANCE, 15)
         self.fan_pwm_path_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_PWM_PATH_FORMAT, 1)
+        self.fan_direction_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_DIRECTION_FORMAT, 0)
 
         if self.is_psu_fan:
             self.fan_path = self._fan_path.format(psu['bus'], psu['addr'])
@@ -61,19 +62,20 @@ class Fan(FanBase):
             self.g_led_path = None
             self.r_led_path = None
         else:
-            self.fan_path = self._fan_path.format(fan_data['bus'], fan_data['addr'])
-            self.status_path = self._status_path.format(self.index)
-            self.speed_path  = self._speed_path.format(self.index)
-            self.pwm_path = None
-            self.pre_path = self._gpio_path.format(fan_data['gpio_presence'])
-            self.dir_path = self._gpio_path.format(fan_data['gpio_direction'])
-            self.g_led_path =self._g_led_path.format(self.drawer_index)
-            self.r_led_path =self._r_led_path.format(self.drawer_index)
             self._name = "FAN {}-{}".format(self.drawer_index,self.index)
+            self.pwm_path = None
             if self.fan_pwm_path_format == 1: #use fan index to control PWM
                 self.pwm_path = self._pwm_path.format(self.index)
             elif self.fan_pwm_path_format == 2: #use drawer index to control PWM
                 self.pwm_path = self._pwm_path.format(self.drawer_index)
+                self.index = ((self.drawer_index-1)*2) + self.index
+            self.fan_path = self._fan_path.format(fan_data['bus'], fan_data['addr'])
+            self.status_path = self._status_path.format(self.index)
+            self.speed_path  = self._speed_path.format(self.index)
+            self.pre_path = self._gpio_path.format(fan_data['gpio_presence'])
+            self.dir_path = self._gpio_path.format(fan_data['gpio_direction'])
+            self.g_led_path =self._g_led_path.format(self.drawer_index)
+            self.r_led_path =self._r_led_path.format(self.drawer_index)
 
 
     def get_name(self):
@@ -90,9 +92,15 @@ class Fan(FanBase):
             return FanBase.FAN_DIRECTION_NOT_APPLICABLE
         else:
             if not os.path.exists(self.dir_path):
-                return False
+                return FanBase.FAN_DIRECTION_NOT_APPLICABLE
+
             direction = read_int_from_file(self.dir_path)
-            return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
+            if self.fan_direction_format:
+                #fan direction 0 - b2f ; 1 - f2b
+                return FanBase.FAN_DIRECTION_INTAKE if (direction) else FanBase.FAN_DIRECTION_EXHAUST
+            else:
+                #fan direction 0 - f2b ; 1 - b2f
+                return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
 
     def get_status(self):
         status = 0
@@ -128,7 +136,7 @@ class Fan(FanBase):
     #Platform specific code
     def rpm2pwm(self, rpm):
         pwm = 0
-        if self.index == 1:
+        if (self.index%2) == 1:
             f_fan_curve_slope = self.platform_data.get_param(PlatformGlobalData.KEY_FORWARD_FAN_CURVE_SLOPE,1)
             pwm = int(rpm / f_fan_curve_slope)
         else:
@@ -155,6 +163,8 @@ class Fan(FanBase):
             if filename is None:
                 return False
             speed = read_int_from_file(filename)
+            if self.is_psu_fan and self.psu is not None and self.psu['is_fan_sw_controllable'] == True:
+                return speed
 
         pwm = self.rpm2pwm(speed)
             
@@ -245,8 +255,11 @@ class Fan(FanBase):
 
     def get_status_led(self):
         if self.is_psu_fan:
-            #Silently fail
-            return 'green'
+            if self.get_presence():
+                return 'green'
+            else:
+                return 'off'
+
         red_color_val = 0
         green_color_val = 0
         if os.path.exists(self.g_led_path):

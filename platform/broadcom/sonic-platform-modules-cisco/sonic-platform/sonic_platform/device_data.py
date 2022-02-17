@@ -14,6 +14,7 @@ DEVICE_DATA = {
             'max_red_fans_speed' : 100,
             'fan_speed_tolerance' : 25,
             'fan_pwm_path_format' : 2,
+            'fan_direction_format' : 1, # fan direction: 0 - b2f ; 1 - f2b
             'sensors_path_format' : 1,
             'F_fan_curve_slope' : 153.0,
             'R_fan_curve_slope' : 113.0,
