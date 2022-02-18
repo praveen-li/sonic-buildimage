@@ -40,6 +40,7 @@ CONFIG_SETUP_VAR_DIR=/var/lib/config-setup
 CONFIG_SETUP_PRE_MIGRATION_FLAG=${CONFIG_SETUP_VAR_DIR}/pending_pre_migration
 CONFIG_SETUP_POST_MIGRATION_FLAG=${CONFIG_SETUP_VAR_DIR}/pending_post_migration
 CONFIG_SETUP_INITIALIZATION_FLAG=${CONFIG_SETUP_VAR_DIR}/pending_initialization
+ZTP_CONF=/etc/ztp/ztp.conf
 
 TACACS_JSON_BACKUP=tacacs.json
 
@@ -302,6 +303,20 @@ check_all_config_db_present()
     return 0   
 }
 
+# Disable LinkedIn ZTP process
+disable_ztp_service()
+{
+    if [ -e ${ZTP_CONF} ]; then
+        . ${ZTP_CONF}
+        if [ "$ZTP_MODE" == "TRUE" ]; then
+            sed -i "s/ZTP_MODE=TRUE/ZTP_MODE=FALSE/g" ${ZTP_CONF}
+            echo "Disabled ZTP on config migration"
+        else
+            echo "ZTP has already been disabled"
+        fi
+    fi
+}
+
 # Perform configuration migration from backup copy.
 #  - This step is performed when a new image is installed and SONiC switch boots into it
 do_config_migration()
@@ -314,6 +329,9 @@ do_config_migration()
     
     # Migrate all config_db from old to new
     copy_config_files_and_directories $(get_config_db_file_list)
+
+    # Disable LinkedIn ZTP process while doing config migration
+    disable_ztp_service
 
     # Migrate post-migration hooks
     copy_post_migration_hooks
