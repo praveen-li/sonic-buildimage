@@ -13,6 +13,8 @@ def
 {%-         set filename_postfix = 't0' %}
 {%-     elif 'leafrouter' in switch_role.lower() and 'mgmt' not in switch_role.lower()%}
 {%-         set filename_postfix = 't1' %}
+{%-     elif 'spinerouter' in switch_role.lower() and 'mgmt' not in switch_role.lower()%}
+{%-         set filename_postfix = 't2' %}
 {%-     else %}
 {%-         set filename_postfix = set_default_topology() %}
 {%-     endif %}
@@ -140,11 +142,11 @@ def
 {% endif %}
 
 {%- if defs.generate_profile_lists is defined %}
-{{ defs.generate_profile_lists(port_names_active) }},
+{{ defs.generate_profile_lists(PORT_ACTIVE) }},
 {% endif %}
 
 {%- if defs.generate_pg_profils is defined %}
-{{ defs.generate_pg_profils(port_names_active) }}
+{{ defs.generate_pg_profils(PORT_ACTIVE) }}
 {% else %}
     "BUFFER_PG": {
 {% for port in PORT_ACTIVE %}
@@ -162,7 +164,7 @@ def
 {% endif %}
 
 {% if defs.generate_queue_buffers is defined %}
-{{ defs.generate_queue_buffers(port_names_active) }}
+{{ defs.generate_queue_buffers(PORT_ACTIVE) }}
 {% else %}
     "BUFFER_QUEUE": {
 {% for port in PORT_ACTIVE %}

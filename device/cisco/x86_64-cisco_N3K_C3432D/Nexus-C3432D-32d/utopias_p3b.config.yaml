@@ -6,13 +6,15 @@ nodes:
   options:
     sku: "innovium.77700_A"
     buffer_management_mode: "api_driven"
+    pt01: "768"
+    wred_cr_ip_proto_list: "17"
+    cr_assignment_mode: "1"
     max_lossless_tc: "2"
     sd_low_power_mode_global_default: "true"
     ecn_stats_enable: "1"
     forward_profile: "IFCS_FORWARD_PROFILE_ID_PROFILE_E"
     ilpm_enable: "1"
     srp2: "126"
-    wred_cr_ip_proto_list: "17, 61"
     netdev:
     - auto_create: "no"
       multi_interface: "yes"
