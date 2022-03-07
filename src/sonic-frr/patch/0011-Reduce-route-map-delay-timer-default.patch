@@ -1,0 +1,25 @@
+diff --git a/bgpd/bgpd.h b/bgpd/bgpd.h
+index 19aa1ce5f..62ec6faba 100644
+--- a/bgpd/bgpd.h
++++ b/bgpd/bgpd.h
+@@ -152,7 +152,19 @@ struct bgp_master {
+ 	/* timer to dampen route map changes */
+ 	struct thread *t_rmap_update; /* Handle route map updates */
+ 	uint32_t rmap_update_timer;   /* Route map update timer */
+-#define RMAP_DEFAULT_UPDATE_TIMER 5 /* disabled by default */
++
++/*
++ * Reduce the default route-map delay-timer from 5 secs to 1 sec
++ * due to the upstream FRR issue in handling this timer at bgp
++ * startup, where incoming and outgoing routes get rejected while
++ * waiting for the timer to expire but EORs are still received and sent,
++ * hence GR function is broken.
++ *
++ * Setting the timer to 1 sec will work for LinkedIn use case:
++ * - at startup, the timer will expire before sessions come up.
++ * - 1 sec delay is sufficient for subsequent route-map changes.
++ */
++#define RMAP_DEFAULT_UPDATE_TIMER 1
+ 
+ 	/* Id space for automatic RD derivation for an EVI/VRF */
+ 	bitfield_t rd_idspace;
