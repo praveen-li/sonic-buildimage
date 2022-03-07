@@ -61,5 +61,12 @@
             "key": "sonic-acl:services",
             "value": ["SNMP"]
         }
+    },
+    "ACL_RULE_WITH_INVALID_MIRROR_INGRESS_ACTION": {
+        "desc": "Configure ACL_RULE with invalid mirror action.",
+        "eStrKey" : "LeafRef"
+    },
+    "ACL_RULE_WITH_VALID_MIRROR_INGRESS_ACTION": {
+        "desc": "Configure ACL_RULE with valid mirror action."
     }
 }

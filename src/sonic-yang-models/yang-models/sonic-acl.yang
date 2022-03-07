@@ -29,6 +29,10 @@ module sonic-acl {
 		revision-date 2019-07-01;
 	}
 
+	import sonic-mirror-session {
+		prefix sms;
+	}
+
 	description "ACL YANG Module for SONiC OS";
 
 	revision 2019-07-01 {
@@ -59,6 +63,18 @@ module sonic-acl {
 
 				leaf PACKET_ACTION {
 					type stypes:packet_action;
+				}
+
+				leaf MIRROR_INGRESS_ACTION {
+					type leafref {
+						path "/sms:sonic-mirror-session/sms:MIRROR_SESSION/sms:MIRROR_SESSION_LIST/sms:name";
+					}
+				}
+
+				leaf MIRROR_EGRESS_ACTION {
+					type leafref {
+						path "/sms:sonic-mirror-session/sms:MIRROR_SESSION/sms:MIRROR_SESSION_LIST/sms:name";
+					}
 				}
 
 				leaf IP_TYPE {

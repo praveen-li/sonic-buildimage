@@ -140,7 +140,7 @@ module sonic-mirror-session {
                     when "current()/../type = 'SPAN'";
                     type union {
                         type leafref {
-                            path "/port:sonic-port/port:PORT/port:PORT_LIST/port:name";
+                            path "/port:sonic-port/port:PORT/port:PORT_LIST/port:port_name";
                         }
                         type string {
                             pattern "CPU";
@@ -153,10 +153,10 @@ module sonic-mirror-session {
                 leaf-list src_port {
                     type union {
                         type leafref {
-                            path "/port:sonic-port/port:PORT/port:PORT_LIST/port:name";
+                            path "/port:sonic-port/port:PORT/port:PORT_LIST/port:port_name";
                         }
                         type leafref {
-                            path "/lag:sonic-portchannel/lag:PORTCHANNEL/lag:PORTCHANNEL_LIST/lag:name";
+                            path "/lag:sonic-portchannel/lag:PORTCHANNEL/lag:PORTCHANNEL_LIST/lag:portchannel_name";
                         }
                     }
                     description
