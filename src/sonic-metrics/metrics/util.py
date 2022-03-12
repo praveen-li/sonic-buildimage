@@ -15,7 +15,7 @@ SYSLOG_IDENTIFIER = os.path.basename(__file__)
 #
 
 SONIC_VERSION_YAML_PATH = "/etc/sonic/sonic_version.yml"
-VER_PATTERN = 'lnos_v(\d+)\.(\d+)\.(\d+)'
+VER_PATTERN = '(\d+)\.(\d+)\.(\d+).*'
 
 def run_command(command):
     """

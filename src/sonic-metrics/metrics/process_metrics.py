@@ -45,7 +45,7 @@ CRITICAL_PROCESSES_FILE = os.path.join(os.path.dirname(__file__), 'data/critical
 
 PROCESS_INFO_TABLE = 'PROCESS_INFO'
 PROCESS_INFO_UPDATE_PERIOD_SECS = 30
-DEFAULT_REL_VERSION = '2'
+DEFAULT_REL_VERSION = '3'
 
 # Process State definition
 STATE_RUNNING = 1
@@ -129,8 +129,8 @@ class ProcessInfoUpdateTask(object):
         rel, major, minor = util.check_version()
         log.debug("SONiC Release {}, manjor {}, minor {} version".format(rel, major, minor))
         if not rel:
-            log.error("Unable to get release version")
-            return
+            # if check_version regex does not match, pin it to dafault release version
+            rel =  DEFAULT_REL_VERSION
 
         ver_key = "v_{}.x".format(rel)
 
