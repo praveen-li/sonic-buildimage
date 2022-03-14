@@ -1,0 +1,4 @@
+{%- set default_topo = 't0' %}
+{%- from 'qos_ports.j2' import PORT_ACTIVE, generate_port_lists %}
+{%- from 'cable_len.j2' import cable_length %}
+{%- include 'buffers_config.j2' %}

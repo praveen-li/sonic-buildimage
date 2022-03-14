@@ -1,0 +1,27 @@
+{%- set PORT_ACTIVE = [] %}
+{%- set PORT_TOR_SRV = [] %}
+{%- set PORT_CSW_TOR = [] %}
+{%- set PORT_FAB_CSW = [] %}
+
+{%- for port_idx in range(0, 64, 2) %}
+{%- if PORT_ACTIVE.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- if PORT_CSW_TOR.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- endfor %}
+{%- for port_idx in range(64, 96, 2) %}
+{%- if PORT_ACTIVE.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- if PORT_FAB_CSW.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- endfor %}
+{%- for port_idx in range(96, 128, 4) %}
+{%- if PORT_ACTIVE.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- if PORT_FAB_CSW.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+{%- endfor %}
+
+{%- macro generate_port_lists(PORT_ALL) %}
+    {# Generate list of ports #}
+    {%- for port_idx in range(0, 96, 2) %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+    {%- endfor %}
+    {%- for port_idx in range(96, 128, 4) %}
+        {%- if PORT_ALL.append("Ethernet%d" % (port_idx)) %}{%- endif %}
+    {%- endfor %}
+{%- endmacro %}

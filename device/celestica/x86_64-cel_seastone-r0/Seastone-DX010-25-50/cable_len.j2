@@ -1,0 +1,21 @@
+{%- from 'qos_ports.j2' import PORT_TOR_SRV, PORT_CSW_TOR, PORT_FAB_CSW %}
+
+{%- set TOR_SRV_CAB = "5m" %}
+{%- set CSW_TOR_CAB = "300m" %}
+{%- set FAB_CSW_CAB = "1500m" %}
+
+{%- macro cable_length(port_name) %}
+    {%- set cable_len = [] %}
+    {%- if port_name in PORT_TOR_SRV %}
+        {%- if cable_len.append(TOR_SRV_CAB) %}{% endif %}
+    {%- elif port_name in PORT_CSW_TOR %}
+        {%- if cable_len.append(CSW_TOR_CAB) %}{% endif %}
+    {%- elif port_name in PORT_FAB_CSW %}
+        {%- if cable_len.append(FAB_CSW_CAB) %}{% endif %}
+    {%- else %}
+        {%- if cable_len.append(CSW_TOR_CAB) %}{% endif %}
+    {%- endif %}
+    {%- if cable_len -%}
+    {{ cable_len.0 }}
+    {%- endif %}
+{%- endmacro %}
