@@ -1,12 +1,17 @@
 # Docker image for SONiC platform monitoring tools
 
+DOCKER_PLATFORM_INTELSSD = intelmas_1.6.122-0_amd64.deb
+$(DOCKER_PLATFORM_INTELSSD)_PATH = files/lnos-internal/tools
+
+SONIC_COPY_DEBS += $(DOCKER_PLATFORM_INTELSSD)
+
 DOCKER_PLATFORM_MONITOR_STEM = docker-platform-monitor
 DOCKER_PLATFORM_MONITOR = $(DOCKER_PLATFORM_MONITOR_STEM).gz
 DOCKER_PLATFORM_MONITOR_DBG = $(DOCKER_PLATFORM_MONITOR_STEM)-$(DBG_IMAGE_MARK).gz
 
 $(DOCKER_PLATFORM_MONITOR)_PATH = $(DOCKERS_PATH)/$(DOCKER_PLATFORM_MONITOR_STEM)
 
-$(DOCKER_PLATFORM_MONITOR)_DEPENDS += $(LIBSENSORS) $(LM_SENSORS) $(FANCONTROL) $(SENSORD) $(LIBSWSSCOMMON) $(PYTHON_SWSSCOMMON) $(PYTHON3_SWSSCOMMON) $(SMARTMONTOOLS) $(ETHTOOL) $(SONIC_LEDD) $(SONIC_XCVRD) $(SONIC_SSDD)
+$(DOCKER_PLATFORM_MONITOR)_DEPENDS += $(LIBSENSORS) $(LM_SENSORS) $(FANCONTROL) $(SENSORD) $(LIBSWSSCOMMON) $(PYTHON_SWSSCOMMON) $(PYTHON3_SWSSCOMMON) $(SMARTMONTOOLS) $(ETHTOOL) $(SONIC_LEDD) $(SONIC_XCVRD) $(SONIC_SSDD) $(DOCKER_PLATFORM_INTELSSD)
 
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_PLATFORM_COMMON_PY2)
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_PLATFORM_COMMON_PY3)
@@ -59,8 +64,6 @@ $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /var/run/platform_cache:/var/run/platfo
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/share/sonic/device/pddf:/usr/share/sonic/device/pddf:ro
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/local/bin/pfm_util:/usr/local/bin/pfm_util:ro
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/local/bin/act2_util:/usr/local/bin/act2_util:ro
-$(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python2.7/dist-packages/sonic_platform:/usr/lib/python2.7/dist-packages/sonic_platform:ro
-$(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python3/dist-packages/sonic_platform:/usr/lib/python3/dist-packages/sonic_platform:ro
 
 # Mount Arista python library on Aboot images to be used by plugins
 $(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/libsfp-eeprom.so:/usr/lib/libsfp-eeprom.so:ro

@@ -326,7 +326,8 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y in
     python3-pip             \
     cron                    \
     haveged                 \
-    jq
+    jq                      \
+    python3-apt
 
 if [[ $CONFIGURED_ARCH == amd64 ]]; then
 ## Pre-install the fundamental packages for amd64 (x86)
