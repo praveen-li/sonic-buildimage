@@ -105,6 +105,9 @@ sudo dpkg --root=$FILESYSTEM_ROOT --force-confdef --force-confold -i $debs_path/
     -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -f
 
 # Install dependencies for SONiC config engine
+# Temp fix for the build due to version dependencies
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y --allow-downgrades install libexpat1=2.2.6-2+deb10u3
+
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install \
     python-dev     \
     python3-dev
@@ -254,6 +257,9 @@ sudo rm -rf $FILESYSTEM_ROOT/$SYSTEM_HEALTH_PY3_WHEEL_NAME
 
 # Install prerequisites needed for installing the Python m2crypto package, used by sonic-utilities
 # These packages can be uninstalled after intallation
+# Temp fix for the build due to version dependencies
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y --allow-downgrades install libssl1.1=1.1.1d-0+deb10u7
+
 sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install build-essential libssl-dev swig
 
 # Install prerequisites needed for using the Python m2crypto package, used by sonic-utilities
