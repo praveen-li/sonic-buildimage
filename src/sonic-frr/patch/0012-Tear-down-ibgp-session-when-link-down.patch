@@ -1,0 +1,20 @@
+diff --git a/bgpd/bgp_zebra.c b/bgpd/bgp_zebra.c
+index de1db4f8e..b7d035332 100644
+--- a/bgpd/bgp_zebra.c
++++ b/bgpd/bgp_zebra.c
+@@ -286,8 +286,14 @@ static int bgp_ifp_down(struct interface *ifp)
+ 				|| bgp_bfd_is_peer_multihop(peer)))
+ #else
+ 			/* Take down directly connected EBGP peers */
++                        /* In LinkedIn use case, tear down directly connected iBGP session
++                         * as well for fast re-convergence. If the iBGP session stays up and
++                         * routes are still valid due to next-hop resolved by static route,
++                         * traffic will be blackholed for extended period of time.
++                         */
+ 			if ((peer->ttl != BGP_DEFAULT_TTL)
+-			    && (peer->gtsm_hops != BGP_GTSM_HOPS_CONNECTED))
++			    && (peer->gtsm_hops != BGP_GTSM_HOPS_CONNECTED)
++                            && ((peer->sort != BGP_PEER_IBGP) || !peer->shared_network))
+ #endif
+ 				continue;
+ 
