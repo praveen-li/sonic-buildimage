@@ -842,6 +842,28 @@
         }
     },
 
+    "DEVICE_METADATA_TYPE_SPINE": {
+        "sonic-device_metadata:sonic-device_metadata": {
+            "sonic-device_metadata:DEVICE_METADATA": {
+                "sonic-device_metadata:localhost": {
+                    "hostname": "DUT-FAB",
+                    "type": "SpineRouter"
+                }
+            }
+        }
+    },
+
+    "DEVICE_METADATA_TYPE_LEAF": {
+        "sonic-device_metadata:sonic-device_metadata": {
+            "sonic-device_metadata:DEVICE_METADATA": {
+                "sonic-device_metadata:localhost": {
+                    "hostname": "DUT-CSW",
+                    "type": "LeafRouter"
+                }
+            }
+        }
+    },
+
     "DEVICE_METADATA_DEFAULT_BGP_STATUS": {
         "sonic-device_metadata:sonic-device_metadata": {
             "sonic-device_metadata:DEVICE_METADATA": {

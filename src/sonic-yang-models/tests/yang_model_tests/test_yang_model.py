@@ -206,6 +206,14 @@ class Test_yang_models:
                 'desc': 'VALID DEVICE_METADATA_x509_CERT Config.',
                 'eStr': self.defaultYANGFailure['None']
             },
+            'DEVICE_METADATA_TYPE_SPINE': {
+                'desc': 'VALID DEVICE_METADATA_TYPE_SPINE Config.',
+                'eStr': self.defaultYANGFailure['None']
+            },
+            'DEVICE_METADATA_TYPE_LEAF': {
+                'desc': 'VALID DEVICE_METADATA_TYPE_LEAF Config.',
+                'eStr': self.defaultYANGFailure['None']
+            },
             'DEVICE_METADATA_DEFAULT_BGP_STATUS': {
                 'desc': 'DEVICE_METADATA DEFAULT VALUE FOR BGP_STATUS FIELD.',
                 'eStr': self.defaultYANGFailure['Verify'],
