@@ -80,7 +80,7 @@ class SfpUtilCisco(SfpUtilBase):
 
         try:
             for n in range(0, num_bytes):
-                eeprom_raw[n] = hex(ord(raw[n]))[2:].zfill(2)
+                eeprom_raw[n] = hex(int(raw[n]))[2:].zfill(2)
         except:
             return None
 
