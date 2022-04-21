@@ -1,2 +1,4 @@
 sonic_platform-1.0-py3-none-any.whl usr/share/sonic/device/x86_64-cisco_N3K_C3432D
 sonic_platform-1.0-py3-none-any.whl usr/share/sonic/device/x86_64-cisco_N3K_C3432C
+cisco_platform.sh usr/local/bin
+systemd/platform-modules-cisco3432.service lib/systemd/system

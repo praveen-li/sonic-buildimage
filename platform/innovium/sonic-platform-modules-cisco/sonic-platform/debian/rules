@@ -13,5 +13,7 @@ override_dh_auto_build:
 	python2.7 setup.py bdist_wheel -d $(MOD_SRC_DIR); \
 	python3 setup.py bdist_wheel -d $(MOD_SRC_DIR);
 
+override_dh_usrlocal:
+
 override_dh_clean:
 	dh_clean

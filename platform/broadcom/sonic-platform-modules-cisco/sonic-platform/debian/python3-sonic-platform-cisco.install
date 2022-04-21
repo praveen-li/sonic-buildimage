@@ -1,1 +1,3 @@
 sonic_platform-1.0-py3-none-any.whl usr/share/sonic/device/x86_64-n3200-r0
+cisco_platform.sh usr/local/bin
+systemd/platform-modules-cisco3232c.service lib/systemd/system

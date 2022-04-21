@@ -1,0 +1,8 @@
+# postinst script for cisco 3432
+
+# Enable Cisco-3432-platform-service
+depmod -a
+systemctl enable platform-modules-cisco3432.service
+systemctl start platform-modules-cisco3432.service
+
+#DEBHELPER#
