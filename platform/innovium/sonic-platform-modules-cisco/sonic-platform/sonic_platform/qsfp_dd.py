@@ -814,7 +814,6 @@ class qsfpddDom(qsfp_dd_Dom):
 
         media_type = self.parse_sff_element(None, self.mod_media_type_field , start_pos)
         if  media_type != 0x1 and media_type != 0x2:
-            print("DOM not supported")
             self.dom_data = None
             return
 

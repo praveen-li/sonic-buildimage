@@ -495,9 +495,6 @@ class SfpUtil(SfpUtilBase):
             sfp_media_type_raw = self.read_eeprom_specific_bytes(port_num, QSFP_DD_MEDIA_TYPE_OFFSET, QSFP_DD_MEDIA_TYPE_WIDTH)
             if sfp_media_type_raw is not None:
                 sfp_media_type_dict = sfpi_obj.parse_media_type(sfp_media_type_raw, 0)
-                if sfp_media_type_dict is None:
-                    return None
-
                 host_media_list = ""
                 sfp_application_type_first_list = self.read_eeprom_specific_bytes(port_num, (QSFP_DD_FIRST_APPLICATION_LIST_OFFSET), QSFP_DD_FIRST_APPLICATION_LIST_WIDTH)
                 possible_application_count = 8
@@ -507,7 +504,7 @@ class SfpUtil(SfpUtilBase):
                     return None
 
                 for i in range(0, possible_application_count):
-                    if sfp_application_type_list[i * 4] == 'ff':
+                    if sfp_application_type_list[i * 4] == 'ff' or sfp_media_type_dict is None:
                         break
                     host_electrical, media_interface = sfpi_obj.parse_application(sfp_media_type_dict, sfp_application_type_list[i * 4], sfp_application_type_list[i * 4 + 1])
                     host_media_list = host_media_list + host_electrical + ' - ' + media_interface + '\n\t\t\t\t   '
@@ -525,7 +522,7 @@ class SfpUtil(SfpUtilBase):
             transceiver_info_dict['encoding'] = "Not supported for CMIS cables"
             transceiver_info_dict['ext_identifier'] = str(sfp_ext_identifier_data['data']['Extended Identifier']['value'])
             transceiver_info_dict['ext_rateselect_compliance'] = "Not supported for CMIS cables"
-            transceiver_info_dict['specification_compliance'] = "Not supported for CMIS cables"
+            transceiver_info_dict['specification_compliance'] = '{}'
             transceiver_info_dict['cable_type'] = "Length Cable Assembly(m)"
             transceiver_info_dict['cable_length'] = str(sfp_cable_len_data['data']['Length Cable Assembly(m)']['value'])
             transceiver_info_dict['nominal_bit_rate'] = "Not supported for CMIS cables"
@@ -567,7 +564,8 @@ class SfpUtil(SfpUtilBase):
             if dom_data is None:
                 return transceiver_dom_info_dict
 
-            dom_monitor_data = dom_data['data']['MonitorData']
+            dom_monitor_data = dom_data['data'].get('MonitorData')
+
             if dom_monitor_data is None:
                 return transceiver_dom_info_dict
 
@@ -654,7 +652,7 @@ class SfpUtil(SfpUtilBase):
             if dom_data is None:
                 return transceiver_dom_threshold_info_dict
 
-            dom_threshold_data = dom_data['data']['AwThresholds']
+            dom_threshold_data = dom_data['data'].get('AwThresholds')
             if dom_threshold_data is None:
                 return transceiver_dom_threshold_info_dict
 
