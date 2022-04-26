@@ -78,8 +78,9 @@ class SfpUtilCisco(SfpUtilBase):
             return None
 
         try:
+            raw = bytearray(raw)
             for n in range(0, num_bytes):
-                eeprom_raw[n] = hex(int(raw[n]))[2:].zfill(2)
+                eeprom_raw[n] = hex(raw[n])[2:].zfill(2)
         except:
             return None
 
