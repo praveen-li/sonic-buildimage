@@ -15,7 +15,7 @@
 
 #define RELAY_PORT 547
 #define CLIENT_PORT 546
-#define HOP_LIMIT 32
+#define HOP_LIMIT 8     //HOP_LIMIT reduced from 32 to 8 as stated in RFC8415
 
 #define lengthof(A) (sizeof (A) / sizeof (A)[0])
 
@@ -25,6 +25,7 @@
 /* DHCPv6 message types */
 typedef enum
 {
+    DHCPv6_MESSAGE_TYPE_UNKNOWN = 0,
     DHCPv6_MESSAGE_TYPE_SOLICIT = 1,
     DHCPv6_MESSAGE_TYPE_ADVERTISE = 2,
     DHCPv6_MESSAGE_TYPE_REQUEST = 3,
@@ -42,6 +43,7 @@ typedef enum
 
 struct relay_config {
     int local_sock; 
+    int server_sock;
     int filter;
     sockaddr_in6 link_address;
     swss::DBConnector *db;
@@ -90,15 +92,17 @@ struct linklayer_addr_option  {
 int sock_open(int ifindex, const struct sock_fprog *fprog);
 
 /**
- * @code                prepare_socket(int *local_sock);
+ * @code                prepare_socket(int *local_sock, int *server_sock, relay_config *config, int index);
  * 
  * @brief               prepare L3 socket for sending
  *
- * @param local_sock    pointer to socket to be prepared
+ * @param local_sock    pointer to socket binded to global address for relaying client message to server and listening for server message
+ * @param server_sock       pointer to socket binded to link_local address for relaying server message to client
+ * @param index         scope id of interface
  *
  * @return              none
  */
-void prepare_socket(int *local_sock);
+void prepare_socket(int *local_sock, int *server_sock, relay_config *config, int index);
 
 /**
  * @code                        prepare_relay_config(relay_config *interface_config, int local_sock, int filter);
@@ -141,6 +145,21 @@ void relay_forward(uint8_t *buffer, const struct dhcpv6_msg *msg, uint16_t msg_l
  * @return none
  */
 void relay_client(int sock, const uint8_t *msg, int32_t len, const ip6_hdr *ip_hdr, const ether_header *ether_hdr, relay_config *config);
+
+/**
+ * @code                 relay_relay_forw(int sock, const uint8_t *msg, int32_t len, const ip6_hdr *ip_hdr, relay_config *config)
+ *
+ * @brief                construct a relay-forward message encapsulated relay-forward message
+ *
+ * @param sock           L3 socket for sending data to servers
+ * @param msg            pointer to dhcpv6 message header position
+ * @param len            size of data received
+ * @param ip_hdr         pointer to IPv6 header
+ * @param config         pointer to the relay interface config
+ *
+ * @return none
+ */
+void relay_relay_forw(int sock, const uint8_t *msg, int32_t len, const ip6_hdr *ip_hdr, relay_config *config);
 
 /**
  * @code                relay_relay_reply(int sock, const uint8_t *msg, int32_t len, relay_config *configs);
@@ -246,28 +265,6 @@ void update_counter(swss::DBConnector *db, std::string counterVlan, uint8_t msg_
 std::string toString(uint16_t count);
 
 /**
- * @code                bool is_addr_gua(in6_addr addr);
- *
- * @brief               check if address is global
- *
- * @param addr         ipv6 address
- * 
- * @return              bool
- */
-bool is_addr_gua(in6_addr addr);
-
-/**
- * @code                is_addr_link_local(in6_addr addr);
- *
- * @brief               check if address is link_local
- *
- * @param addr         ipv6 address
- * 
- * @return              bool
- */
-bool is_addr_link_local(in6_addr addr);
-
-/**
  * @code                const struct ether_header *parse_ether_frame(const uint8_t *buffer, const uint8_t **out_end);
  *
  * @brief               parse through ethernet frame
@@ -340,15 +337,17 @@ const struct dhcpv6_relay_msg *parse_dhcpv6_relay(const uint8_t *buffer);
 const struct dhcpv6_option *parse_dhcpv6_opt(const uint8_t *buffer, const uint8_t **out_end);
 
 /**
- * @code                            void send_udp(int sock, uint8_t *buffer, struct sockaddr_in6 target, uint32_t n);
+ * @code                            void send_udp(int sock, uint8_t *buffer, struct sockaddr_in6 target, uint32_t n, relay_config *config, uint8_t msg_type);
  *
  * @brief                           send udp packet
  *
  * @param *buffer                   message buffer
  * @param sockaddr_in6 target       target socket
  * @param n                         length of message
+ * @param relay_config *config      pointer to relay_config
+ * @param uint8_t msg_type          message type of dhcpv6 option of relayed message
  * 
  * @return dhcpv6_option   end of dhcpv6 message option
  */
-void send_udp(int sock, struct sockaddr_in6 target, uint8_t *buffer, uint32_t n);
+void send_udp(int sock, uint8_t *buffer, struct sockaddr_in6 target, uint32_t n, relay_config *config, uint8_t msg_type);
 

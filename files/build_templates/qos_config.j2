@@ -37,6 +37,8 @@
 {%- set PFC_QUEUES = [3, 4] %}
 {% endif %}
 
+{%- set apollo_resource_types = ['DL-NPU-Apollo'] -%}
+
 {
 {% if generate_tc_to_pg_map is defined %}
     {{- generate_tc_to_pg_map() }}
@@ -166,6 +168,22 @@
 {% if generate_scheduler_list is defined %}
 {{- generate_scheduler_list() }}
 {% else %}
+{% if 'resource_type' in DEVICE_METADATA['localhost'] and DEVICE_METADATA['localhost']['resource_type'] in apollo_resource_types %}
+    "SCHEDULER": {
+        "scheduler.0": {
+            "type"  : "DWRR",
+            "weight": "1"
+        },
+        "scheduler.1": {
+            "type"  : "DWRR",
+            "weight": "1"
+        },
+        "scheduler.2": {
+            "type"  : "DWRR",
+            "weight": "100"
+        }
+    },
+{% else %}
     "SCHEDULER": {
         "scheduler.0": {
             "type"  : "DWRR",
@@ -176,6 +194,7 @@
             "weight": "15"
         }
     },
+{% endif %}
 {% endif %}
 {% if asic_type in pfc_to_pg_map_supported_asics  %}
     "PFC_PRIORITY_TO_PRIORITY_GROUP_MAP": {
@@ -228,21 +247,50 @@
 {% endif %}
     "QUEUE": {
 {% for port in PORT_ACTIVE %}
-{% set port_last = loop.last %}
-{% for queue in range (0, 7) %}
-{% if queue in PFC_QUEUES %}
-        "{{ port }}|{{ queue }}": {
+        "{{ port }}|3": {
             "scheduler"   : "[SCHEDULER|scheduler.1]",
             "wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]"
-        }{% if not port_last or not loop.last %},{% endif %}
-
-{% else %}
-        "{{ port }}|{{ queue }}": {
-            "scheduler": "[SCHEDULER|scheduler.0]"
-        }{% if not port_last or not loop.last %},{% endif %}
-
-{% endif %}
+        },
 {% endfor %}
+{% if 'resource_type' in DEVICE_METADATA['localhost'] and DEVICE_METADATA['localhost']['resource_type'] in apollo_resource_types %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|4": {
+            "scheduler"   : "[SCHEDULER|scheduler.2]",
+            "wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]"
+        },
+{% endfor %}
+{% else %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|4": {
+            "scheduler"   : "[SCHEDULER|scheduler.1]",
+            "wred_profile": "[WRED_PROFILE|AZURE_LOSSLESS]"
+        },
+{% endfor %}
+{% endif %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|0": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        },
+{% endfor %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|1": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        },
+{% endfor %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|2": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        },
+{% endfor %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|5": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        },
+{% endfor %}
+{% for port in PORT_ACTIVE %}
+        "{{ port }}|6": {
+            "scheduler": "[SCHEDULER|scheduler.0]"
+        }{% if not loop.last %},{% endif %}
 
 {% endfor %}
     }

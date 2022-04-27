@@ -1,11 +1,12 @@
+{% set prefix = DEFAULT_CONTAINER_REGISTRY %}
 {%- if CONFIGURED_ARCH == "armhf" and MULTIARCH_QEMU_ENVIRON == "y" %}
-FROM multiarch/qemu-user-static:x86_64-arm-5.0.0-2 as qemu
-FROM multiarch/debian-debootstrap:armhf-buster
+FROM {{ prefix }}multiarch/qemu-user-static:x86_64-arm-5.0.0-2 as qemu
+FROM {{ prefix }}multiarch/debian-debootstrap:armhf-buster
 COPY --from=qemu /usr/bin/qemu-arm-static /usr/bin
 {%- elif CONFIGURED_ARCH == "arm64" and MULTIARCH_QEMU_ENVIRON == "y" %}
-FROM multiarch/debian-debootstrap:arm64-buster
+FROM {{ prefix }}multiarch/debian-debootstrap:arm64-buster
 {%- else -%}
-FROM debian:buster
+FROM {{ prefix }}debian:buster
 {%- endif %}
 
 MAINTAINER gulv@microsoft.com
@@ -109,6 +110,13 @@ RUN apt-get update && apt-get install -y \
         libxml-simple-perl \
         graphviz \
         aspell \
+# For SAI meta rpc build - make rpc
+        libgetopt-long-descriptive-perl \
+        libconst-fast-perl \
+        libtemplate-perl \
+        libnamespace-autoclean-perl \
+        libmoose-perl \
+        libmoosex-aliases-perl \
 # For linux build
         bc \
         fakeroot \
@@ -422,8 +430,8 @@ RUN pip2 install j2cli==0.3.10
 # For sonic-mgmt-framework
 RUN pip2 install "PyYAML==5.4.1"
 RUN pip3 install "PyYAML==5.4.1"
-RUN pip2 install "lxml==4.6.2"
-RUN pip3 install "lxml==4.6.2"
+RUN pip2 install "lxml==4.6.5"
+RUN pip3 install "lxml==4.6.5"
 
 # For sonic-platform-common testing
 RUN pip3 install redis==3.5.3

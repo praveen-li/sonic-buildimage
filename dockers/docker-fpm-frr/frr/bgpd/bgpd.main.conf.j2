@@ -32,7 +32,12 @@ ipv6 prefix-list LOCAL_VLAN_IPV6_PREFIX seq {{ loop.index * 5 }} permit {{ prefi
 !
 {% if DEVICE_METADATA['localhost']['sub_role'] == 'FrontEnd' or DEVICE_METADATA['localhost']['sub_role'] == 'BackEnd' %}
 route-map HIDE_INTERNAL permit 10
-  set community local-AS
+  set community no-export
+{% if constants.bgp.peers is defined and constants.bgp.peers.internal is defined and constants.bgp.peers.internal.community is defined %}
+  on-match next
+route-map HIDE_INTERNAL permit 20
+  set community {{ constants.bgp.peers.internal.community }} additive
+{% endif %}
 {% set multi_asic = True %}
 !
 {% endif %}
@@ -52,6 +57,7 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
   bgp graceful-restart restart-time {{ constants.bgp.graceful_restart.restart_time | default(240) }}
   bgp graceful-restart
   bgp graceful-restart preserve-fw-state
+  bgp graceful-restart select-defer-time {{ constants.bgp.graceful_restart.select_defer_time | default(45) }}
 {% endif %}
 !
 {# set router-id #}
@@ -75,7 +81,7 @@ router bgp {{ DEVICE_METADATA['localhost']['bgp_asn'] }}
 {% if multi_asic is defined %}
 {% if get_ipv6_loopback_address(LOOPBACK_INTERFACE, "Loopback4096") != 'None' %}
   address-family ipv6
-    network {{ get_ipv6_loopback_address(LOOPBACK_INTERFACE, "Loopback4096") | ip }}/64 route-map HIDE_INTERNAL
+    network {{ get_ipv6_loopback_address(LOOPBACK_INTERFACE, "Loopback4096") | ip }}/128 route-map HIDE_INTERNAL
   exit-address-family
 {% endif %}
 {% endif %}

@@ -5,7 +5,6 @@ libbabeltrace1==1.5.1-1
 libbsd0==0.8.3-1+deb9u1
 libdw1==0.168-1+deb9u1
 libedit2==3.1-20160903-3
-libelf1==0.168-1+deb9u1
 libglib2.0-0==2.50.3-2+deb9u2
 libgpm2==1.20.4-6.2+b1
 libicu57==57.1-6+deb9u5
@@ -26,5 +25,5 @@ sshpass==1.06-1
 strace==4.15-2
 syncd==1.0.0
 syncd-dbg==1.0.0
-vim==2:8.0.0197-4+deb9u3
-vim-runtime==2:8.0.0197-4+deb9u3
+vim==2:8.0.0197-4+deb9u5
+vim-runtime==2:8.0.0197-4+deb9u5

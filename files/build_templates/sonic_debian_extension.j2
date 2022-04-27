@@ -68,15 +68,6 @@ else
     sudo chroot $FILESYSTEM_ROOT service docker start
 fi
 
-# Apply apt configuration files
-sudo cp $IMAGE_CONFIGS/apt/sources.list $FILESYSTEM_ROOT/etc/apt/
-sudo mkdir -p $FILESYSTEM_ROOT/etc/apt/sources.list.d/
-sudo cp -R $IMAGE_CONFIGS/apt/sources.list.d/${CONFIGURED_ARCH}/* $FILESYSTEM_ROOT/etc/apt/sources.list.d/
-cat $IMAGE_CONFIGS/apt/sonic-dev.gpg.key | sudo LANG=C chroot $FILESYSTEM_ROOT apt-key add -
-
-# Update apt's snapshot of its repos
-sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get update
-
 # Apply environtment configuration files
 sudo cp $IMAGE_CONFIGS/environment/environment $FILESYSTEM_ROOT/etc/
 sudo cp $IMAGE_CONFIGS/environment/motd $FILESYSTEM_ROOT/etc/
@@ -377,6 +368,10 @@ sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d
 sudo cp $IMAGE_CONFIGS/syslog/override.conf $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d/override.conf
 sudo cp $IMAGE_CONFIGS/syslog/host_umount.sh $FILESYSTEM_ROOT/usr/bin/
 
+# Copy haveged override file
+sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/
+sudo cp $IMAGE_CONFIGS/haveged/haveged.service $FILESYSTEM_ROOT_ETC/systemd/system/haveged.service
+
 # Copy system-health files
 sudo LANG=C cp $IMAGE_CONFIGS/system-health/system-health.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
 echo "system-health.service" | sudo tee -a $GENERATED_SERVICE_FILE
@@ -514,6 +509,11 @@ if [ -f platform/{{ sonic_asic_platform }}/peripheral_table.j2 ]
 then
     sudo cp platform/{{ sonic_asic_platform }}/peripheral_table.j2 $FILESYSTEM_ROOT/usr/share/sonic/templates/peripheral_table.j2
 fi
+
+if [ -f platform/{{ sonic_asic_platform }}/zero_profiles.j2 ]
+then
+    sudo cp platform/{{ sonic_asic_platform }}/zero_profiles.j2 $FILESYSTEM_ROOT/usr/share/sonic/templates/zero_profiles.j2
+fi
 {% endif %}
 
 # Copy hostname configuration scripts
@@ -646,11 +646,13 @@ if [ $MULTIARCH_QEMU_ENVIRON == y ]; then
 fi
 
 {% if installer_images.strip() -%}
-clean_proc() {
-    sudo umount /proc || true
-}
-trap_push clean_proc
-sudo mount proc /proc -t proc
+## ensure proc is mounted
+sudo mount proc /proc -t proc || true
+if [[ $CONFIGURED_ARCH == armhf ]]; then
+    # A workaround to fix the armhf build hung issue, caused by sonic-platform-nokia-7215_1.0_armhf.deb post installation script
+    ps -eo pid,cmd | grep python | grep "/etc/entropy.py" | awk '{print $1}' | xargs sudo kill -9 2>/dev/null || true
+fi
+
 sudo mkdir $FILESYSTEM_ROOT/target
 sudo mount --bind target $FILESYSTEM_ROOT/target
 sudo chroot $FILESYSTEM_ROOT docker $SONIC_NATIVE_DOCKERD_FOR_DOCKERFS info
@@ -710,7 +712,6 @@ if [ $MULTIARCH_QEMU_ENVIRON == y ]; then
 else
     sudo chroot $FILESYSTEM_ROOT service docker stop
 fi
-sudo umount /proc || true
 sudo rm $FILESYSTEM_ROOT/etc/init.d/docker
 
 sudo bash -c "echo { > $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/ctr_image_names.json"
@@ -759,12 +760,19 @@ sudo LANG=C cp $SCRIPTS_DIR/gbsyncd.sh $FILESYSTEM_ROOT/usr/local/bin/gbsyncd.sh
 sudo LANG=C cp $SCRIPTS_DIR/bgp.sh $FILESYSTEM_ROOT/usr/local/bin/bgp.sh
 sudo LANG=C cp $SCRIPTS_DIR/teamd.sh $FILESYSTEM_ROOT/usr/local/bin/teamd.sh
 sudo LANG=C cp $SCRIPTS_DIR/radv.sh $FILESYSTEM_ROOT/usr/local/bin/radv.sh
+sudo LANG=C cp $SCRIPTS_DIR/database.sh $FILESYSTEM_ROOT/usr/local/bin/database.sh
+sudo LANG=C cp $SCRIPTS_DIR/snmp.sh $FILESYSTEM_ROOT/usr/local/bin/snmp.sh
+sudo LANG=C cp $SCRIPTS_DIR/telemetry.sh $FILESYSTEM_ROOT/usr/local/bin/telemetry.sh
+sudo LANG=C cp $SCRIPTS_DIR/mgmt-framework.sh $FILESYSTEM_ROOT/usr/local/bin/mgmt-framework.sh
 
 # Copy sonic-netns-exec script
 sudo LANG=C cp $SCRIPTS_DIR/sonic-netns-exec $FILESYSTEM_ROOT/usr/bin/sonic-netns-exec
 
 # Copy write_standby script for mux state
 sudo LANG=C cp $SCRIPTS_DIR/write_standby.py $FILESYSTEM_ROOT/usr/local/bin/write_standby.py
+
+# Copy mark_dhcp_packet script
+sudo LANG=C cp $SCRIPTS_DIR/mark_dhcp_packet.py $FILESYSTEM_ROOT/usr/local/bin/mark_dhcp_packet.py
 
 # Copy systemd timer configuration
 # It implements delayed start of services
