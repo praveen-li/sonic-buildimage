@@ -26,7 +26,7 @@ class Sfp(SfpBase):
 
     def sfp_reinit(self, insert):
         if self.platform_sfputil is not None:
-            self.sfp_type = self.platform_sfputil.update_sfp_type(self.port_index, insert)
+            self.sfp_type = self.platform_sfputil.update_sfp_type(self.port_index,self.sfp_type, insert)
         return False
 
     def get_presence(self):

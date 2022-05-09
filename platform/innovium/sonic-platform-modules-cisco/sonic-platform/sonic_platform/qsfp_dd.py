@@ -15,6 +15,8 @@ try:
     from collections import OrderedDict
     import re
     from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
+    from sonic_platform.utils import xcvr_eeprom_rw_unlock
+    from sonic_platform.utils import xcvr_eeprom_rw_lock
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
 
@@ -696,6 +698,7 @@ class qsfpddDom(qsfp_dd_Dom):
 
 
     PORT_START = 50
+
     def read_bytes(self, sysfs_eeprom_path, offset, num_bytes):
         #offset=128
         #num_bytes=128
@@ -740,13 +743,14 @@ class qsfpddDom(qsfp_dd_Dom):
         page = None
         offset=0
         num_bytes=256
-
+        fd=xcvr_eeprom_rw_lock(self.port)
         if 'upage' in eeprom_ele:
 
             page = eeprom_ele.get('upage')
 
             if page in self.page_data:
                 sfp_log("Upper page %d cached" % (page))
+                xcvr_eeprom_rw_unlock(fd)
                 return self.page_data[page]
 
             sfp_log("Upper page %d not cached" % (page))
@@ -754,7 +758,9 @@ class qsfpddDom(qsfp_dd_Dom):
             #set upper page
             os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
         else:
+
             #Lower page should be already cached
+            xcvr_eeprom_rw_unlock(fd)
             if 'lpage' in self.page_data:
                 sfp_log("Lower page cached")
                 return self.page_data['lpage']
@@ -762,8 +768,8 @@ class qsfpddDom(qsfp_dd_Dom):
                 #Error no lower page?
                 sfp_log("Lower page not cached")
                 return None
-
         eeprom_raw = self.read_bytes(sysfs_eeprom_path, offset, num_bytes)
+        xcvr_eeprom_rw_unlock(fd)
         if page is not None and eeprom_raw is not None:
             self.page_data[page] = eeprom_raw
             #cache lower page
@@ -788,9 +794,12 @@ class qsfpddDom(qsfp_dd_Dom):
         return None
 
     def get_lower_page(self):
+        fd=xcvr_eeprom_rw_lock(self.port)
         os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.PORT_START))
         sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
-        return self.read_bytes(sysfs_eeprom_path, 0, 256)
+        eeprom_raw = self.read_bytes(sysfs_eeprom_path, 0, 256)
+        xcvr_eeprom_rw_unlock(fd)
+        return eeprom_raw
 
     def __init__(self, port, sfp_data=None, eeprom_raw_data=None, calibration_type=1):
         self._calibration_type = calibration_type

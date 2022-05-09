@@ -198,7 +198,7 @@ class Chassis(ChassisBase):
         status, p_pres_dict = self.platform_sfputil.get_transceiver_change_event(timeout)
         if status is True and  len(p_pres_dict) != 0 :
             for port_index in p_pres_dict :
-                self._sfp_list[port_index].sfp_reinit(p_pres_dict[port_index])
+                self._sfp_list[int(port_index)].sfp_reinit(p_pres_dict[port_index])
             p_dict['sfp'] = p_pres_dict
         return status, p_dict
 
