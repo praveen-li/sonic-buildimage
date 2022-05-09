@@ -63,11 +63,10 @@ DEVICE_DATA = {
                 ]
         },
         'sfps': {
-            'fp_num' : 34,
+            'fp_num' : 32,
             'fp_start_index' : 1,
             'sfp' : [
                 {'type' : 'QSFP_DD', 'sfp_num' : 32, 'start_index' : 1},
-                {'type' : 'SFP', 'sfp_num' : 2, 'start_index' : 33}
                 ]
         }
     }

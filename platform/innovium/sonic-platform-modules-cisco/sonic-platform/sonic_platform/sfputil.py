@@ -70,6 +70,25 @@ SFP_TEMPE_WIDTH = 2
 SFP_VOLT_OFFSET = 98
 SFP_VOLT_WIDTH = 2
 
+SFP_TYPE_CODE_LIST = [
+    '03' # SFP/SFP+/SFP28
+]
+QSFP_TYPE_CODE_LIST = [
+    '0d', # QSFP+ or later
+    '11' # QSFP28 or later
+]
+QSFP_DD_TYPE_CODE_LIST = [
+    '18' # QSFP-DD Double Density 8X Pluggable Transceiver
+]
+
+SFP_TYPE = "SFP"
+QSFP_TYPE = "QSFP"
+OSFP_TYPE = "OSFP"
+QSFP_DD_TYPE = "QSFP_DD"
+
+XCVR_TYPE_OFFSET = 0
+XCVR_TYPE_WIDTH = 1
+
 class SfpUtil(SfpUtilBase):
     """Platform-specific SfpUtil class"""
 
@@ -90,10 +109,19 @@ class SfpUtil(SfpUtilBase):
 
         self.PORT_START = port_start - 1
         self.PORT_END = num_ports - 1
+        self.NUM_PORTS = num_ports
 
         self.SFP_PORTS_IN_BLOCK = set()
         self.QSFP_PORTS_IN_BLOCK = set()
         self.OSFP_QSFPDD_PORTS_IN_BLOCK = set()
+
+        eeprom_path = "/sys/class/i2c-adapter/i2c-{0}/{0}-0050/eeprom"
+        self._xcvr_presence = None
+        self.XCVR_CHANGE_WAIT_TIME = .2
+        for x in range(self.PORT_START, self.NUM_PORTS):
+            epath = eeprom_path.format(x+self.EEPROM_OFFSET)
+            self._port_to_eeprom_mapping[x] = epath
+            self._eeprom_to_prt_mapping[epath] = x
 
         if 'sfp' in sfps_data:
             sfp_data = sfps_data['sfp']
@@ -119,23 +147,15 @@ class SfpUtil(SfpUtilBase):
                 if sfp_num_block < 1:
                     continue
 
-                if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
-                    for port_index in range(sfp_start - 1,sfp_num_block):
-                        self.QSFP_PORTS_IN_BLOCK.add(port_index)
-                elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
-                    for port_index in range(sfp_start - 1,sfp_num_block):
-                        self.SFP_PORTS_IN_BLOCK.add(port_index)
-                elif sfp_type in self.SUPPORTED_OSFP_QSFPDD_PORT_TYPES:
-                    for port_index in range(sfp_start - 1,sfp_num_block):
-                        self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_index)
+                for port_index in range(self.PORT_START, self.NUM_PORTS):
+                    sfp_type = self.detect_sfp_type(port_index, sfp_type)
+                    if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
+                         self.QSFP_PORTS_IN_BLOCK.add(port_index)
+                    elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
+                         self.SFP_PORTS_IN_BLOCK.add(port_index)
+                    elif sfp_type in self.SUPPORTED_OSFP_QSFPDD_PORT_TYPES:
+                         self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_index)
 
-        eeprom_path = "/sys/class/i2c-adapter/i2c-{0}/{0}-0050/eeprom"
-        self._xcvr_presence = None
-        self.XCVR_CHANGE_WAIT_TIME = .2
-        for x in range(self.PORT_START, self.PORT_END):
-            epath = eeprom_path.format(x+self.EEPROM_OFFSET)
-            self._port_to_eeprom_mapping[x] = epath                                                                                                 
-            self._eeprom_to_prt_mapping[epath] = x
         super(SfpUtil, self).__init__()
 
     @property
@@ -272,6 +292,54 @@ class SfpUtil(SfpUtilBase):
             return None
         return eeprom_bytes
 
+    def detect_sfp_type(self, port_num, sfp_type):
+        if self._is_valid_port(port_num) is False:
+            return sfp_type
+        if self.get_presence(port_num) is False:
+            return sfp_type
+
+        sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
+        if sfp_type_raw:
+            if sfp_type_raw[0] in SFP_TYPE_CODE_LIST:
+                return SFP_TYPE
+            elif sfp_type_raw[0] in QSFP_TYPE_CODE_LIST:
+                return QSFP_TYPE
+            elif sfp_type_raw[0] in QSFP_DD_TYPE_CODE_LIST:
+                return QSFP_DD_TYPE
+            else:
+                return sfp_type
+        else:
+            return sfp_type
+
+    def update_sfp_type(self, port_num, sfp_type, insert):
+        if self._is_valid_port(port_num) is False:
+            return sfp_type
+
+        if insert == '1':
+            sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
+            if sfp_type_raw:
+                if sfp_type_raw[0] in SFP_TYPE_CODE_LIST:
+                    self.SFP_PORTS_IN_BLOCK.add(port_num)
+                    return SFP_TYPE
+                elif sfp_type_raw[0] in QSFP_TYPE_CODE_LIST:
+                    self.QSFP_PORTS_IN_BLOCK.add(port_num)
+                    return QSFP_TYPE
+                elif sfp_type_raw[0] in QSFP_DD_TYPE_CODE_LIST:
+                    self.QSFP_DD_PORTS_IN_BLOCK.add(port_num)
+                    return QSFP_DD_TYPE
+                else:
+                    return sfp_type
+            else:
+                return sfp_type
+        else:
+            if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
+                self.QSFP_PORTS_IN_BLOCK.remove(port_num)
+            elif sfp_type in self.SUPPORTED_QSFP_DD_PORT_TYPES:
+                self.QSFP_DD_PORTS_IN_BLOCK.remove(port_num)
+            elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
+                 self.SFP_PORTS_IN_BLOCK.remove(port_num)
+            return QSFP_DD_TYPE
+
     def get_transceiver_change_event(self, timeout=0):
         end_time = time.time() + timeout
         p_pres_dict = {}
@@ -286,13 +354,13 @@ class SfpUtil(SfpUtilBase):
                 return False, {}
             if self._xcvr_presence is not None:
                 # Previous state present. Check any change from previous state
-                for p in range(self.port_start, self.port_end):
+                for p in range(self.port_start, self.NUM_PORTS):
                     if self._xcvr_presence[p] != xcvrs[p]:
                         # Add the change to dict
                         d = {str(p) : str(xcvrs[p])}
                         p_pres_dict.update(d)
             else:
-                for p in range(self.port_start, self.port_end):
+                for p in range(self.port_start, self.NUM_PORTS):
                     # Add the change to dict
                     if xcvrs[p] == 1:
                         d = {str(p) : str(xcvrs[p])}
@@ -567,6 +635,9 @@ class SfpUtil(SfpUtilBase):
             if dom_data is None:
                 return transceiver_dom_info_dict
 
+            if dom_data['version'] == 'N/A':
+                return transceiver_dom_info_dict
+
             dom_monitor_data = dom_data['data']['MonitorData']
             if dom_monitor_data is None:
                 return transceiver_dom_info_dict
@@ -652,6 +723,9 @@ class SfpUtil(SfpUtilBase):
 
             dom_data = sfpd_obj.get_data_pretty()
             if dom_data is None:
+                return transceiver_dom_threshold_info_dict
+
+            if dom_data['version'] == 'N/A':
                 return transceiver_dom_threshold_info_dict
 
             dom_threshold_data = dom_data['data']['AwThresholds']

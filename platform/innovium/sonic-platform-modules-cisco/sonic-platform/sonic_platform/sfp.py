@@ -24,6 +24,11 @@ class Sfp(SfpBase):
     #def reinit(self):
         #self.detect_dom_supported()
 
+    def sfp_reinit(self, insert):
+        if self.platform_sfputil is not None:
+            self.sfp_type = self.platform_sfputil.update_sfp_type(self.port_index, insert)
+        return False
+
     def get_presence(self):
         if self.platform_sfputil is not None:
             return self.platform_sfputil.get_presence(self.port_index)

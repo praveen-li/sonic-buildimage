@@ -149,17 +149,16 @@ class Chassis(ChassisBase):
 
         self.platform_sfputil=SfpUtil(self.fp_index_start, self.num_fp, self.global_parameters, sfps_data)
 
-        for qsfp_port_index in self.platform_sfputil.qsfp_ports:
-            qsfp_port = Sfp(qsfp_port_index,SfpUtil.SUPPORTED_QSFP_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(qsfp_port)
+        for port_index in range(self.fp_index_start-1, self.num_fp):
+            if port_index in self.platform_sfputil.qsfp_ports:
+                sfp_type = SfpUtil.SUPPORTED_QSFP_PORT_TYPES[0]
+            elif port_index in self.platform_sfputil.sfp_ports:
+                sfp_type = SfpUtil.SUPPORTED_SFP_PORT_TYPES[0]
+            else:
+                sfp_type = SfpUtil.SUPPORTED_OSFP_QSFPDD_PORT_TYPES[0]
 
-        for sfp_port_index in self.platform_sfputil.sfp_ports:
-            sfp_port = Sfp(sfp_port_index,SfpUtil.SUPPORTED_SFP_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(sfp_port)
-
-        for qsfpdd_port_index in self.platform_sfputil.osfp_ports:
-            qsfpdd_port = Sfp(qsfpdd_port_index,SfpUtil.SUPPORTED_OSFP_QSFPDD_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(qsfpdd_port)
+            port_data = Sfp(port_index,sfp_type, self.global_parameters, self.platform_sfputil)
+            self._sfp_list.append(port_data)
 
         self.sfp_init_done = True
 
@@ -198,6 +197,8 @@ class Chassis(ChassisBase):
 
         status, p_pres_dict = self.platform_sfputil.get_transceiver_change_event(timeout)
         if status is True and  len(p_pres_dict) != 0 :
+            for port_index in p_pres_dict :
+                self._sfp_list[port_index].sfp_reinit(p_pres_dict[port_index])
             p_dict['sfp'] = p_pres_dict
         return status, p_dict
 
