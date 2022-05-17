@@ -286,6 +286,9 @@ class SfpUtil(SfpUtilBase):
     def get_eeprom_raw(self, port_num, num_bytes=256):
         # Read interface id EEPROM at addr 0x50
         fd=xcvr_eeprom_rw_lock(port_num)
+        if fd is None:
+            print("Error: Unable to acquire lock to read raw eeprom of port {0}".format(port_num))
+            return None
         self.reset_page(port_num, 0)
         eeprom_ifraw = self._read_eeprom_devid(port_num, self.IDENTITY_EEPROM_ADDR, 0, num_bytes)
         xcvr_eeprom_rw_unlock(fd)
@@ -303,6 +306,9 @@ class SfpUtil(SfpUtilBase):
             try:
                 with open(file_path, mode="rb", buffering=0) as sysfsfile_eeprom:
                     fd=xcvr_eeprom_rw_lock(port_num)
+                    if fd is None:
+                        print("Error: Unable to acquire lock to read eeprom of port {0}".format(port_num))
+                        return None
                     self.reset_page(port_num, 0)
                     eeprom_bytes = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, width)
 
@@ -387,18 +393,22 @@ class SfpUtil(SfpUtilBase):
                         # Add the change to dict
                         d = {str(p) : str(xcvrs[p])}
                         p_pres_dict.update(d)
-                time.sleep(2)
             else:
                 for p in range(self.port_start, self.NUM_PORTS):
                     # Add the change to dict
                     if xcvrs[p] == 1:
                         d = {str(p) : str(xcvrs[p])}
                         p_pres_dict.update(d)
-                time.sleep(2)
 
             self._xcvr_presence = xcvrs
 
             if len(p_pres_dict) != 0 :
+                # On xcvr insert, there as a race condition between pmon and syncd
+                # container where syncd resets the sfp as part of CMIS init sequence
+                # and pmon tries to access the sfp eeprom data resulting in failure.
+                # To avoid this, 2 secs delay is added here so CMIS init/reset can
+                # complete before pmon tries to access the eeprom
+                time.sleep(2)
                 return True, p_pres_dict
 
             cur_time = time.time()

@@ -125,6 +125,5 @@ def xcvr_eeprom_rw_unlock( fd):
             time.sleep(0.001)
         except OSError as e:
             syslog.syslog(syslog.LOG_ERR,"Unable to unlock eeprom file")
-            return False
 
-    return True
+    return None

@@ -743,24 +743,19 @@ class qsfpddDom(qsfp_dd_Dom):
         page = None
         offset=0
         num_bytes=256
-        fd=xcvr_eeprom_rw_lock(self.port)
         if 'upage' in eeprom_ele:
 
             page = eeprom_ele.get('upage')
 
             if page in self.page_data:
                 sfp_log("Upper page %d cached" % (page))
-                xcvr_eeprom_rw_unlock(fd)
                 return self.page_data[page]
 
             sfp_log("Upper page %d not cached" % (page))
 
-            #set upper page
-            os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
         else:
 
             #Lower page should be already cached
-            xcvr_eeprom_rw_unlock(fd)
             if 'lpage' in self.page_data:
                 sfp_log("Lower page cached")
                 return self.page_data['lpage']
@@ -768,6 +763,13 @@ class qsfpddDom(qsfp_dd_Dom):
                 #Error no lower page?
                 sfp_log("Lower page not cached")
                 return None
+
+        fd=xcvr_eeprom_rw_lock(self.port)
+        if fd is None:
+            print("Error: Unable to acquire lock to get qsfpdd page data for port {0} page {1}".format(port_num, page))
+            return None
+        #set upper page
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
         eeprom_raw = self.read_bytes(sysfs_eeprom_path, offset, num_bytes)
         xcvr_eeprom_rw_unlock(fd)
         if page is not None and eeprom_raw is not None:
@@ -795,6 +797,9 @@ class qsfpddDom(qsfp_dd_Dom):
 
     def get_lower_page(self):
         fd=xcvr_eeprom_rw_lock(self.port)
+        if fd is None:
+            print("Error: Unable to acquire lock to get qsfpdd lower page data for port {0}".format(port_num))
+            return None
         os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.PORT_START))
         sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
         eeprom_raw = self.read_bytes(sysfs_eeprom_path, 0, 256)
