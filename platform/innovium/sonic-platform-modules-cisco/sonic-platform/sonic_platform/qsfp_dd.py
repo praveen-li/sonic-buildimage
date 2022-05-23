@@ -14,11 +14,15 @@ try:
     from math import log10
     from collections import OrderedDict
     import re
+    from sonic_py_common.logger import Logger
     from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
     from sonic_platform.utils import xcvr_eeprom_rw_unlock
     from sonic_platform.utils import xcvr_eeprom_rw_lock
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
+
+# Global logger class instance
+logger = Logger()
 
 def sfp_log(msg):
     #print(msg)
@@ -766,7 +770,7 @@ class qsfpddDom(qsfp_dd_Dom):
 
         fd=xcvr_eeprom_rw_lock(self.port)
         if fd is None:
-            print("Error: Unable to acquire lock to get qsfpdd page data for port {0} page {1}".format(port_num, page))
+            logger.log_error("Unable to acquire lock to get qsfpdd page data for port {} page {}".format(self.port, page))
             return None
         #set upper page
         os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
@@ -798,7 +802,7 @@ class qsfpddDom(qsfp_dd_Dom):
     def get_lower_page(self):
         fd=xcvr_eeprom_rw_lock(self.port)
         if fd is None:
-            print("Error: Unable to acquire lock to get qsfpdd lower page data for port {0}".format(port_num))
+            logger.log_error("Unable to acquire lock to get qsfpdd lower page data for port {}".format(self.port))
             return None
         os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.PORT_START))
         sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)

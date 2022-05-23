@@ -7,6 +7,7 @@
 
 try:
     import os, fnmatch, subprocess, time
+    from sonic_py_common.logger import Logger
     from sonic_platform_base.sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_platform_base.sonic_sfp.sff8472 import sff8472InterfaceId
     from sonic_platform_base.sonic_sfp.sff8472 import sff8472Dom
@@ -21,6 +22,9 @@ try:
     import syslog
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
+
+# Global logger class instance
+logger = Logger()
 
 # definitions of the offset and width for values in QSFP_DD info eeprom
 QSFP_DD_TYPE_OFFSET = 0
@@ -154,14 +158,12 @@ class SfpUtil(SfpUtilBase):
 
                 for port_index in range(self.PORT_START, self.NUM_PORTS):
                     sfp_type = self.detect_sfp_type(port_index, sfp_type)
-                    '''
                     if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
                          self.QSFP_PORTS_IN_BLOCK.add(port_index)
                     elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
                          self.SFP_PORTS_IN_BLOCK.add(port_index)
                     elif sfp_type in self.SUPPORTED_OSFP_QSFPDD_PORT_TYPES:
                          self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_index)
-                    '''
         super(SfpUtil, self).__init__()
 
     @property
@@ -287,7 +289,7 @@ class SfpUtil(SfpUtilBase):
         # Read interface id EEPROM at addr 0x50
         fd=xcvr_eeprom_rw_lock(port_num)
         if fd is None:
-            print("Error: Unable to acquire lock to read raw eeprom of port {0}".format(port_num))
+            logger.log_error("Unable to acquire lock to read raw eeprom for port {}".format(port_num))
             return None
         self.reset_page(port_num, 0)
         eeprom_ifraw = self._read_eeprom_devid(port_num, self.IDENTITY_EEPROM_ADDR, 0, num_bytes)
@@ -299,7 +301,7 @@ class SfpUtil(SfpUtilBase):
         file_path = self.port_to_eeprom_mapping[port_num]
 
         if not self._sfp_eeprom_present(file_path, 0):
-            print("Error, file %s doesn't exist" % file_path)
+            logger.log_error("File {} doesn't exist".format(file_path))
             return None
 
         while (read_retry < XCVR_EEPROM_READ_MAX_RETRY):
@@ -307,7 +309,7 @@ class SfpUtil(SfpUtilBase):
                 with open(file_path, mode="rb", buffering=0) as sysfsfile_eeprom:
                     fd=xcvr_eeprom_rw_lock(port_num)
                     if fd is None:
-                        print("Error: Unable to acquire lock to read eeprom of port {0}".format(port_num))
+                        logger.log_error("Unable to acquire lock to read eeprom of port {}".format(port_num))
                         return None
                     self.reset_page(port_num, 0)
                     eeprom_bytes = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, width)
@@ -315,7 +317,7 @@ class SfpUtil(SfpUtilBase):
                 xcvr_eeprom_rw_unlock(fd)
                 break
             except IOError:
-                syslog.syslog(syslog.LOG_ERR, "Unable to read EEPROM of port {0}".format(port_num))
+                logger.log_error("Unable to read EEPROM of port {}".format(port_num))
                 xcvr_eeprom_rw_unlock(fd)
                 read_retry += 1
                 time.sleep(0.1)
@@ -333,13 +335,10 @@ class SfpUtil(SfpUtilBase):
         sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
         if sfp_type_raw:
             if sfp_type_raw[0] in SFP_TYPE_CODE_LIST:
-                self.SFP_PORTS_IN_BLOCK.add(port_num)
                 return SFP_TYPE
             elif sfp_type_raw[0] in QSFP_TYPE_CODE_LIST:
-                self.QSFP_PORTS_IN_BLOCK.add(port_num)
                 return QSFP_TYPE
             elif sfp_type_raw[0] in QSFP_DD_TYPE_CODE_LIST:
-                self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_num)
                 return QSFP_DD_TYPE
             else:
                 return sfp_type
@@ -349,6 +348,16 @@ class SfpUtil(SfpUtilBase):
     def update_sfp_type(self, port_num, sfp_type, insert):
         if self._is_valid_port(port_num) is False:
             return sfp_type
+
+        #Remove SFP from current list
+        if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
+            self.QSFP_PORTS_IN_BLOCK.discard(port_num)
+        elif sfp_type in self.SUPPORTED_OSFP_QSFPDD_PORT_TYPES:
+            self.OSFP_QSFPDD_PORTS_IN_BLOCK.discard(port_num)
+        elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
+             self.SFP_PORTS_IN_BLOCK.discard(port_num)
+
+        #Try to detect and update new SFP
         if insert == '1':
             sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
             if sfp_type_raw:
@@ -361,18 +370,10 @@ class SfpUtil(SfpUtilBase):
                 elif sfp_type_raw[0] in QSFP_DD_TYPE_CODE_LIST:
                     self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_num)
                     return QSFP_DD_TYPE
-                else:
-                    return sfp_type
-            else:
-                return sfp_type
-        else:
-            if sfp_type in self.SUPPORTED_QSFP_PORT_TYPES:
-                self.QSFP_PORTS_IN_BLOCK.remove(port_num)
-            elif sfp_type in self.SUPPORTED_OSFP_QSFPDD_PORT_TYPES:
-                self.OSFP_QSFPDD_PORTS_IN_BLOCK.remove(port_num)
-            elif sfp_type in self.SUPPORTED_SFP_PORT_TYPES:
-                 self.SFP_PORTS_IN_BLOCK.remove(port_num)
-            return QSFP_DD_TYPE
+
+        #Update default as QSFP_DD
+        self.OSFP_QSFPDD_PORTS_IN_BLOCK.add(port_num)
+        return QSFP_DD_TYPE
 
     def get_transceiver_change_event(self, timeout=0):
         end_time = time.time() + timeout

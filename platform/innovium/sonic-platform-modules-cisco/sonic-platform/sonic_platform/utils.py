@@ -2,6 +2,10 @@ import os
 import fnmatch
 import syslog
 import fcntl,errno,time
+from sonic_py_common.logger import Logger
+
+# Global logger class instance
+logger = Logger()
 
 WDT_DEV_PATH = "/dev/"
 WDT_SYSFS = "/sys/class/watchdog/"
@@ -88,7 +92,7 @@ def xcvr_eeprom_rw_lock( port_num,retry_max=XCVR_EEPROM_LOCK_MAX_RETRY):
     try:
         fd = open(eeprom_lock_path, "r")
     except OSError as e:
-        print("Error: unable to open file: %s" % str(e))
+        logger.log_error("Unable to open eeprom lock file {} err {}".format(eeprom_lock_path, str(e)))
         return None
 
     while (retry < retry_max):
@@ -106,11 +110,11 @@ def xcvr_eeprom_rw_lock( port_num,retry_max=XCVR_EEPROM_LOCK_MAX_RETRY):
                 time.sleep(0.001)
                 continue
             else:
-                print("Error: unable to lock file: %s" % str(e))
+                logger.log_error("Unable to acquire lock on file {} error {}".format(eeprom_lock_path, str(e)))
                 fd.close()
                 return None
     if (retry == retry_max):
-        syslog.syslog(syslog.LOG_ERR,"Unable to lock eeprom file {0}".format(port_num))
+        logger.log_error("Unable to lock eeprom for port {} after max retries".format(port_num))
         fd.close()
         return None
 
@@ -124,6 +128,6 @@ def xcvr_eeprom_rw_unlock( fd):
             fd.close()
             time.sleep(0.001)
         except OSError as e:
-            syslog.syslog(syslog.LOG_ERR,"Unable to unlock eeprom file")
+            logger.log_error("Unable to unlock eeprom file fd {} error {}".format(fd), str(e))
 
     return None
