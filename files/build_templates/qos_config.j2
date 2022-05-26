@@ -245,6 +245,9 @@
         }
     },
 {% endif %}
+{% if generate_queue_scheduler_profiles is defined %}
+    {{- generate_queue_scheduler_profiles() }}
+{% else %}
     "QUEUE": {
 {% for port in PORT_ACTIVE %}
         "{{ port }}|3": {
@@ -294,4 +297,5 @@
 
 {% endfor %}
     }
+{% endif %}
 }
