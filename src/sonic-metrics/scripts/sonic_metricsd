@@ -90,7 +90,8 @@ class DaemonMetricsd():
     # Remove all entries in 'PROCESS_INFO' table.
     def _clear_process_info_table(self):
         self._db.delete_all_by_pattern(self._db.STATE_DB, "PROCESS_INFO|*")
-
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "TOP_PROCESS_SORTBY_CPU|*")
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "TOP_PROCESS_SORTBY_MEMORY|*")
 
     # Deinitialize daemon
     def deinit(self):
