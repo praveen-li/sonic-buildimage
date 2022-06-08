@@ -26,7 +26,8 @@ setup(
     description='SONiC metrics python scripts',
     install_requires = dependencies,
     package_data = {
-        'metrics': ['data/critical_process_file.json']
+        'metrics': ['data/critical_process_file.json',
+                    'data/config.yml']
     },
     include_package_data=True,
     classifiers=[
