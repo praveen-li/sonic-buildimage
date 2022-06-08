@@ -128,6 +128,6 @@ def xcvr_eeprom_rw_unlock( fd):
             fd.close()
             time.sleep(0.001)
         except OSError as e:
-            logger.log_error("Unable to unlock eeprom file fd {} error {}".format(fd), str(e))
+            logger.log_error("Unable to unlock eeprom file fd {} error {}".format(fd, str(e)))
 
     return None

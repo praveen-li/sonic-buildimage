@@ -30,6 +30,7 @@ class PlatformGlobalData():
     KEY_THERMAL_CRIT_THRESHOLD_HYSTERESIS = 'thermal_crit_thresh_hysteresis'
     KEY_REBOOT_GPIO_NUM = 'reboot_gpio'
     KEY_SHUTDOWN_GPIO_NUM = 'shutdown_gpio'
+    KEY_MAX_SUPPLIED_POWER = 'max_supplied_power'
 
     DICT_GLOBAL_KEY_NOT_AVAILABLE = 'N/A'
 

@@ -28,8 +28,6 @@ class Eeprom(Eeprom_Tlv):
             "Part Number":"Part_Number",
             "Part Revision":"Part_Revision",
             "Hardware Revision":"HW_Revision",
-            "Hardware Change Bit":"HW_Change_Bit",
-            "Card Index":"CARD_INDEX",
         }
 
         # Need to modify this
@@ -41,26 +39,29 @@ class Eeprom(Eeprom_Tlv):
             self._TLV_CODE_CISCO_PART_NUMBER:"Part_Number",
             self._TLV_CODE_CISCO_PART_REVISION:"Part_Revision",
             self._TLV_CODE_CISCO_HW_REVISION:"HW_Revision",
-            self._TLV_CODE_CISCO_HW_CHANGE_BIT:"HW_Change_Bit",
-            self._TLV_CODE_CISCO_CARD_INDEX:"CARD_INDEX",
         }
         self._eeprom_map = None
         self._eeprom_code_map = None
+        self.platform_eeprom_path = "/etc/sonic/platform_eeprom_data"
         self.read_eeprom()
 
     def read_pfm_util(self, arg):
         pfm_dict = {}
-        try:
-            ph = subprocess.Popen(['/usr/local/bin/pfm_util', arg],
+        if os.path.exists(self.platform_eeprom_path):
+            with open(self.platform_eeprom_path,"r") as eeprom_fp:
+                lines=eeprom_fp.readlines()
+        else:
+            try:
+                ph = subprocess.Popen(['/usr/local/bin/pfm_util', arg],
                                   stdout=subprocess.PIPE,
                                   shell=False, stderr=subprocess.STDOUT)
-            cmdout = ph.communicate()[0]
-            ph.wait()
-        except OSError as e:
-            raise OSError("cannot access pfm_util")
+                cmdout = ph.communicate()[0]
+                ph.wait()
+            except OSError as e:
+                raise OSError("cannot access pfm_util")
 
-        str_img = cmdout.decode("utf-8", errors="ignore")
-        lines = str_img.splitlines()
+            str_img = cmdout.decode("utf-8", errors="ignore")
+            lines = str_img.splitlines()
 
         for line in lines:
             line = line.rstrip('\n\r')
@@ -75,15 +76,17 @@ class Eeprom(Eeprom_Tlv):
         pfm_util_map.update(self.read_pfm_util('-r'))
 
         eeprom_map = {key: pfm_util_map[self.name_map[key]] for key in self.name_map.keys()}
-        eeprom_code_map = {key: pfm_util_map[self.code_map[key]] for key in self.code_map.keys()}
-
+        eeprom_code_map = {hex(key): pfm_util_map[self.code_map[key]] for key in self.code_map.keys()}
+        crc=self.helper_calculate_crc(eeprom_code_map)
+        eeprom_map["CRC"] = hex(crc)
+        eeprom_code_map[hex(self._TLV_CODE_CRC_32)] = hex(crc)
         return eeprom_map, eeprom_code_map
 
     def read_eeprom(self):
         if self._eeprom_map is None:
             self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
 
-        return self._eeprom_map
+        return self._eeprom_code_map
 
     def get_base_mac(self):
         """
@@ -134,9 +137,7 @@ class Eeprom(Eeprom_Tlv):
         '''
         Decode the contents of the EEPROM and update the contents to database
         '''
-        if self._eeprom_code_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
-
+        self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
         return self.helper_update_eeprom_db(self._eeprom_code_map)
 
 ########################################

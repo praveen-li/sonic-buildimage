@@ -28,6 +28,8 @@ class SystemLed():
             write_file(self.get_green_led_path(), '0')
             write_file(self.get_red_led_path(), '0')
 
+        return True
+
     def get_status(self):
         green_color_val=read_int_from_file(self.get_green_led_path())
         red_color_val=read_int_from_file(self.get_red_led_path())

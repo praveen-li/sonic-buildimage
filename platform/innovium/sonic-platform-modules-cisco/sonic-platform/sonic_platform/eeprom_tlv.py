@@ -15,16 +15,16 @@ STATE_DB_INDEX = 6
 
 class Eeprom_Tlv(eeprom_tlvinfo.TlvInfoDecoder):
     #TLV codes
-    _TLV_CODE_CISCO_PRODUCT_NAME = 0x30
-    _TLV_CODE_CISCO_SERIAL_NUMBER = 0x31
-    _TLV_CODE_CISCO_MAC_BASE = 0x32
-    _TLV_CODE_CISCO_MAC_SIZE = 0x33
-    _TLV_CODE_CISCO_PART_NUMBER = 0x34
-    _TLV_CODE_CISCO_PART_REVISION = 0x35
-    _TLV_CODE_CISCO_HW_REVISION = 0x36
+    _TLV_CODE_CISCO_PRODUCT_NAME = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_PRODUCT_NAME
+    _TLV_CODE_CISCO_SERIAL_NUMBER = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_SERIAL_NUMBER
+    _TLV_CODE_CISCO_MAC_BASE = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_MAC_BASE
+    _TLV_CODE_CISCO_MAC_SIZE =eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_MAC_SIZE
+    _TLV_CODE_CISCO_PART_NUMBER = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_PART_NUMBER
+    _TLV_CODE_CISCO_PART_REVISION = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_LABEL_REVISION
+    _TLV_CODE_CISCO_HW_REVISION = eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_DEVICE_VERSION
     _TLV_CODE_CISCO_HW_CHANGE_BIT = 0x37
     _TLV_CODE_CISCO_CARD_INDEX = 0x38
-    _TLV_CODE_CISCO_MANUF_NAME = 0x39
+    _TLV_CODE_CISCO_MANUF_NAME =eeprom_tlvinfo.TlvInfoDecoder._TLV_CODE_MANUF_NAME
 
     def cisco_decoder(self, s, t):
         '''
@@ -75,7 +75,7 @@ class Eeprom_Tlv(eeprom_tlvinfo.TlvInfoDecoder):
             value = t[2:2 + t[1]].decode("ascii")
         elif t[0] == self._TLV_CODE_CRC_32 and len(t) == 6:
             name = "CRC-32"
-            value = "0x%08X" % ((t[2] << 24) | (t[3] << 16) | (t[4] << 8) | t[5])
+            value = "0x%08X" % ((t[5] << 24) | (t[4] << 16) | (t[3] << 8) | t[2])
         else:
             name = "Unknown"
             value = ""
@@ -90,31 +90,31 @@ class Eeprom_Tlv(eeprom_tlvinfo.TlvInfoDecoder):
         I[0] is the TLV code.
         '''
         try:
-            if I[0] == self._TLV_CODE_CISCO_PRODUCT_NAME   or \
-               I[0] == self._TLV_CODE_CISCO_PART_NUMBER    or \
-               I[0] == self._TLV_CODE_CISCO_SERIAL_NUMBER  or \
-               I[0] == self._TLV_CODE_CISCO_PART_REVISION or \
-               I[0] == self._TLV_CODE_PLATFORM_NAME  or \
-               I[0] == self._TLV_CODE_CISCO_HW_REVISION   or \
-               I[0] == self._TLV_CODE_CISCO_MANUF_NAME     or \
-               I[0] == self._TLV_CODE_CISCO_CARD_INDEX:
+            if I == self._TLV_CODE_CISCO_PRODUCT_NAME   or \
+               I == self._TLV_CODE_CISCO_PART_NUMBER    or \
+               I == self._TLV_CODE_CISCO_SERIAL_NUMBER  or \
+               I == self._TLV_CODE_CISCO_PART_REVISION or \
+               I == self._TLV_CODE_PLATFORM_NAME  or \
+               I == self._TLV_CODE_CISCO_HW_REVISION   or \
+               I == self._TLV_CODE_CISCO_MANUF_NAME     or \
+               I == self._TLV_CODE_CISCO_CARD_INDEX:
                 errstr = "A string less than 256 characters"
                 if len(v) > 255:
                     raise
                 value = v.encode("ascii", "replace")
-            elif I[0] == self._TLV_CODE_CISCO_HW_CHANGE_BIT:
+            elif I == self._TLV_CODE_CISCO_HW_CHANGE_BIT:
                 errstr  = "A number between 0 and 255"
-                num = int(v, 0)
+                num = int(v, 16)
                 if num < 0 or num > 255:
                     raise
                 value = bytearray([num])
-            elif I[0] == self._TLV_CODE_CISCO_MAC_SIZE:
+            elif I == self._TLV_CODE_CISCO_MAC_SIZE:
                 errstr  = "A number between 0 and 65535"
                 num = int(v, 0)
                 if num < 0 or num > 65535:
                     raise
                 value = bytearray([(num >> 8) & 0xFF, num & 0xFF])
-            elif I[0] == self._TLV_CODE_CISCO_MAC_BASE:
+            elif I == self._TLV_CODE_CISCO_MAC_BASE:
                 errstr = 'XX:XX:XX:XX:XX:XX'
                 mac_digits = v.split(':')
                 if len(mac_digits) != 6:
@@ -122,24 +122,28 @@ class Eeprom_Tlv(eeprom_tlvinfo.TlvInfoDecoder):
                 value = bytearray()
                 for c in mac_digits:
                     value += bytearray([int(c, 16)])
-            elif I[0] == self._TLV_CODE_MANUF_COUNTRY:
+            elif I == self._TLV_CODE_MANUF_COUNTRY:
                 errstr = 'CC, a two character ISO 3166-1 alpha-2 country code'
                 if len(v) < 2:
                     raise
                 value = v.encode("ascii", "replace")
-            elif I[0] == self._TLV_CODE_CRC_32:
+            elif I == self._TLV_CODE_CRC_32:
                 errstr = "CRC"
+                val  = int(v,16)
                 value = bytearray()
+                for x in range(4):
+                    val1 = (val >> (x*8)) & 0xff
+                    value += bytearray([val1])
             else:
                 errstr = '0xXX ... A list of space-separated hexidecimal numbers'
                 value = bytearray()
                 for c in v.split():
                     value += bytearray([int(c, 0)])
         except Exception as inst:
-            sys.stderr.write("Error: '" + "0x%02X" % (I[0],) + "' correct format is " + errstr + "\n")
+            sys.stderr.write("Error: '" + "0x%02x" % I + "' correct format is " + errstr + "\n")
             exit(0)
 
-        return bytearray([I[0]]) + bytearray([len(value)]) + value
+        return bytearray([I]) + bytearray([len(value)]) + value
 
     def __print_db(self, db, code, num=0):
         field_name = (db.hget('EEPROM_INFO|{}'.format(hex(code)), 'Name')).decode("ascii")
@@ -231,15 +235,35 @@ class Eeprom_Tlv(eeprom_tlvinfo.TlvInfoDecoder):
         client.hmset('EEPROM_INFO|State', fvs)
         return 0
 
+    def helper_calculate_crc(self, eeprom_code_map):
+        new_tlvs = bytearray()
+        for key in eeprom_code_map.keys():
+            k = int(key,16)
+            v = eeprom_code_map[key].rstrip(' ')
+            new_tlv = self.cisco_encoder((k), v)
+            new_tlvs += new_tlv
+
+        if self._TLV_HDR_ENABLED:
+            new_tlvs_len = len(new_tlvs) + 6
+            new_e = self._TLV_INFO_ID_STRING + bytearray([self._TLV_INFO_VERSION]) + \
+                    bytearray([(new_tlvs_len >> 8) & 0xFF]) + \
+                    bytearray([new_tlvs_len & 0xFF]) + new_tlvs
+        else:
+            new_e = new_tlvs
+
+        new_e = new_e + bytearray([self._TLV_CODE_CRC_32]) + bytearray([4])
+        checksum= self.calculate_checksum(new_e)
+        return checksum
+
     def helper_update_eeprom_db(self, eeprom_code_map):
         '''
         Decode the contents of the EEPROM and update the contents to database
         '''
         new_tlvs = bytearray()
         for key in eeprom_code_map.keys():
-            k = key
-            v = eeprom_code_map[key].rstrip(' ')
-            new_tlv = self.cisco_encoder((k,), v)
+            k = int(key,16)
+            v=eeprom_code_map[key]
+            new_tlv = self.cisco_encoder((k), v)
             new_tlvs += new_tlv
 
         if self._TLV_HDR_ENABLED:

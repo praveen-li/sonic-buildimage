@@ -28,6 +28,7 @@ debs/{{ deb }}{{' '}}
 COPY ["start.sh", "/usr/bin/"]
 COPY ["ivm_start.sh", "/usr/bin/"]
 COPY ["supervisord.conf", "/etc/supervisor/conf.d/"]
+COPY ["critical_processes", "/etc/supervisor/"]
 
 ## Clean up
 RUN apt-get clean -y; apt-get autoclean -y; apt-get autoremove -y

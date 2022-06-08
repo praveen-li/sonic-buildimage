@@ -23,6 +23,7 @@ class FanDrawer(FanDrawerBase):
         self._fan_drawer_data = fan_drawer_data
         self._index = index + 1
         self._fan_num_per_drawer = fan_drawer_data['fan_num']
+        self._max_consumed_power = fan_drawer_data['max_consumed_power']
 
         for fan_index in range(self._fan_num_per_drawer):
             fan_data = fan_drawer_data['fan'][fan_index]
@@ -33,8 +34,15 @@ class FanDrawer(FanDrawerBase):
         return 'Fantray-' + str(self._index)
 
     def set_status_led(self, color):
+        status = 0
+        result = False
+
         for fan in self._fan_list:
-            fan.set_status_led(color)
+            result = fan.set_status_led(color)
+            if result is False:
+                status += 1
+
+        return True if status == 0 else False
 
     def get_status_led(self):
         if len(self._fan_list) != 0:
@@ -61,6 +69,10 @@ class FanDrawer(FanDrawerBase):
         #Fan drawer/tray is field replaceable 
         return True
 
+    def get_position_in_parent(self) :
+        #Fan_drawer position
+        return self._index
+
     def get_status(self):
         status = True 
         #Need to return failure even if any of the fans is failed
@@ -68,3 +80,6 @@ class FanDrawer(FanDrawerBase):
             status = status and fan.get_status()
 
         return status
+
+    def get_maximum_consumed_power(self):
+        return float(self._max_consumed_power)

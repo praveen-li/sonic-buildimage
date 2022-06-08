@@ -6,7 +6,7 @@
 #
 
 try:
-    import os, fnmatch, subprocess, time
+    import os, fnmatch, subprocess, time, re
     from sonic_py_common.logger import Logger
     from sonic_platform_base.sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_platform_base.sonic_sfp.sff8472 import sff8472InterfaceId
@@ -19,6 +19,7 @@ try:
     from sonic_platform.globals import PlatformGlobalData
     from sonic_platform.utils import xcvr_eeprom_rw_unlock
     from sonic_platform.utils import xcvr_eeprom_rw_lock
+    from sonic_platform_base.sonic_sfp.sffbase import sffbase
     import syslog
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
@@ -66,16 +67,45 @@ QSFP_DD_FIRST_APPLICATION_LIST_WIDTH = 32
 QSFP_DD_PAGE_OFFSET = 127
 QSFP_DD_PAGE_WIDTH = 1
 
+QSFP_DD_TX_SUPPORT = 157
+QSFP_DD_TX_SUPPORT_WIDTH = 1
+
+QSFP_DD_TX_FLAG = 135
+QSFP_DD_TX_FLAG_WIDTH = 1
+
+QSFP_DD_RX_SUPPORT = 158
+QSFP_DD_RX_SUPPORT_WIDTH = 1
+
+QSFP_DD_RX_FLAG = 147
+QSFP_DD_RX_FLAG_WIDTH = 1
+
+QSFP_DD_CONTROL_BYTES_OFFSET = 130
+QSFP_DD_CONTROL_BYTES_WIDTH = 1
+
+QSFP_DD_GLOBAL_CONTROL_BYTES_OFFSET = 26
+QSFP_DD_GLOBAL_CONTROL_BYTES_WIDTH = 1
+
+QSFP_DD_NUM_CHANNELS = 8
 #QSFP temperature and voltage offsets
 QSFP_TEMPE_OFFSET = 22
 QSFP_TEMPE_WIDTH = 2
 QSFP_VOLT_OFFSET = 26
 QSFP_VOLT_WIDTH = 2
+QSFP_CONTROL_BYTES_OFFSET = 86
+QSFP_CONTROL_BYTES_WIDTH = 14
+QSFP_NUM_CHANNELS = 4
+QSFP_STATUS_CONTROL_OFFSET   = 3
+QSFP_STATUS_CONTROL_WIDTH    = 1
+
+QSFP_CHANNL_TX_FAULT_STATUS_OFFSET = 4
+QSFP_CHANNL_TX_FAULT_STATUS_WIDTH = 1
 #SFP temperature and volatage offsets
 SFP_TEMPE_OFFSET = 96
 SFP_TEMPE_WIDTH = 2
 SFP_VOLT_OFFSET = 98
 SFP_VOLT_WIDTH = 2
+SFP_STATUS_CONTROL_OFFSET   = 110
+SFP_STATUS_CONTROL_WIDTH    = 1
 
 SFP_TYPE_CODE_LIST = [
     '03' # SFP/SFP+/SFP28
@@ -210,7 +240,8 @@ class SfpUtil(SfpUtilBase):
     def reset_page(self, port_num, page):
         if self._is_valid_port(port_num) :
             os.system("/usr/sbin/i2cset -y -f %d 0x50 %d %d b" % (port_num + self.EEPROM_OFFSET, QSFP_DD_PAGE_OFFSET, page))
-
+            # Wait for page change to take effect
+            time.sleep(0.01)
     def get_low_power_mode(self, port_num):
         if self._is_valid_port(port_num) :
             port_lpmode="/sys/class/mifpga/mifpga/qsfp_%d_lp_mode/value" % (port_num+1)
@@ -265,6 +296,22 @@ class SfpUtil(SfpUtilBase):
 
         return True
 
+    def open_port_to_eeprom_path(self, port_num):
+        eeprom_path = self._port_to_eeprom_mapping[port_num]
+        try:
+            port_eeprom_file = open(eeprom_path, mode="rb", buffering=0)
+        except IOError:
+            print("Error: reading sysfs file %s" % eeprom_path)
+            return None
+        return port_eeprom_file
+
+    def close_port_eeprom_path(self, port_eeprom_file):
+        try:
+            port_eeprom_file.close()
+        except IOError:
+            print("Error: closing sysfs file %s" % port_eeprom_file)
+            return False
+        return True
 
     def reset(self, port_num):
         # Check for valid port_num
@@ -296,7 +343,7 @@ class SfpUtil(SfpUtilBase):
         xcvr_eeprom_rw_unlock(fd)
         return eeprom_ifraw
 
-    def read_eeprom_specific_bytes(self, port_num, offset, width):
+    def read_eeprom_specific_bytes(self, port_num, offset, width, page_num=0):
         read_retry = 0
         file_path = self.port_to_eeprom_mapping[port_num]
 
@@ -311,7 +358,7 @@ class SfpUtil(SfpUtilBase):
                     if fd is None:
                         logger.log_error("Unable to acquire lock to read eeprom of port {}".format(port_num))
                         return None
-                    self.reset_page(port_num, 0)
+                    self.reset_page(port_num, page_num)
                     eeprom_bytes = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, width)
 
                 xcvr_eeprom_rw_unlock(fd)
@@ -332,7 +379,8 @@ class SfpUtil(SfpUtilBase):
         if self.get_presence(port_num) is False:
             return sfp_type
 
-        sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
+        page_num = 0
+        sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH, page_num)
         if sfp_type_raw:
             if sfp_type_raw[0] in SFP_TYPE_CODE_LIST:
                 return SFP_TYPE
@@ -346,6 +394,7 @@ class SfpUtil(SfpUtilBase):
             return sfp_type
 
     def update_sfp_type(self, port_num, sfp_type, insert):
+        page_num = 0
         if self._is_valid_port(port_num) is False:
             return sfp_type
 
@@ -359,7 +408,7 @@ class SfpUtil(SfpUtilBase):
 
         #Try to detect and update new SFP
         if insert == '1':
-            sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
+            sfp_type_raw = self.read_eeprom_specific_bytes(port_num, XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH, page_num)
             if sfp_type_raw:
                 if sfp_type_raw[0] in SFP_TYPE_CODE_LIST:
                     self.SFP_PORTS_IN_BLOCK.add(port_num)
@@ -422,11 +471,13 @@ class SfpUtil(SfpUtilBase):
 
         return True, {} #we reach here when timeout expire
 
+
     def get_temperature(self, port_num):
         if self._is_valid_port(port_num) :
-            eeprom_path = self._port_to_eeprom_mapping[port_num]
             if port_num in self.osfp_ports:
-                return 'N/A'          #Need to handle it in future
+               transceiver_dom_info_dict = self.get_transceiver_dom_info_dict(port_num)
+               temp = self._convert_string_to_num(transceiver_dom_info_dict['temperature'])
+               return temp
             elif port_num in self.qsfp_ports:
                 offset  = 0 + QSFP_TEMPE_OFFSET
                 width = QSFP_TEMPE_WIDTH
@@ -439,18 +490,27 @@ class SfpUtil(SfpUtilBase):
                 sfpd_obj = sff8472Dom()
                 if sfpd_obj is None:
                     return None
-            
+
+            temperature_value = None
+            temperature_value_f = None
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return 'N/A'
             raw_data = self._read_eeprom_specific_bytes(eeprom_path, offset, width)
             if raw_data is not None:
                 dom_temperature_data = sfpd_obj.parse_temperature(raw_data, 0)
-                return dom_temperature_data['data']['Temperature']['value']
-        return None
+                temperature_value = dom_temperature_data['data']['Temperature']['value']
+                temperature_value_f = self._convert_string_to_num(temperature_value)
+            self.close_port_eeprom_path( eeprom_path)
+
+        return temperature_value_f
 
     def get_voltage(self, port_num):
         if self._is_valid_port(port_num) :
-            eeprom_path = self._port_to_eeprom_mapping[port_num]
             if port_num in self.osfp_ports:
-                return 'N/A'          #Need to handle it in future
+                transceiver_dom_info_dict = self.get_transceiver_dom_info_dict(port_num)
+                voltage = self._convert_string_to_num(transceiver_dom_info_dict['voltage'])
+                return voltage
             elif port_num in self.qsfp_ports:
                 offset  = 0 + QSFP_VOLT_OFFSET
                 width = QSFP_VOLT_WIDTH
@@ -463,52 +523,538 @@ class SfpUtil(SfpUtilBase):
                 sfpd_obj = sff8472Dom()
                 if sfpd_obj is None:
                     return None
-            
+
+            voltage_value = None
+            voltage_value_f = None
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return 'N/A'
             raw_data = self._read_eeprom_specific_bytes(eeprom_path, offset, width)
             if raw_data is not None:
                 dom_voltage_data = sfpd_obj.parse_voltage(raw_data, 0)
-                return dom_voltage_data['data']['Vcc']['value']
-        return None
+                voltage_value = dom_voltage_data['data']['Vcc']['value']
+                voltage_value_f = self._convert_string_to_num(voltage_value)
+            self.close_port_eeprom_path( eeprom_path)
+        return voltage_value_f
+
+    def get_power_override(self, port_num):
+        power_override_state = False
+
+        if not self._is_valid_port(port_num):
+            return power_override_state
+
+        if not self.get_presence(port_num):
+            return power_override_state
+
+        if port_num in self.sfp_ports:
+            #N/A for SFP+ ports
+            return power_override_state
+
+        if port_num in self.osfp_ports:
+            page_num = 0x0
+            byte26 = self.read_eeprom_specific_bytes(port_num, QSFP_DD_GLOBAL_CONTROL_BYTES_OFFSET, QSFP_DD_CONTROL_BYTES_WIDTH , page_num)
+            if byte26 is not None:
+                data = int(byte26[0], 16)
+                # Check LowPwrAllowRequestHW (6th bit), 0:Override enabled 1:override disabled
+                power_override_state = (sffbase().test_bit(data, 6) != 1)
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return power_override_state
+            byte93 = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CONTROL_BYTES_OFFSET, QSFP_CONTROL_BYTES_WIDTH)[7]
+            if byte93 is not None:
+                data = int(byte93, 16)
+                power_override_state = (sffbase().test_bit(data, 0) != 0)
+
+            self.close_port_eeprom_path( eeprom_path)
+        return power_override_state
 
     def get_tx_bias(self, port_num):
-        tx_bias_dict_keys = [ 'tx1bias', 'tx2bias', 'tx3bias', 'tx4bias',]
-        tx_bias_dict = dict.fromkeys(tx_bias_dict_keys, 'N/A')
 
         transceiver_dom_info_dict = self.get_transceiver_dom_info_dict(port_num)
-        if transceiver_dom_info_dict is not None :
-            tx_bias_dict['tx1bias']= transceiver_dom_info_dict['tx1bias']
-            tx_bias_dict['tx2bias']= transceiver_dom_info_dict['tx2bias']
-            tx_bias_dict['tx3bias']= transceiver_dom_info_dict['tx3bias']
-            tx_bias_dict['tx4bias']= transceiver_dom_info_dict['tx4bias']
-        return tx_bias_dict
+        if port_num in self.qsfp_ports:
+            tx_bias_list = [0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                tx_bias_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['tx1bias'])
+                tx_bias_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['tx2bias'])
+                tx_bias_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['tx3bias'])
+                tx_bias_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                return tx_bias_list
+            return None
+        elif port_num in self.osfp_ports:
+            tx_bias_list = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                tx_bias_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['tx1bias'])
+                tx_bias_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['tx2bias'])
+                tx_bias_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['tx3bias'])
+                tx_bias_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                tx_bias_list[4] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                tx_bias_list[5] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                tx_bias_list[6] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                tx_bias_list[7] = self._convert_string_to_num(transceiver_dom_info_dict['tx4bias'])
+                return tx_bias_list
+            return None
+
+    def set_bit(self, n, bitpos):
+        try:
+            n = n | (1 << bitpos)
+            return n
+        except Exception:
+            return -1
+
+    def clear_bit(self, n, bitpos):
+        try:
+            n = n & (~(1 << bitpos))
+            return n
+        except Exception:
+            return -1
+
+    def get_tx_disable(self, port_num):
+        tx_disable_state = []
+
+        if not self._is_valid_port(port_num):
+            return tx_disable_state
+
+        if not self.get_presence(port_num):
+            return tx_disable_state
+
+
+        if port_num in self.osfp_ports:
+            page_num= 0x10
+            byte130 = self.read_eeprom_specific_bytes(port_num, QSFP_DD_CONTROL_BYTES_OFFSET, QSFP_DD_CONTROL_BYTES_WIDTH, page_num)
+            if byte130 is not None:
+                data = int(byte130[0], 16)
+                tx_disable_state.append(sffbase().test_bit(data, 0) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 1) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 2) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 3) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 4) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 5) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 6) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 7) != 0)
+            return tx_disable_state
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return tx_disable_state
+            byte86 = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CONTROL_BYTES_OFFSET, QSFP_CONTROL_BYTES_WIDTH)[0]
+            if byte86 is not None:
+                data = int(byte86, 16)
+                tx_disable_state.append(sffbase().test_bit(data, 0) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 1) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 2) != 0)
+                tx_disable_state.append(sffbase().test_bit(data, 3) != 0)
+            self.close_port_eeprom_path( eeprom_path)
+        else:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return tx_disable_state
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, SFP_STATUS_CONTROL_OFFSET, SFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+                data = int(raw_data[0], 16)
+                tx_disable_state.append(sffbase().test_bit(data, 7) != 0)
+            self.close_port_eeprom_path( eeprom_path)
+
+        return tx_disable_state
+
+    def get_tx_disable_channel(self, port_num):
+        tx_disable_state = []
+        tx_disable_channel = 0
+        bit_num = 0
+
+        tx_disable_state = self.get_tx_disable(port_num)
+
+        for state in tx_disable_state:
+            if state:
+                tx_disable_channel = self.set_bit(tx_disable_channel, bit_num)
+            else:
+                tx_disable_channel = self.clear_bit(tx_disable_channel, bit_num)
+            bit_num = bit_num + 1
+
+        return tx_disable_channel
+
+    def tx_disable(self, port_num, tx_disable):
+        status = False
+
+        if not self._is_valid_port(port_num):
+            return status
+
+        if not self.get_presence(port_num):
+            return status
+
+        if port_num in self.osfp_ports:
+            page_num = 0x10
+            byte130 = self.read_eeprom_specific_bytes(port_num, QSFP_DD_CONTROL_BYTES_OFFSET, QSFP_DD_CONTROL_BYTES_WIDTH, page_num)
+            if byte130 is not None:
+                data = int(byte130[0], 16)
+                if tx_disable:
+                    data = self.set_bit(data, 0)
+                    data = self.set_bit(data, 1)
+                    data = self.set_bit(data, 2)
+                    data = self.set_bit(data, 3)
+                    data = self.set_bit(data, 4)
+                    data = self.set_bit(data, 5)
+                    data = self.set_bit(data, 6)
+                    data = self.set_bit(data, 7)
+                else:
+                    data = self.clear_bit(data, 0)
+                    data = self.clear_bit(data, 1)
+                    data = self.clear_bit(data, 2)
+                    data = self.clear_bit(data, 3)
+                    data = self.clear_bit(data, 4)
+                    data = self.clear_bit(data, 5)
+                    data = self.clear_bit(data, 6)
+                    data = self.clear_bit(data, 7)
+
+                fd=xcvr_eeprom_rw_lock(port_num)
+                if fd is None:
+                    logger.log_error("Unable to acquire lock in tx_disable for port {}".format(port_num))
+                    return status
+                self.reset_page(port_num,page_num)
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_DD_CONTROL_BYTES_OFFSET) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+                xcvr_eeprom_rw_unlock(fd)
+
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return status
+            byte86 = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CONTROL_BYTES_OFFSET, QSFP_CONTROL_BYTES_WIDTH)[0]
+            if byte86 is not None:
+                data = int(byte86, 16)
+                if tx_disable:
+                    data = self.set_bit(data, 0)
+                    data = self.set_bit(data, 1)
+                    data = self.set_bit(data, 2)
+                    data = self.set_bit(data, 3)
+                else:
+                    data = self.clear_bit(data, 0)
+                    data = self.clear_bit(data, 1)
+                    data = self.clear_bit(data, 2)
+                    data = self.clear_bit(data, 3)
+
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_CONTROL_BYTES_OFFSET) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+            self.close_port_eeprom_path( eeprom_path)
+        elif port_num in self.sfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return status
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, SFP_STATUS_CONTROL_OFFSET, SFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+                data = int(raw_data[0], 16)
+                tx_disable_state = (sffbase().test_bit(data, 7) != 0)
+                if tx_disable_state != tx_disable:
+                    if tx_disable:
+                        data = self.set_bit(data, 6)
+                    else:
+                        data = self.clear_bit(data, 6)
+                    #Write into soft TX disable select bit @ SFP_STATUS_CONTROL_OFFSET
+                    run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(SFP_STATUS_CONTROL_OFFSET) + ' ' + str(hex(data))
+                    os.system(run_cmd)
+                status = True
+            self.close_port_eeprom_path( eeprom_path)
+        return status
+
+    def tx_disable_channel(self, port_num, channel, disable):
+        status = False
+
+        if not self._is_valid_port(port_num):
+            return status
+
+        if not self.get_presence(port_num):
+            return status
+
+        if port_num in self.osfp_ports:
+            page_num = 0x10
+            byte130 = self.read_eeprom_specific_bytes(port_num, QSFP_DD_CONTROL_BYTES_OFFSET, QSFP_DD_CONTROL_BYTES_WIDTH, page_num)
+            if byte130 is not None:
+                data = int(byte130[0], 16)
+                for lane in range(0,QSFP_DD_NUM_CHANNELS):
+                    mask = 1 << lane
+                    if channel & mask:
+                        if disable:
+                            data = self.set_bit(data, lane)
+                        else:
+                            data = self.clear_bit(data, lane)
+                fd=xcvr_eeprom_rw_lock(port_num)
+                if fd is None:
+                    logger.log_error("Unable to acquire lock in tx_disable_channel for port {}".format(port_num))
+                    return status
+                self.reset_page(port_num, page_num)
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_DD_CONTROL_BYTES_OFFSET) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+                xcvr_eeprom_rw_unlock(fd)
+
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return status
+            byte86 = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CONTROL_BYTES_OFFSET, QSFP_CONTROL_BYTES_WIDTH)[0]
+            if byte86 is not None:
+                data = int(byte86, 16)
+                for lane in range(0,QSFP_NUM_CHANNELS):
+                    mask = 1 << lane
+                    if channel & mask:
+                        if disable:
+                            data = self.set_bit(data, lane)
+                        else:
+                            data = self.clear_bit(data, lane)
+
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_CONTROL_BYTES_OFFSET) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+            self.close_port_eeprom_path( eeprom_path)
+        elif port_num in self.sfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return status
+            #For SFP+, its same as tx_disable()
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, SFP_STATUS_CONTROL_OFFSET, SFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+                data = int(raw_data[0], 16)
+                tx_disable_state = (sffbase().test_bit(data, 7) != 0)
+                if tx_disable_state != disable:
+                    if disable:
+                        data = self.set_bit(data, 6)
+                    else:
+                        data = self.clear_bit(data, 6)
+                    #Write into soft TX disable select bit @ SFP_STATUS_CONTROL_OFFSET
+                    run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(SFP_STATUS_CONTROL_OFFSET) + ' ' + str(hex(data))
+                    os.system(run_cmd)
+                status = True
+            self.close_port_eeprom_path( eeprom_path)
+
+        return status
+
+
+    def set_power_override(self, port_num, power_override, power_set):
+        status = False
+
+        if not self._is_valid_port(port_num):
+            return status
+
+        if not self.get_presence(port_num):
+            return status
+
+        if port_num in self.sfp_ports:
+            #N/A for SFP+ ports
+            return status
+
+        if port_num in self.osfp_ports:
+            page_num = 0
+            byte26 = self.read_eeprom_specific_bytes(port_num, QSFP_DD_GLOBAL_CONTROL_BYTES_OFFSET, QSFP_DD_GLOBAL_CONTROL_BYTES_WIDTH, page_num)
+            if byte26 is not None:
+                data = int(byte26[0], 16)
+                if power_override:
+                    data = self.clear_bit(data, 6)
+                    if power_set:
+                        data = self.set_bit(data, 4)
+                    else:
+                        data = self.clear_bit(data, 4)
+                else:
+                    data = self.set_bit(data, 6)
+                    data = self.clear_bit(data, 4)
+                fd=xcvr_eeprom_rw_lock(port_num)
+                if fd is None:
+                    logger.log_error("Unable to acquire lock in set_power_override for port {}".format(port_num))
+                    return status
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_DD_GLOBAL_CONTROL_BYTES_OFFSET ) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+                xcvr_eeprom_rw_unlock(fd)
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return status
+            byte93 = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CONTROL_BYTES_OFFSET, QSFP_CONTROL_BYTES_WIDTH)[7]
+            if byte93 is not None:
+                data = int(byte93, 16)
+                if power_override:
+                    data = self.set_bit(data, 0)
+                    if power_set:
+                        data = self.set_bit(data, 1)
+                    else:
+                        data = self.clear_bit(data, 1)
+                else:
+                    data = self.clear_bit(data, 0)
+
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_CONTROL_BYTES_OFFSET + 7) + ' ' + str(hex(data))
+                os.system(run_cmd)
+                status = True
+            self.close_port_eeprom_path( eeprom_path)
+
+        return status
 
     def get_rx_power(self, port_num):
-        rx_power_dict_keys = ['rx1power', 'rx2power',    'rx3power', 'rx4power',]
-        rx_power_dict = dict.fromkeys(rx_power_dict_keys, 'N/A')
 
         transceiver_dom_info_dict = self.get_transceiver_dom_info_dict(port_num)
-        if transceiver_dom_info_dict is not None :
-            rx_power_dict['rx1power'] =transceiver_dom_info_dict['rx1power']
-            rx_power_dict['rx2power'] =transceiver_dom_info_dict['rx2power']
-            rx_power_dict['rx3power'] =transceiver_dom_info_dict['rx3power']
-            rx_power_dict['rx4power'] =transceiver_dom_info_dict['rx4power']
-        return rx_power_dict
+        if port_num in self.qsfp_ports:
+            rx_power_list = [0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                rx_power_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['rx1power'])
+                rx_power_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['rx2power'])
+                rx_power_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['rx3power'])
+                rx_power_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['rx4power'])
+                return rx_power_list
+            return None
+        elif port_num in self.osfp_ports:
+            rx_power_list = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                rx_power_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['rx1power'])
+                rx_power_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['rx2power'])
+                rx_power_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['rx3power'])
+                rx_power_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['rx4power'])
+                rx_power_list[4] = self._convert_string_to_num(transceiver_dom_info_dict['rx5power'])
+                rx_power_list[5] = self._convert_string_to_num(transceiver_dom_info_dict['rx6power'])
+                rx_power_list[6] = self._convert_string_to_num(transceiver_dom_info_dict['rx7power'])
+                rx_power_list[7] = self._convert_string_to_num(transceiver_dom_info_dict['rx8power'])
+                return rx_power_list
+            return None
+
+    def get_tx_fault(self, port_num):
+        tx_fault_state = []
+
+        if not self._is_valid_port(port_num):
+            return tx_fault_state
+
+        if not self.get_presence(port_num):
+            return tx_fault_state
+
+        if port_num in self.osfp_ports:
+            page_num = 0x1
+            raw_data = self.read_eeprom_specific_bytes(port_num, QSFP_DD_TX_SUPPORT, QSFP_DD_TX_SUPPORT_WIDTH, page_num)
+            if raw_data is not None:
+                tx_supported = int(raw_data[0], 16)
+                if (tx_supported & 0x01):
+                    page = 0x11
+                    raw_data = self.read_eeprom_specific_bytes(port_num, QSFP_DD_TX_FLAG, QSFP_DD_TX_FLAG_WIDTH, page)
+                    if raw_data is not None:
+                        tx_flag_data = int(raw_data[0], 16)
+                        tx_fault_state.append(tx_flag_data & 0x01 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x02 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x04 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x08 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x10 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x20 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x40 != 0)
+                        tx_fault_state.append(tx_flag_data & 0x80 != 0)
+            return tx_fault_state
+
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return tx_fault_state
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, QSFP_CHANNL_TX_FAULT_STATUS_OFFSET,QSFP_CHANNL_TX_FAULT_STATUS_WIDTH)
+            if raw_data is not None:
+                tx_flag_data = int(raw_data[0], 16)
+                tx_fault_state.append(tx_flag_data & 0x01 != 0)
+                tx_fault_state.append(tx_flag_data & 0x02 != 0)
+                tx_fault_state.append(tx_flag_data & 0x04 != 0)
+                tx_fault_state.append(tx_flag_data & 0x08 != 0)
+            self.close_port_eeprom_path( eeprom_path)
+            return tx_fault_state
+        elif port_num in self.sfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return tx_fault_state
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, SFP_STATUS_CONTROL_OFFSET, SFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+                data = int(raw_data[0], 16)
+                tx_fault_state.append(sffbase().test_bit(data, 2) != 0)
+
+            self.close_port_eeprom_path( eeprom_path)
+
+        return tx_fault_state
+
+
+    def get_rx_los(self, port_num):
+        rx_los_state = []
+
+        if not self._is_valid_port(port_num):
+            return rx_los_state
+
+        if not self.get_presence(port_num):
+            return rx_los_state
+
+        if port_num in self.osfp_ports:
+            page_num = 0x01
+            raw_data = self.read_eeprom_specific_bytes(port_num, QSFP_DD_RX_SUPPORT, QSFP_DD_RX_SUPPORT_WIDTH, page_num)
+            if raw_data is not None:
+                rx_los_supported = int(raw_data[0], 16)
+                if (rx_los_supported & 0x02):
+                    page = 0x11
+                    raw_data = self.read_eeprom_specific_bytes(port_num, QSFP_DD_RX_FLAG, QSFP_DD_RX_FLAG_WIDTH, page)
+                    if raw_data is not None:
+                        rx_los_data = int(raw_data[0], 16)
+                        rx_los_state.append(rx_los_data & 0x01 != 0)
+                        rx_los_state.append(rx_los_data & 0x02 != 0)
+                        rx_los_state.append(rx_los_data & 0x04 != 0)
+                        rx_los_state.append(rx_los_data & 0x08 != 0)
+                        rx_los_state.append(rx_los_data & 0x10 != 0)
+                        rx_los_state.append(rx_los_data & 0x20 != 0)
+                        rx_los_state.append(rx_los_data & 0x40 != 0)
+                        rx_los_state.append(rx_los_data & 0x80 != 0)
+            return rx_los_state
+        elif port_num in self.qsfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return rx_los_state
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, QSFP_STATUS_CONTROL_OFFSET, QSFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+                rx_los_data = int(raw_data[0], 16)
+                rx_los_state.append(rx_los_data & 0x01 != 0)
+                rx_los_state.append(rx_los_data & 0x02 != 0)
+                rx_los_state.append(rx_los_data & 0x04 != 0)
+                rx_los_state.append(rx_los_data & 0x08 != 0)
+            self.close_port_eeprom_path( eeprom_path)
+            return rx_los_state
+        elif port_num in self.sfp_ports:
+            eeprom_path = self.open_port_to_eeprom_path(port_num)
+            if eeprom_path is None:
+                return rx_los_state
+            raw_data = self._read_eeprom_specific_bytes(eeprom_path, SFP_STATUS_CONTROL_OFFSET, SFP_STATUS_CONTROL_WIDTH)
+            if raw_data is not None:
+               data = int(raw_data[0], 16)
+               rx_los_state.append(sffbase().test_bit(data, 1) != 0)
+
+            self.close_port_eeprom_path( eeprom_path)
+            return rx_los_state
 
     def get_tx_power(self, port_num):
-        tx_power_dict_keys = ['tx1power', 'tx2power',    'tx3power', 'tx4power',]
-        tx_power_dict = dict.fromkeys(tx_power_dict_keys, 'N/A')
 
         transceiver_dom_info_dict = self.get_transceiver_dom_info_dict(port_num)
-        if transceiver_dom_info_dict is not None :
-            tx_power_dict['tx1power'] =transceiver_dom_info_dict['tx1power']
-            tx_power_dict['tx2power'] =transceiver_dom_info_dict['tx2power']
-            tx_power_dict['tx3power'] =transceiver_dom_info_dict['tx3power']
-            tx_power_dict['tx4power'] =transceiver_dom_info_dict['tx4power']
-        return tx_power_dict
+
+        if port_num in self.qsfp_ports:
+            tx_power_list = [0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                tx_power_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['tx1power'])
+                tx_power_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['tx2power'])
+                tx_power_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['tx3power'])
+                tx_power_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['tx4power'])
+                return tx_power_list
+            return None
+        elif port_num in self.osfp_ports:
+            tx_power_list = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            if transceiver_dom_info_dict is not None :
+                tx_power_list[0] = self._convert_string_to_num(transceiver_dom_info_dict['tx1power'])
+                tx_power_list[1] = self._convert_string_to_num(transceiver_dom_info_dict['tx2power'])
+                tx_power_list[2] = self._convert_string_to_num(transceiver_dom_info_dict['tx3power'])
+                tx_power_list[3] = self._convert_string_to_num(transceiver_dom_info_dict['tx4power'])
+                tx_power_list[4] = self._convert_string_to_num(transceiver_dom_info_dict['tx5power'])
+                tx_power_list[5] = self._convert_string_to_num(transceiver_dom_info_dict['tx6power'])
+                tx_power_list[6] = self._convert_string_to_num(transceiver_dom_info_dict['tx7power'])
+                tx_power_list[7] = self._convert_string_to_num(transceiver_dom_info_dict['tx8power'])
+                return tx_power_list
+            return None
+
 
     def _convert_string_to_num(self, value_str):
         if "-inf" in value_str:
-            return 'N/A'
+            return float('-inf')
         elif "Unknown" in value_str:
             return 'N/A'
         elif 'dBm' in value_str:
@@ -537,8 +1083,8 @@ class SfpUtil(SfpUtilBase):
             if sfpi_obj is None:
                 print("Error: sfp_object open failed")
                 return None
-
-            sfp_type_raw = self.read_eeprom_specific_bytes(port_num, QSFP_DD_TYPE_OFFSET,QSFP_DD_TYPE_WIDTH)
+            page_num = 0
+            sfp_type_raw = self.read_eeprom_specific_bytes(port_num, QSFP_DD_TYPE_OFFSET,QSFP_DD_TYPE_WIDTH, page_num)
             if sfp_type_raw is not None:
                 try :
                     sfp_type_data = sfpi_obj.parse_sfp_type(sfp_type_raw, 0)
@@ -551,7 +1097,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_name_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_NAME_OFFSET), QSFP_DD_VENDOR_NAME_WIDTH)
+            sfp_vendor_name_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_NAME_OFFSET), QSFP_DD_VENDOR_NAME_WIDTH, page_num)
             if sfp_vendor_name_raw is not None:
                 try :
                     sfp_vendor_name_data = sfpi_obj.parse_vendor_name(sfp_vendor_name_raw, 0)
@@ -564,7 +1110,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_pn_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_PN_OFFSET), QSFP_DD_VENDOR_PN_WIDTH)
+            sfp_vendor_pn_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_PN_OFFSET), QSFP_DD_VENDOR_PN_WIDTH, page_num)
             if sfp_vendor_pn_raw is not None:
                 try :
                     sfp_vendor_pn_data = sfpi_obj.parse_vendor_pn(sfp_vendor_pn_raw, 0)
@@ -577,7 +1123,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_rev_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_HW_REV_OFFSET), QSFP_DD_HW_REV_WIDTH)
+            sfp_vendor_rev_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_HW_REV_OFFSET), QSFP_DD_HW_REV_WIDTH, page_num)
             if sfp_vendor_rev_raw is not None:
                 try :
                     sfp_vendor_rev_data = sfpi_obj.parse_vendor_rev(sfp_vendor_rev_raw, 0)
@@ -590,7 +1136,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_sn_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_SN_OFFSET), QSFP_DD_VENDOR_SN_WIDTH)
+            sfp_vendor_sn_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_SN_OFFSET), QSFP_DD_VENDOR_SN_WIDTH, page_num)
             if sfp_vendor_sn_raw is not None:
                 try :
                     sfp_vendor_sn_data = sfpi_obj.parse_vendor_sn(sfp_vendor_sn_raw, 0)
@@ -604,7 +1150,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_oui_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_OUI_OFFSET), QSFP_DD_VENDOR_OUI_WIDTH)
+            sfp_vendor_oui_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_OUI_OFFSET), QSFP_DD_VENDOR_OUI_WIDTH, page_num)
             if sfp_vendor_oui_raw is not None:
                 try :
                     sfp_vendor_oui_data = sfpi_obj.parse_vendor_oui(sfp_vendor_oui_raw, 0)
@@ -617,7 +1163,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_vendor_date_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_DATE_OFFSET), QSFP_DD_VENDOR_DATE_WIDTH)
+            sfp_vendor_date_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_VENDOR_DATE_OFFSET), QSFP_DD_VENDOR_DATE_WIDTH, page_num)
             if sfp_vendor_date_raw is not None:
                 try :
                     sfp_vendor_date_data = sfpi_obj.parse_vendor_date(sfp_vendor_date_raw, 0)
@@ -630,7 +1176,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_connector_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_CONNECTOR_OFFSET), QSFP_DD_CONNECTOR_WIDTH)
+            sfp_connector_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_CONNECTOR_OFFSET), QSFP_DD_CONNECTOR_WIDTH, page_num)
             if sfp_connector_raw is not None:
                 try:
                     sfp_connector_data = sfpi_obj.parse_connector(sfp_connector_raw, 0)
@@ -643,7 +1189,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_ext_identifier_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_EXT_TYPE_OFFSET), QSFP_DD_EXT_TYPE_WIDTH)
+            sfp_ext_identifier_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_EXT_TYPE_OFFSET), QSFP_DD_EXT_TYPE_WIDTH, page_num)
             if sfp_ext_identifier_raw is not None:
                 try :
                     sfp_ext_identifier_data = sfpi_obj.parse_ext_iden(sfp_ext_identifier_raw, 0)
@@ -656,7 +1202,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_cable_len_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_CABLE_LENGTH_OFFSET), QSFP_DD_CABLE_LENGTH_WIDTH)
+            sfp_cable_len_raw = self.read_eeprom_specific_bytes(port_num, (offset + QSFP_DD_CABLE_LENGTH_OFFSET), QSFP_DD_CABLE_LENGTH_WIDTH, page_num)
             if sfp_cable_len_raw is not None:
                 try :
                     sfp_cable_len_data = sfpi_obj.parse_cable_len(sfp_cable_len_raw, 0)
@@ -669,7 +1215,7 @@ class SfpUtil(SfpUtilBase):
             else:
                 return None
 
-            sfp_media_type_raw = self.read_eeprom_specific_bytes(port_num, QSFP_DD_MEDIA_TYPE_OFFSET, QSFP_DD_MEDIA_TYPE_WIDTH)
+            sfp_media_type_raw = self.read_eeprom_specific_bytes(port_num, QSFP_DD_MEDIA_TYPE_OFFSET, QSFP_DD_MEDIA_TYPE_WIDTH, page_num)
             if sfp_media_type_raw is not None:
                 try :
                     sfp_media_type_dict = sfpi_obj.parse_media_type(sfp_media_type_raw, 0)
@@ -680,7 +1226,7 @@ class SfpUtil(SfpUtilBase):
                     return None
 
                 host_media_list = ""
-                sfp_application_type_first_list = self.read_eeprom_specific_bytes(port_num, (QSFP_DD_FIRST_APPLICATION_LIST_OFFSET), QSFP_DD_FIRST_APPLICATION_LIST_WIDTH)
+                sfp_application_type_first_list = self.read_eeprom_specific_bytes(port_num, (QSFP_DD_FIRST_APPLICATION_LIST_OFFSET), QSFP_DD_FIRST_APPLICATION_LIST_WIDTH, page_num)
                 possible_application_count = 8
                 if sfp_application_type_first_list is not None:
                     sfp_application_type_list = sfp_application_type_first_list
@@ -751,15 +1297,15 @@ class SfpUtil(SfpUtilBase):
 
             dom_temperature_data = dom_monitor_data['ModuleMonitor']['TemperatureMonitor']
             if dom_temperature_data is not None:
-                temp = self._convert_string_to_num(dom_temperature_data['Temperature'])
+                temp = dom_temperature_data['Temperature']
                 if temp is not None:
                     transceiver_dom_info_dict['temperature'] = temp
 
             dom_voltage_data = dom_monitor_data['ModuleMonitor']['VoltageMonitor']
             if dom_voltage_data is not None:
-                temp = self._convert_string_to_num(dom_voltage_data['Vcc'])
-                if temp is not None:
-                    transceiver_dom_info_dict['voltage'] = temp
+                volt = dom_voltage_data['Vcc']
+                if volt is not None:
+                    transceiver_dom_info_dict['voltage'] = volt
 
             dom_channel_monitor_data = dom_monitor_data['ChannelMonitor']
             if dom_channel_monitor_data is not None:
@@ -767,28 +1313,28 @@ class SfpUtil(SfpUtilBase):
                 dom_tx_power_monitor = dom_channel_monitor_data['TxPowerMonitor']
                 if dom_tx_power_monitor is not None:
                     try :
-                        transceiver_dom_info_dict['tx1power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX1Power']))
-                        transceiver_dom_info_dict['tx2power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX2Power']))
-                        transceiver_dom_info_dict['tx3power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX3Power']))
-                        transceiver_dom_info_dict['tx4power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX4Power']))
-                        transceiver_dom_info_dict['tx5power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX5Power']))
-                        transceiver_dom_info_dict['tx6power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX6Power']))
-                        transceiver_dom_info_dict['tx7power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX7Power']))
-                        transceiver_dom_info_dict['tx8power'] = str(self._convert_string_to_num(dom_tx_power_monitor['TX8Power']))
+                        transceiver_dom_info_dict['tx1power'] = dom_tx_power_monitor['TX1Power']
+                        transceiver_dom_info_dict['tx2power'] = dom_tx_power_monitor['TX2Power']
+                        transceiver_dom_info_dict['tx3power'] = dom_tx_power_monitor['TX3Power']
+                        transceiver_dom_info_dict['tx4power'] = dom_tx_power_monitor['TX4Power']
+                        transceiver_dom_info_dict['tx5power'] = dom_tx_power_monitor['TX5Power']
+                        transceiver_dom_info_dict['tx6power'] = dom_tx_power_monitor['TX6Power']
+                        transceiver_dom_info_dict['tx7power'] = dom_tx_power_monitor['TX7Power']
+                        transceiver_dom_info_dict['tx8power'] = dom_tx_power_monitor['TX8Power']
                     except :
                         syslog.syslog(syslog.LOG_ERR, "Unable to read Tx power for port {0}".format(port_num))
                         return None
                 dom_rx_power_monitor = dom_channel_monitor_data['RxPowerMonitor']
                 if dom_rx_power_monitor is not None:
                     try :
-                        transceiver_dom_info_dict['rx1power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX1Power']))
-                        transceiver_dom_info_dict['rx2power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX2Power']))
-                        transceiver_dom_info_dict['rx3power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX3Power']))
-                        transceiver_dom_info_dict['rx4power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX4Power']))
-                        transceiver_dom_info_dict['rx5power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX5Power']))
-                        transceiver_dom_info_dict['rx6power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX6Power']))
-                        transceiver_dom_info_dict['rx7power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX7Power']))
-                        transceiver_dom_info_dict['rx8power'] = str(self._convert_string_to_num(dom_rx_power_monitor['RX8Power']))
+                        transceiver_dom_info_dict['rx1power'] = dom_rx_power_monitor['RX1Power']
+                        transceiver_dom_info_dict['rx2power'] = dom_rx_power_monitor['RX2Power']
+                        transceiver_dom_info_dict['rx3power'] = dom_rx_power_monitor['RX3Power']
+                        transceiver_dom_info_dict['rx4power'] = dom_rx_power_monitor['RX4Power']
+                        transceiver_dom_info_dict['rx5power'] = dom_rx_power_monitor['RX5Power']
+                        transceiver_dom_info_dict['rx6power'] = dom_rx_power_monitor['RX6Power']
+                        transceiver_dom_info_dict['rx7power'] = dom_rx_power_monitor['RX7Power']
+                        transceiver_dom_info_dict['rx8power'] = dom_rx_power_monitor['RX8Power']
                     except :
                         syslog.syslog(syslog.LOG_ERR, "Unable to read Rx power for port {0}".format(port_num))
                         return None

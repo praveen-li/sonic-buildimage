@@ -1,0 +1,4 @@
+{
+        "skip_chassisd": true,
+        "skip_fancontrol": true
+}

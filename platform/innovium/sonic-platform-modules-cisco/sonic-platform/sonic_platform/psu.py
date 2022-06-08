@@ -26,11 +26,11 @@ psu_dict =  {'x86_64-cisco_N3K_C3432D':0}
 psu_eeprom = [
         {
             'model_offset' : 33,
-            'model_len'    : 19,
+            'model_len'    : 18,
             'serial_offset': 52,
             'serial_len'   : 11,
-            'vendor_offset': 14,
-            'vendor_len'   : 20,
+            'vendor_offset': 15,
+            'vendor_len'   : 17,
         }
 ]
 
@@ -199,20 +199,20 @@ class Psu(PsuBase):
         filename = None
         if self.psu_power is not None and self.get_powergood_status():
             if not os.path.exists(self._path_psu):
-                return 0.0
+                return "N/A"
         
             for dirname in os.listdir(self._path_psu):
                 if fnmatch.fnmatch(dirname, 'hwmon?'):
                      filename = self._path_psu + dirname + '/' + self.psu_power
                      break
             if filename is None:
-                return 0.0
+                return "N/A"
             if not os.path.exists(filename):
-                return 0.0
+                return "N/A"
             power = read_int_from_file(filename)            
             return float(power) / 1000000
         else:
-            return 0.0
+            return "N/A"
 
         
     def get_mfr_id(self):
@@ -253,12 +253,27 @@ class Psu(PsuBase):
         return None
 
     def get_temperature_high_threshold(self):
-        return None
+        return self.platform_data.get_param(PlatformGlobalData.KEY_MAX_TEMP, 0)
 
     def is_replaceable(self):
         return True
+
+    def get_position_in_parent (self):
+        return self.index
+
     def set_status_led(self, color):
-        return None
+        if self.is_fan_sw_controllable == False:
+            return True
+        return False
+
+    def get_maximum_supplied_power(self) :
+        return self.platform_data.get_param(PlatformGlobalData.KEY_MAX_SUPPLIED_POWER, 0)
+
+    def get_status_led(self) :
+        if self.get_powergood_status() :
+            return self.STATUS_LED_COLOR_GREEN
+        return self.STATUS_LED_COLOR_OFF
+
 ################## test ###############
 # p1 = Psu(1, "x86_64-cisco_N3K_C3432C")
 # print(p1.get_num_psus())

@@ -27,6 +27,7 @@ DEVICE_DATA = {
             'red_fans_inlet_temp_high_threshold' : 35.0,
             'reboot_gpio' : 133,
             'shutdown_gpio' : 134,
+            'max_supplied_power' : 1200.0,
 
             #Components and their num instances in platform
             'IOFPGA' : 1,
@@ -35,17 +36,17 @@ DEVICE_DATA = {
         },
         'fans': {
             'drawer_num': 6,
-            'fan_drawer': [{'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002f", 'input_index': 1, 'gpio_presence': 804, 'gpio_direction': 800},
+            'fan_drawer': [{'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002f", 'input_index': 1, 'gpio_presence': 804, 'gpio_direction': 800},
                                                  {'bus': 31, 'addr': "002f", 'input_index': 2, 'gpio_presence': 804, 'gpio_direction': 800}]},
-                           {'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002f", 'input_index': 3, 'gpio_presence': 805, 'gpio_direction': 801},
+                           {'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002f", 'input_index': 3, 'gpio_presence': 805, 'gpio_direction': 801},
                                                  {'bus': 31, 'addr': "002f", 'input_index': 4, 'gpio_presence': 805, 'gpio_direction': 801}]},
-                           {'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002c", 'input_index': 1, 'gpio_presence': 806, 'gpio_direction': 802},
+                           {'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002c", 'input_index': 1, 'gpio_presence': 806, 'gpio_direction': 802},
                                                  {'bus': 31, 'addr': "002c", 'input_index': 2, 'gpio_presence': 806, 'gpio_direction': 802}]},
-                           {'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002c", 'input_index': 3, 'gpio_presence': 807, 'gpio_direction': 803},
+                           {'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002c", 'input_index': 3, 'gpio_presence': 807, 'gpio_direction': 803},
                                                  {'bus': 31, 'addr': "002c", 'input_index': 4, 'gpio_presence': 807, 'gpio_direction': 803}]},
-                           {'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002e", 'input_index': 1, 'gpio_presence': 819, 'gpio_direction': 818},
+                           {'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002e", 'input_index': 1, 'gpio_presence': 819, 'gpio_direction': 818},
                                                  {'bus': 31, 'addr': "002e", 'input_index': 2, 'gpio_presence': 819, 'gpio_direction': 818}]},
-                           {'fan_num': 2, 'fan':[{'bus': 31, 'addr': "002e", 'input_index': 3, 'gpio_presence': 823, 'gpio_direction': 822},
+                           {'fan_num': 2, 'max_consumed_power': 24.0, 'fan':[{'bus': 31, 'addr': "002e", 'input_index': 3, 'gpio_presence': 823, 'gpio_direction': 822},
                                                  {'bus': 31, 'addr': "002e", 'input_index': 4, 'gpio_presence': 823, 'gpio_direction': 822}]}]
         },
         'psus': {
