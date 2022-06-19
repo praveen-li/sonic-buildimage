@@ -29,6 +29,7 @@ $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_PSUD_PY3)
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_SYSEEPROMD_PY3)
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_THERMALCTLD_PY3)
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_XCVRD_PY3)
+$(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_YCABLED_PY3)
 $(DOCKER_PLATFORM_MONITOR)_PYTHON_WHEELS += $(SONIC_CHASSISD_PY3)
 
 ifeq ($(PDDF_SUPPORT),y)
@@ -61,6 +62,7 @@ $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python2.7/dist-packages/sonic_
 $(DOCKER_PLATFORM_MONITOR)_RUN_OPT += -v /usr/lib/python3/dist-packages/sonic_platform:/usr/lib/python3/dist-packages/sonic_platform:ro
 
 # Mount Arista python library on Aboot images to be used by plugins
+$(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/libsfp-eeprom.so:/usr/lib/libsfp-eeprom.so:ro
 $(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/python2.7/dist-packages/arista:/usr/lib/python2.7/dist-packages/arista:ro
 $(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/python3/dist-packages/arista:/usr/lib/python3/dist-packages/arista:ro
 $(DOCKER_PLATFORM_MONITOR)_aboot_RUN_OPT += -v /usr/lib/python2.7/dist-packages/sonic_platform:/usr/lib/python2.7/dist-packages/sonic_platform:ro

@@ -1,7 +1,18 @@
+# The following 2 SOC properties are needed to prevent FDB Events during Warmboot due to TH3 is SW Managed MACs
+l2xmsg_shadow_hit_bits=0
+l2xmsg_no_cb_during_table_rebuild=1
+
+sai_tunnel_global_sip_mask_enable=1
 core_clock_frequency=1325
 dpr_clock_frequency=1000
 device_clock_frequency=1325
 port_flex_enable=1
+
+# disables bcmALPMDH (ALPM distributed hitbit) thread.  This thread is purely for debug purpose
+l3_alpm_hit_skip=1
+
+# Disable Counting ACL Drop towards interface RX_DRP counter
+sai_adjust_acl_drop_in_rx_drop=1
 
 #firmware load method, use fast load
 load_firmware=0x2
@@ -31,7 +42,6 @@ max_vp_lags.0=0
 tdma_intr_enable=1
 tdma_timeout_usec.0=5000000
 parity_correction.0=1
-mmu_lossless.0=0
 bcm_num_cos=10
 default_cpu_tx_queue=7
 pktdma_poll_mode_channel_bitmap=1
@@ -43,6 +53,9 @@ l3_mem_entries=40960
 
 l2xlrn_thread_interval=50000
 l2xlrn_intr_en=0
+
+sai_optimized_mmu=1
+mmu_init_config="TH3-MSFT-T1"
 
 pbmp_xport_xe=0xffffffFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE
 
@@ -514,6 +527,6 @@ serdes_lane_config_media_type_27=copper
 serdes_lane_config_media_type_28=copper
 serdes_lane_config_media_type_24=copper
 
-#sai_preinit_cmd_file=/usr/share/sonic/hwsku/sai_preinit_cmd.soc
+sai_preinit_cmd_file=/usr/share/sonic/hwsku/sai_preinit_cmd.soc
 sai_postinit_cmd_file=/usr/share/sonic/hwsku/sai_postinit_cmd.soc
-
+led_fw_path=/usr/share/sonic/hwsku/

@@ -1,9 +1,10 @@
-{%- if CONFIGURED_ARCH == "armhf" %}
-FROM multiarch/debian-debootstrap:armhf-stretch
-{%- elif CONFIGURED_ARCH == "arm64" %}
-FROM multiarch/debian-debootstrap:arm64-stretch
+{% set prefix = DEFAULT_CONTAINER_REGISTRY %}
+{%- if CONFIGURED_ARCH == "armhf" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/debian-debootstrap:armhf-stretch
+{%- elif CONFIGURED_ARCH == "arm64" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/debian-debootstrap:arm64-stretch
 {%- else -%}
-FROM debian:stretch
+FROM {{ prefix }}debian:stretch
 {%- endif %}
 
 MAINTAINER gulv@microsoft.com
@@ -349,12 +350,12 @@ RUN pip3 install mockredispy==2.9.3
 # For sonic-mgmt-framework
 RUN pip2 install "PyYAML==5.3.1"
 RUN pip3 install "PyYAML==5.3.1"
-RUN pip2 install "lxml==4.6.2"
-RUN pip3 install "lxml==4.6.2"
+RUN pip2 install "lxml==4.6.5"
+RUN pip3 install "lxml==4.6.5"
 
 
 # For sonic-platform-common testing
-RUN pip3 install redis
+RUN pip3 install redis==3.5.3
 
 # For vs image build
 RUN pip2 install pexpect==4.6.0
@@ -369,7 +370,7 @@ RUN pip2 install setuptools==40.8.0
 RUN pip2 install Pympler==0.8
 
 # For sonic_yang_model build
-RUN pip2 install pyang==2.1.1
+RUN pip3 install pyang==2.4.0
 
 # For mgmt-framework build
 RUN pip2 install mmh3

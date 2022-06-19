@@ -2,27 +2,6 @@
 
 #platform init script for Dell S6100
 
-install_python_api_package() {
-    device="/usr/share/sonic/device"
-    platform=$(/usr/local/bin/sonic-cfggen -H -v DEVICE_METADATA.localhost.platform)
-
-    rv=$(pip install $device/$platform/sonic_platform-1.0-py2-none-any.whl)
-    rv=$(pip3 install $device/$platform/sonic_platform-1.0-py3-none-any.whl)
-}
-
-remove_python_api_package() {
-    rv=$(pip show sonic-platform > /dev/null 2>/dev/null)
-    if [ $? -eq 0 ]; then
-        rv=$(pip uninstall -y sonic-platform > /dev/null 2>/dev/null)
-    fi
-
-    rv=$(pip3 show sonic-platform > /dev/null 2>/dev/null)
-    if [ $? -eq 0 ]; then
-        rv=$(pip3 uninstall -y sonic-platform > /dev/null 2>/dev/null)
-    fi
-}
-
-
 if [[ "$1" == "init" ]]; then
 
     pericom="/sys/bus/pci/devices/0000:08:00.0"
@@ -43,18 +22,34 @@ if [[ "$1" == "init" ]]; then
         /usr/local/bin/platform_watchdog_disable.sh
     fi
 
-    is_fast_warm=$(cat /proc/cmdline | grep SONIC_BOOT_TYPE | wc -l)
+    systemctl start --no-block s6100-ssd-upgrade-status.service
 
-    if [[ "$is_fast_warm" == "1" ]]; then
-        systemctl start --no-block s6100-i2c-enumerate.service
+    case "$(cat /proc/cmdline)" in
+        *SONIC_BOOT_TYPE=warm*)
+            TYPE='warm'
+            ;;
+        *SONIC_BOOT_TYPE=fastfast*)
+            TYPE='fastfast'
+            ;;
+        *SONIC_BOOT_TYPE=fast*|*fast-reboot*)
+            TYPE='fast'
+            ;;
+        *SONIC_BOOT_TYPE=soft*)
+            TYPE='soft'
+            ;;
+        *)
+            TYPE='cold'
+    esac
+
+    if [[ "$TYPE" == "cold" ]]; then
+        systemctl start s6100-platform-startup.service
     else
-        systemctl start s6100-i2c-enumerate.service
+        systemctl start --no-block s6100-platform-startup.service
     fi
 
-    install_python_api_package
 
 elif [[ "$1" == "deinit" ]]; then
-    /usr/local/bin/s6100_i2c_enumeration.sh deinit
+    /usr/local/bin/s6100_platform_startup.sh deinit
 
     modprobe -r dell_s6100_lpc
     modprobe -r dell_s6100_iom_cpld
@@ -62,7 +57,6 @@ elif [[ "$1" == "deinit" ]]; then
     modprobe -r i2c-dev
     modprobe -r dell_ich
     modprobe -r nvram
-    remove_python_api_package
 else
      echo "s6100_platform : Invalid option !"
 fi

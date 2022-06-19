@@ -28,7 +28,7 @@ MAX_Z9332F_FANTRAY = 7
 MAX_Z9332F_FAN = 2
 MAX_Z9332F_PSU = 2
 MAX_Z9332F_THERMAL = 14
-MAX_Z9332F_COMPONENT = 6 # BIOS,FPGA,BMC,BB CPLD and 2 Switch CPLDs
+MAX_Z9332F_COMPONENT = 8 # BIOS,FPGA,BMC,BB CPLD,2 Switch CPLDs,SSD and PCIe
 
 media_part_num_list = set([ \
 "8T47V","XTY28","MHVPK","GF76J","J6FGD","F1KMV","9DN5J","H4DHD","6MCNV","0WRX0","X7F70","5R2PT","WTRD1","WTRD1","WTRD1","WTRD1","5250G","WTRD1","C5RNH","C5RNH","FTLX8571D3BCL-FC",
@@ -110,6 +110,14 @@ class Chassis(ChassisBase):
             34: 2,
             }
 
+    reboot_reason_dict = { 0x11: (ChassisBase.REBOOT_CAUSE_POWER_LOSS, "Power on reset"),
+                           0x22: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Soft-set CPU warm reset"),
+                           0x33: (ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER, "Soft-set CPU cold reset"),
+                           0x66: (ChassisBase.REBOOT_CAUSE_WATCHDOG, "GPIO watchdog reset"),
+                           0x77: (ChassisBase.REBOOT_CAUSE_POWER_LOSS, "Power cycle reset"),
+                           0x88: (ChassisBase.REBOOT_CAUSE_WATCHDOG, "CPLD watchdog reset")
+                        }
+
     def __init__(self):
         ChassisBase.__init__(self)
         # sfp.py will read eeprom contents and retrive the eeprom data.
@@ -121,7 +129,7 @@ class Chassis(ChassisBase):
         eeprom_base = "/sys/class/i2c-adapter/i2c-{0}/{0}-0050/eeprom"
         for index in range(self.PORT_START, self.PORTS_IN_BLOCK):
             eeprom_path = eeprom_base.format(self._port_to_i2c_mapping[index])
-            port_type = 'SFP' if index in _sfp_port else 'QSFP'
+            port_type = 'SFP' if index in _sfp_port else 'QSFP_DD'
             sfp_node = Sfp(index, port_type, eeprom_path)
             self._sfp_list.append(sfp_node)
 
@@ -262,6 +270,15 @@ class Chassis(ChassisBase):
         """
         return self._eeprom.serial_number_str()
 
+    def get_revision(self):
+        """
+        Retrieves the hardware revision of the device
+
+        Returns:
+            string: Revision value of device
+        """
+        return self._eeprom.revision_str()
+
     def get_system_eeprom_info(self):
         """
         Retrieves the full content of system EEPROM information for the chassis
@@ -312,22 +329,8 @@ class Chassis(ChassisBase):
         except EnvironmentError:
             return (self.REBOOT_CAUSE_NON_HARDWARE, None)
 
-        if reboot_cause & 0x1:
-            return (self.REBOOT_CAUSE_POWER_LOSS, None)
-        elif reboot_cause & 0x2:
-            return (self.REBOOT_CAUSE_NON_HARDWARE, None)
-        elif reboot_cause & 0x44:
-            return (self.REBOOT_CAUSE_HARDWARE_OTHER, "CPU warm reset")
-        elif reboot_cause & 0x8:
-            return (self.REBOOT_CAUSE_THERMAL_OVERLOAD_CPU, None)
-        elif reboot_cause & 0x66:
-            return (self.REBOOT_CAUSE_WATCHDOG, None)
-        elif reboot_cause & 0x55:
-            return (self.REBOOT_CAUSE_HARDWARE_OTHER, "CPU cold reset")
-        elif reboot_cause & 0x11:
-            return (self.REBOOT_CAUSE_HARDWARE_OTHER, "Power on reset")
-        elif reboot_cause & 0x77:
-            return (self.REBOOT_CAUSE_HARDWARE_OTHER, "Power Cycle reset")
+        if reboot_cause in self.reboot_reason_dict.keys():
+            return self.reboot_reason_dict.get(reboot_cause)
         else:
             return (self.REBOOT_CAUSE_NON_HARDWARE, None)
 
@@ -366,3 +369,19 @@ class Chassis(ChassisBase):
         self.sys_ledcolor = color
         return True
 
+    def get_position_in_parent(self):
+        """
+        Retrieves 1-based relative physical position in parent device.
+        Returns:
+            integer: The 1-based relative physical position in parent
+            device or -1 if cannot determine the position
+        """
+        return -1
+
+    def is_replaceable(self):
+        """
+        Indicate whether Chassis is replaceable.
+        Returns:
+            bool: True if it is replaceable.
+        """
+        return False

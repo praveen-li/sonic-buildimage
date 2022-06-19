@@ -110,12 +110,19 @@ reload_minigraph()
 {
     echo "Reloading minigraph..."
     config load_minigraph -y -n 
+    config save -y
+}
+
+# Apply tacacs config
+apply_tacacs()
+{
     if [ -r /etc/sonic/old_config/${TACACS_JSON_BACKUP} ]; then
         sonic-cfggen -j /etc/sonic/old_config/${TACACS_JSON_BACKUP} --write-to-db
+        echo "Applied tacacs json to restore tacacs credentials"
+        config save -y
     else
         echo "Missing tacacs json to restore tacacs credentials"
     fi
-    config save -y
 }
 
 # Reload exisitng config db file on disk
@@ -158,7 +165,7 @@ updategraph_is_enabled()
     rv=1
     if [ -e ${UPDATEGRAPH_CONF} ]; then
         updategraph_mode=$(grep enabled ${UPDATEGRAPH_CONF} | head -n 1 | cut -f2 -d=)
-        [ "${updategraph_mode}" = "true" ] && rv = 0
+        [ "${updategraph_mode}" = "true" ] && rv=0
     fi
     return $rv
 }
@@ -296,7 +303,7 @@ check_all_config_db_present()
 do_config_migration()
 {
     # Identify list of files to migrate
-    copy_list="minigraph.xml snmp.yml acl.json frr telemetry"
+    copy_list="minigraph.xml snmp.yml acl.json port_config.json frr telemetry"
 
     # Migrate all configuration files from old to new
     copy_config_files_and_directories $copy_list
@@ -419,6 +426,11 @@ fi
 # Take a backup of current configuration
 if [ "$CMD" = "backup" ]; then
     do_config_backup
+fi
+
+# Apply tacacs from old configuration
+if [ "$CMD" = "apply_tacacs" ]; then
+    apply_tacacs
 fi
 
 exit 0

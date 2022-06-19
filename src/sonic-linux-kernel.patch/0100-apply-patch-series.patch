@@ -4,14 +4,14 @@ Date: Tue, 17 Aug 2021 12:54:54 +0000
 Subject: [PATCH 2/2] Apply patch series
 
 ---
- patch/series | 12 ++++++++++++
+ patch/series |   12 ++++++++++++
  1 file changed, 12 insertions(+)
 
 Index: sonic-linux-kernel/patch/series
 ===================================================================
 --- sonic-linux-kernel.orig/patch/series
 +++ sonic-linux-kernel/patch/series
-@@ -80,3 +80,15 @@ driver-ixgbe-external-phy.patch
+@@ -106,3 +106,15 @@ armhf_secondary_boot_online.patch
  # Do not add any public patch below this marker
  #
  ############################################################
