@@ -1803,5 +1803,41 @@
         "UNKNOWN_TABLE": {
             "Error": "This Table is for testing, This Table does not have YANG models."
         }
+    },
+    "SAMPLE_CONFIG_DB_JSON_NONE_VALUE": {
+        "VLAN_MEMBER": {
+            "Vlan111|Ethernet0": null,
+            "Vlan111|Ethernet1": {
+                "tagging_mode": "untagged"
+            }
+        },
+        "VLAN": {
+            "Vlan111": {
+                "description": "svlan",
+                "vlanid": "111"
+            }
+        },
+        "ACL_TABLE": {
+            "V4-ACL-TABLE": null,
+            "V6-ACL-TBLE": {
+                "type": "L3V6",
+                "ports": [
+                    "Ethernet0",
+                    "Ethernet1"
+                ]
+            }
+        },
+        "PORT": {
+            "Ethernet0": {
+                "alias": "Eth1/1",
+                "lanes": "65",
+                "speed": "11100"
+            },
+            "Ethernet1": {
+                "alias": "Eth1/2",
+                "lanes": "66",
+                "speed": "11100"
+            }
+        }
     }
 }

@@ -289,6 +289,22 @@ class SonicYangExtMixin:
                     format(pkey))
                 # Find and extracts key from each dict in config
                 keyDict = self._extractKey(pkey, listKeys)
+                """
+                With config load, config[pkey] can be None. For example
+                "ACL_TABLE": {
+                    "NO-NSW-PACL-TEST": None
+                }
+                Today, SONiC support deletion of entire entry like above with
+                Config load command.
+                Such Config does not need yang validation. Because the deletion
+                will result in NO-OP in case of wrong entry.
+                """
+                if config.get(pkey) == None:
+                    # pkey exists with None as value, Marked as processed and
+                    # delete it
+                    del config[pkey]
+                    continue
+
                 # fill rest of the values in keyDict
                 for vKey in config[pkey]:
                     self.sysLog(syslog.LOG_DEBUG, "xlateList vkey {}".format(vKey))

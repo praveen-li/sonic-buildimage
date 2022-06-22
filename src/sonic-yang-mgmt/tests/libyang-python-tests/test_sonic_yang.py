@@ -328,5 +328,25 @@ class Test_SonicYang(object):
 
         return
 
+    def test_table_with_none_value_entries(self, sonic_yang_data):
+        # In this test, tables entries with None as value is tested.
+        # This is applicable with config load command.
+        # Such value should be excluded from yang validation.
+        test_file = sonic_yang_data['test_file']
+        syc = sonic_yang_data['syc']
+
+        jIn = self.readIjsonInput(test_file, 'SAMPLE_CONFIG_DB_JSON_NONE_VALUE')
+
+        jIn = json.loads(jIn)
+
+        syc.loadData(jIn)
+
+        assert len(syc.xlateJson["sonic-vlan:sonic-vlan"]["sonic-vlan:VLAN_MEMBER"]\
+            ["VLAN_MEMBER_LIST"]) == 1
+        assert len(syc.xlateJson["sonic-acl:sonic-acl"]["sonic-acl:ACL_TABLE"]\
+            ["ACL_TABLE_LIST"]) == 1
+
+        return
+
     def teardown_class(self):
         pass
