@@ -1,6 +1,4 @@
 import copy
-import importlib.machinery
-import importlib.util
 import json
 import os
 import subprocess
@@ -45,6 +43,13 @@ FAIL_LOCK = "fail_lock"
 DO_JOIN = "do_join"
 
 # subproc key words
+
+# List all subprocess commands expected within the test.
+# Each call to subproc-side effect (mock_subproc_side_effect) increment index
+# Other key words influence how this proc command to be processed
+# PROC_RUN having true at that index, implies run it instead of mocking it
+# PROC_OUT, ERR, FAIL THROW provide data on how to mock
+#
 PROC_CMD = "subproc_cmd"
 PROC_RUN = "skip_mock"
 PROC_FAIL = "proc_fail"
@@ -608,7 +613,7 @@ class mock_proc:
             err = err_lst[self.index]
         else:
             err = ""
-        self.returncode = 0
+        self.returncode = 0 if not err else -1
         return (out, err)
 
     def kill(self):
@@ -655,13 +660,3 @@ def create_remote_ctr_config_json():
         s.write(str_conf)
 
     return fname
-
-
-def load_mod_from_file(modname, fpath):
-    spec = importlib.util.spec_from_loader(modname,
-            importlib.machinery.SourceFileLoader(modname, fpath))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    sys.modules[modname] = mod
-    return mod
-

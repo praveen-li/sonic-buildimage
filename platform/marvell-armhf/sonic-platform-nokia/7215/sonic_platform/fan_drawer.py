@@ -54,9 +54,25 @@ class NokiaFanDrawer(FanDrawerBase):
         return 'intake'
 
     def set_status_led(self, color):
-        return True
+        """
+        Sets the state of the fan drawer status LED
 
-    def get_status_led(self, color):
+        Args:
+            color: A string representing the color with which to set the
+                   fan drawer status LED
+
+        Returns:
+            bool: True if status LED state is set successfully, False if not
+        """
+        return self._fan_list[0].set_status_led(color)
+
+    def get_status_led(self):
+        """
+        Gets the state of the fan drawer LED
+
+        Returns:
+            A string, one of the predefined STATUS_LED_COLOR_* strings
+        """
         return self._fan_list[0].get_status_led()
 
     def is_replaceable(self):

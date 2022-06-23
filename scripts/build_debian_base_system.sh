@@ -20,9 +20,11 @@ generate_version_file()
 
 if [ "$ENABLE_VERSION_CONTROL_DEB" != "y" ]; then
     if [[ $CONFIGURED_ARCH == armhf || $CONFIGURED_ARCH == arm64 ]]; then
-        # qemu arm bin executable for cross-building
-        sudo mkdir -p $FILESYSTEM_ROOT/usr/bin
-        sudo cp /usr/bin/qemu*static $FILESYSTEM_ROOT/usr/bin || true
+        if [ $MULTIARCH_QEMU_ENVIRON == y ]; then
+            # qemu arm bin executable for cross-building
+            sudo mkdir -p $FILESYSTEM_ROOT/usr/bin
+            sudo cp /usr/bin/qemu*static $FILESYSTEM_ROOT/usr/bin || true
+        fi
         sudo http_proxy=$HTTP_PROXY SKIP_BUILD_HOOK=y debootstrap --variant=minbase --arch $CONFIGURED_ARCH $IMAGE_DISTRO $FILESYSTEM_ROOT http://deb.debian.org/debian
     else
         sudo http_proxy=$HTTP_PROXY SKIP_BUILD_HOOK=y debootstrap --variant=minbase --arch $CONFIGURED_ARCH $IMAGE_DISTRO $FILESYSTEM_ROOT http://debian-archive.trafficmanager.net/debian
@@ -61,14 +63,18 @@ mkdir -p $ARCHIEVES
 mkdir -p $APTLIST
 mkdir -p $TARGET_DEBOOTSTRAP
 PACKAGES=$(sed -E 's/=(=[^=]*)$/\1/' $BASE_VERSIONS)
-URL_ARR=($(apt-get download --print-uris $PACKAGES | cut -d" " -f1 | tr -d "'"))
+URL_ARR=$(apt-get download --print-uris $PACKAGES | cut -d" " -f1 | tr -d "'")
 PACKAGE_ARR=($PACKAGES)
 LENGTH=${#PACKAGE_ARR[@]}
 for ((i=0;i<LENGTH;i++))
 do
     package=${PACKAGE_ARR[$i]}
     packagename=$(echo $package | sed -E 's/=[^=]*$//')
-    url=${URL_ARR[$i]}
+    url=$(echo "$URL_ARR" | grep "/${packagename}_")
+    if [ -z "$url" ] || [[ $(echo "$url" | wc -l) -gt 1 ]]; then
+        echo "No found package or found multiple package for package $packagename, url: $url" 2>&1
+        exit 1
+    fi
     filename=$(basename "$url")
     SKIP_BUILD_HOOK=y wget $url -P $ARCHIEVES
     echo $packagename >> $DEBOOTSTRAP_REQUIRED
@@ -76,7 +82,7 @@ do
 done
 touch $APTDEBIAN
 touch $DEBOOTSTRAP_BASE
-(cd $BASEIMAGE_TARBALLPATH && tar -zcf $BASEIMAGE_TARBALL .)
+(cd $BASEIMAGE_TARBALLPATH && fakeroot tar -zcf $BASEIMAGE_TARBALL .)
 
 sudo debootstrap --verbose --variant=minbase --arch $CONFIGURED_ARCH --unpack-tarball=$BASEIMAGE_TARBALL $IMAGE_DISTRO $FILESYSTEM_ROOT
 RET=$?

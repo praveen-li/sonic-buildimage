@@ -2,12 +2,14 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+from sonic_py_common.general import load_module_from_source
 
 from . import common_test
 
-common_test.load_mod_from_file("docker",
+
+load_module_from_source("docker",
         os.path.join(os.path.dirname(os.path.realpath(__file__)), "mock_docker.py"))
-container = common_test.load_mod_from_file("container",
+container = load_module_from_source("container",
         os.path.join(os.path.dirname(os.path.realpath(__file__)), "../ctrmgr/container"))
 
 
@@ -177,7 +179,8 @@ stop_test_data = {
                         "remote_state": "none",
                         "system_state": "up",
                         "current_owner": "local",
-                        "container_id": "snmp"
+                        "container_id": "snmp",
+                        "container_version": "20201230.0.15"
                     }
                 }
             }
@@ -190,7 +193,7 @@ stop_test_data = {
                         "system_state": "down",
                         "current_owner": "none",
                         "container_id": "",
-                        "container_version": ""
+                        "container_version": "20201230.0.15"
                     }
                 },
                 common_test.KUBE_LABEL_TABLE: {
@@ -220,7 +223,8 @@ stop_test_data = {
                         "container_id": "xxx",
                         "system_state": "up",
                         "current_owner": "kube",
-                        "remote_state": "running"
+                        "remote_state": "running",
+                        "container_version": "20201230.1.15"
                     }
                 }
             }
@@ -233,7 +237,7 @@ stop_test_data = {
                         "system_state": "down",
                         "current_owner": "none",
                         "container_id": "",
-                        "container_version": ""
+                        "container_version": "20201230.1.15"
                     }
                 },
                 common_test.KUBE_LABEL_TABLE: {
