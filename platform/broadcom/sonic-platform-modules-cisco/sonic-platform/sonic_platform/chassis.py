@@ -315,7 +315,7 @@ class Chassis(ChassisBase):
         Returns:
             bool: True if system LED state is set successfully, False if not
         """
-        return False if not self._status_led else self._status_led.set_status(color)
+        return False if self._status_led is None else self._status_led.set_status(color)
 
     def get_status_led(self):
         """
@@ -324,7 +324,7 @@ class Chassis(ChassisBase):
             A string, one of the valid LED color strings which could be vendor
             specified.
         """
-        return None if not self._status_led else self._status_led.get_status()
+        return None if self._status_led is None else self._status_led.get_status()
 
     def initialize_reboot_shutdown_handlers(self):
         _reboot_gpio_path = "/sys/class/gpio/gpio{}/value"

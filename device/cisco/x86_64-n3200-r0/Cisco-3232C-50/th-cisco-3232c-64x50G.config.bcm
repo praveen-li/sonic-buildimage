@@ -524,8 +524,8 @@ portmap_130.0=121:50
 portmap_132.0=123:50
 
 #Management
-portmap_66=129:10
-portmap_100=131:10
+#portmap_66=129:10
+#portmap_100=131:10
 
 # enable cl37 for 1g
 phy_an_c37_66=0x2

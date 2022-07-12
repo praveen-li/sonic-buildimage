@@ -49,12 +49,12 @@ class Thermal(ThermalBase):
         self.max_recorded = -64.0
 
         if 'minor' in temp_data:
-            self.high_threshold = temp_data['minor']
+            self.high_threshold = float(temp_data['minor'])
         else:
             self.high_threshold = None
 
         if 'major' in temp_data:
-            self.critical_high_threshold = temp_data['major']
+            self.critical_high_threshold = float(temp_data['major'])
         else:
             self.critical_high_threshold = None
 
@@ -71,7 +71,7 @@ class Thermal(ThermalBase):
         if temp_data['location'] in Thermal.sensor_location_list:
             self.location = temp_data['location']
         else:
-            self.location = SENSOR_GENERIC
+            self.location = self.SENSOR_GENERIC
 
     def get_name(self):
         return self._temp_name

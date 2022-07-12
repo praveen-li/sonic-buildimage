@@ -28,8 +28,6 @@ class Eeprom(Eeprom_Tlv):
             "Part Number":"Part_Number",
             "Part Revision":"Part_Revision",
             "Hardware Revision":"HW_Revision",
-            "Hardware Change Bit":"HW_Change_Bit",
-            "Card Index":"CARD_INDEX",
         }
 
         # Need to modify this
@@ -41,8 +39,6 @@ class Eeprom(Eeprom_Tlv):
             self._TLV_CODE_CISCO_PART_NUMBER:"Part_Number",
             self._TLV_CODE_CISCO_PART_REVISION:"Part_Revision",
             self._TLV_CODE_CISCO_HW_REVISION:"HW_Revision",
-            self._TLV_CODE_CISCO_HW_CHANGE_BIT:"HW_Change_Bit",
-            self._TLV_CODE_CISCO_CARD_INDEX:"CARD_INDEX",
         }
         self._eeprom_map = None
         self._eeprom_code_map = None
@@ -80,14 +76,17 @@ class Eeprom(Eeprom_Tlv):
         pfm_util_map.update(self.read_pfm_util('-r'))
 
         eeprom_map = {key: pfm_util_map[self.name_map[key]] for key in self.name_map.keys()}
-        eeprom_code_map = {key: pfm_util_map[self.code_map[key]] for key in self.code_map.keys()}
-
+        eeprom_code_map = {hex(key): pfm_util_map[self.code_map[key]] for key in self.code_map.keys()}
+        crc=self.helper_calculate_crc(eeprom_code_map)
+        eeprom_map["CRC"] = hex(crc)
+        eeprom_code_map[hex(self._TLV_CODE_CRC_32)] = hex(crc)
         return eeprom_map, eeprom_code_map
 
     def read_eeprom(self):
         if self._eeprom_map is None:
             self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
-        return self._eeprom_map
+
+        return self._eeprom_code_map
 
     def get_base_mac(self):
         """
@@ -98,7 +97,7 @@ class Eeprom(Eeprom_Tlv):
             'XX:XX:XX:XX:XX:XX'
         """
         if self._eeprom_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
+            self._eeprom_map = self.read_eeprom_map()
         return self._eeprom_map["Base MAC Address"]
 
     def get_serial_number(self):
@@ -109,7 +108,7 @@ class Eeprom(Eeprom_Tlv):
             A string containing the hardware serial number for this chassis.
         """
         if self._eeprom_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
+            self._eeprom_map = self.read_eeprom_map()
         return self._eeprom_map["Serial Number"]
 
     def get_product_name(self):
@@ -120,7 +119,7 @@ class Eeprom(Eeprom_Tlv):
             A string containing the hardware product name for this chassis.
         """
         if self._eeprom_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
+            self._eeprom_map = self.read_eeprom_map()
         return self._eeprom_map["Product Name"]
 
     def get_part_number(self):
@@ -131,16 +130,14 @@ class Eeprom(Eeprom_Tlv):
             A string containing the hardware part number for this chassis.
         """
         if self._eeprom_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
+            self._eeprom_map = self.read_eeprom_map()
         return self._eeprom_map["Part Number"]
 
     def update_eeprom_db(self, eeprom):
         '''
         Decode the contents of the EEPROM and update the contents to database
         '''
-        if self._eeprom_code_map is None:
-            self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
-
+        self._eeprom_map, self._eeprom_code_map = self.read_eeprom_map()
         return self.helper_update_eeprom_db(self._eeprom_code_map)
 
 ########################################

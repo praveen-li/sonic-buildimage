@@ -53,7 +53,7 @@ class Psu(PsuBase):
 
         self.psu_path = "/sys/bus/i2c/devices/{}-{}/hwmon/"
         self.psu_path_eeprom = "/sys/bus/i2c/devices/{}-{}/eeprom"
-        self.psu_oper_status = "in1_input"
+        self.psu_oper_status = "power1_input"
         self.psu_voltage = "in1_input"
         self.psu_current = "curr1_input"
         self.psu_power = "power1_input"
@@ -177,20 +177,20 @@ class Psu(PsuBase):
         filename = None
         if self.psu_current is not None and self.get_powergood_status():
             if not os.path.exists(self._path_psu):
-                return 0.0
+                return "N/A"
         
             for dirname in os.listdir(self._path_psu):
                 if fnmatch.fnmatch(dirname, 'hwmon?'):
                      filename = self._path_psu + dirname + '/' + self.psu_current
                      break
             if filename is None:
-                return 0.0
+                return "N/A"
             if not os.path.exists(filename):
-                return 0.0
+                return "N/A"
             current = read_int_from_file(filename)            
             return float(current) / 1000
         else:
-            return 0.0
+            return "N/A"
 
     def get_serial(self):
         if self.get_presence():
@@ -263,7 +263,7 @@ class Psu(PsuBase):
         return None
 
     def get_temperature_high_threshold(self):
-        return None
+        return self.platform_data.get_param(PlatformGlobalData.KEY_MAX_TEMP, 0)
 
     def is_replaceable(self):
         return True

@@ -6,8 +6,8 @@ DEVICE_DATA = {
             'max_fp_num' : 32,
 
             #Thermal thresholds
-            'min_temperature_threshold' : 55.0, 
-            'max_temperature_threshold' : 85.0,
+            'min_temperature' : 55.0,
+            'max_temperature' : 85.0,
             'min_blue_fans_speed' : 60,
             'min_red_fans_speed' : 60,
             'max_blue_fans_speed' : 100, 
@@ -35,16 +35,16 @@ DEVICE_DATA = {
         },
         'fans': {
             'drawer_num': 4,
-            'fan_drawer': [{'fan_num' : 2,
+            'fan_drawer': [{'fan_num' : 2, 'max_consumed_power': 24.0,
                             'fan':[{'bus': 31,'addr' : "0058",'gpio_presence' : 500,'gpio_direction' :496 },
                                    {'bus': 31,'addr' : "0058",'gpio_presence' : 500,'gpio_direction' :496 }]},
-                           {'fan_num' : 2,
+                           {'fan_num' : 2,'max_consumed_power': 24.0,
                             'fan':[{'bus': 31,'addr' : "0058",'gpio_presence' : 501,'gpio_direction' :497 },
                                    {'bus': 31,'addr' : "0058",'gpio_presence' : 501,'gpio_direction' :497 }]},
-                           {'fan_num' : 2,
+                           {'fan_num' : 2,'max_consumed_power': 24.0,
                             'fan':[{'bus': 31,'addr' : "0058",'gpio_presence' : 502,'gpio_direction' :498 },
                                    {'bus': 31,'addr' : "0058",'gpio_presence' : 502,'gpio_direction' :498 }]},
-                           {'fan_num' : 2,
+                           {'fan_num' : 2, 'max_consumed_power': 24.0,
                             'fan':[{'bus': 31,'addr' : "0058",'gpio_presence' : 503,'gpio_direction' :499 },
                                    {'bus': 31,'addr' : "0058",'gpio_presence' : 503,'gpio_direction' :499 }]},
                           ]

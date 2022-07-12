@@ -122,32 +122,32 @@ class Sfp(SfpBase):
         transceiver_dom_info_dict['lp_mode']            = self.get_lpmode()
         transceiver_dom_info_dict['power_lpmode']       = self.get_power_override()
 
-        tx_bias_dict                                    = self.get_tx_bias()
-        if tx_bias_dict:
-            transceiver_dom_info_dict['tx1bias']            = tx_bias_dict['tx1bias']
-            transceiver_dom_info_dict['tx2bias']            = tx_bias_dict['tx2bias']
-            transceiver_dom_info_dict['tx3bias']            = tx_bias_dict['tx3bias']
-            transceiver_dom_info_dict['tx4bias']            = tx_bias_dict['tx4bias']
+        tx_bias_list                                    = self.get_tx_bias()
+        if tx_bias_list:
+            transceiver_dom_info_dict['tx1bias']            = tx_bias_list[0]
+            transceiver_dom_info_dict['tx2bias']            = tx_bias_list[1]
+            transceiver_dom_info_dict['tx3bias']            = tx_bias_list[2]
+            transceiver_dom_info_dict['tx4bias']            = tx_bias_list[3]
 
-        tx_power_dict                                   = self.get_tx_power()
-        if tx_power_dict:
-            transceiver_dom_info_dict['tx1power']           = tx_power_dict['tx1power']
-            transceiver_dom_info_dict['tx2power']           = tx_power_dict['tx2power']
-            transceiver_dom_info_dict['tx3power']           = tx_power_dict['tx3power']
-            transceiver_dom_info_dict['tx4power']           = tx_power_dict['tx4power']
+        tx_power_list                                   = self.get_tx_power()
+        if tx_power_list:
+            transceiver_dom_info_dict['tx1power']           = tx_power_list[0]
+            transceiver_dom_info_dict['tx2power']           = tx_power_list[1]
+            transceiver_dom_info_dict['tx3power']           = tx_power_list[2]
+            transceiver_dom_info_dict['tx4power']           = tx_power_list[3]
 
-        rx_power_dict                                   = self.get_rx_power()
-        if rx_power_dict:
-            transceiver_dom_info_dict['rx1power']           = rx_power_dict['rx1power']
-            transceiver_dom_info_dict['rx2power']           = rx_power_dict['rx2power']
-            transceiver_dom_info_dict['rx3power']           = rx_power_dict['rx3power']
-            transceiver_dom_info_dict['rx4power']           = rx_power_dict['rx4power']
+        rx_power_list                                   = self.get_rx_power()
+        if rx_power_list:
+            transceiver_dom_info_dict['rx1power']           = rx_power_list[0]
+            transceiver_dom_info_dict['rx2power']           = rx_power_list[1]
+            transceiver_dom_info_dict['rx3power']           = rx_power_list[2]
+            transceiver_dom_info_dict['rx4power']           = rx_power_list[3]
         return transceiver_dom_info_dict
 
     def get_reset_status(self):
         if self.port_index in self.platform_sfputil.sfp_ports:
             return False
-        return True 
+        return True
 
     def get_rx_los(self):
         rx_los_state = []
