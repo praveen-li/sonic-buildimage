@@ -61,7 +61,10 @@ class ComponentIOFPGA(ComponentBase):
             return ""
 
     def get_available_firmware_version(self, image_path):
-        return ""
+        return "N/A"
+
+    def get_firmware_update_notification(self, image_path):
+        return "None"
 
     def install_firmware(self, image_path):
         return False
@@ -118,7 +121,10 @@ class ComponentMIFPGA(ComponentBase):
             return ""
        
     def get_available_firmware_version(self, image_path):
-        return ""
+        return "N/A"
+
+    def get_firmware_update_notification(self, image_path):
+        return "None"
 
     def install_firmware(self, image_path):
         return False
@@ -134,9 +140,9 @@ class ComponentBIOS(ComponentBase):
 
     def _get_name(self):
         if self.index == 0:
-            return "Golden"
-        elif self.index == 1:
             return "Primary"
+        elif self.index == 1:
+            return "Golden"
         else:
             return "Invalid"
 
@@ -175,12 +181,12 @@ class ComponentBIOS(ComponentBase):
             lines = f.readlines()
             for line in lines:
                 if self.index == 0 :
-                    if "Golden BIOS" in line:
+                    if "Primary BIOS" in line:
                         line = line.split(':')[1]
                         self.firmware_version = line.strip()
                         return (self.firmware_version)
                 elif self.index == 1:
-                    if "Primary BIOS" in line:
+                    if "Golden BIOS" in line:
                         line = line.split(':')[1]
                         self.firmware_version = line.strip()
                         return (self.firmware_version)
@@ -188,7 +194,10 @@ class ComponentBIOS(ComponentBase):
 
 
     def get_available_firmware_version(self, image_path):
-        return ""
+        return "N/A"
+
+    def get_firmware_update_notification(self, image_path):
+        return "None"
 
     def install_firmware(self, image_path):
         return False
