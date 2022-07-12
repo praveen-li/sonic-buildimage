@@ -1,5 +1,5 @@
 {% from "dockers/dockerfile-macros.j2" import install_debian_packages, install_python_wheels, copy_files %}
-FROM docker-config-engine-buster
+FROM docker-swss-layer-buster
 
 ARG docker_container_name
 ARG frr_user_uid
@@ -53,6 +53,7 @@ COPY ["snmp.conf", "/etc/snmp/frr.conf"]
 COPY ["TSA", "/usr/bin/TSA"]
 COPY ["TSB", "/usr/bin/TSB"]
 COPY ["TSC", "/usr/bin/TSC"]
+COPY ["TS", "/usr/bin/TS"]
 COPY ["files/supervisor-proc-exit-listener", "/usr/bin"]
 COPY ["zsocket.sh", "/usr/bin/"]
 RUN chmod a+x /usr/bin/TSA && \

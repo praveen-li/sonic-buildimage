@@ -17,6 +17,12 @@ l3_alpm_enable=2
 ipv6_lpm_128b_enable=1
 mmu_lossless=0
 
+# disables bcmALPMDH (ALPM distributed hitbit) thread.  This thread is purely for debug purpose
+l3_alpm_hit_skip=1
+
+# Disable Counting ACL Drop towards interface RX_DRP counter
+sai_adjust_acl_drop_in_rx_drop=1
+
 ###################################################################################
 # Celestica Customize for SeaStone
 ###################################################################################
@@ -374,3 +380,5 @@ phy_xaui_tx_polarity_flip_130=0x0006
 phy_xaui_rx_polarity_flip_130=0x0000
 
 mmu_init_config="MSFT-TH-Tier0"
+
+phy_an_lt_msft=1

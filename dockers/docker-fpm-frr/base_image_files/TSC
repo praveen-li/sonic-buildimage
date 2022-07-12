@@ -1,5 +1,11 @@
 #!/bin/bash
 
-docker exec -i bgp /usr/bin/TSC
+/usr/bin/TS TSC
 
 portstat -p 5
+
+if [[ "$(sonic-cfggen -d -v DEVICE_METADATA.localhost.subtype | tr [:upper:] [:lower:])" == *"dualtor"* ]]
+then
+  echo
+  show mux status
+fi

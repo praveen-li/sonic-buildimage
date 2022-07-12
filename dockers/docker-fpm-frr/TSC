@@ -1,45 +1,20 @@
 #!/bin/bash
 
-function check_not_installed()
-{
-  c=0
-  config=$(vtysh -c "show run")
-  for route_map_name in $(echo "$config" | sed -ne 's/  neighbor \S* route-map \(\S*\) out/\1/p' | egrep 'V4|V6');
-  do
-    echo "$config" | egrep -q "^route-map $route_map_name permit 20$"
-    c=$((c+$?))
-    echo "$config" | egrep -q "^route-map $route_map_name deny 30$"
-    c=$((c+$?))
-  done
-  return $c
-}
+# Load the common functions
+source /usr/bin/TS
 
-function check_installed()
-{
-  c=0
-  e=0
-  config=$(vtysh -c "show run")
-  for route_map_name in $(echo "$config" | sed -ne 's/  neighbor \S* route-map \(\S*\) out/\1/p' | egrep 'V4|V6');
-  do
-    echo "$config" | egrep -q "^route-map $route_map_name permit 20$"
-    c=$((c+$?))
-    e=$((e+1))
-    echo "$config" | egrep -q "^route-map $route_map_name deny 30$"
-    c=$((c+$?))
-    e=$((e+1))
-  done
-  return $((e-c))
-}
-
-echo "Traffic Shift Check:"
-
+find_num_routemap
+routemap_count=$?
 check_not_installed
 not_installed=$?
 
 check_installed
 installed=$?
 
-if [[ $installed -eq 0 ]];
+if [[ $routemap_count -eq 0 ]];
+then 
+  echo "System Mode: No external neighbors"
+elif [[ $installed -eq 0 ]];
 then
   echo "System Mode: Normal"
 elif [[ $not_installed -eq 0 ]];
@@ -48,5 +23,3 @@ then
 else
   echo "System Mode: Not consistent"
 fi
-
-echo

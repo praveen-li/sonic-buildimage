@@ -16,10 +16,6 @@
 [submodule "src/p4-hlir/p4-hlir"]
 	path = platform/p4/p4-hlir/p4-hlir
 	url = https://github.com/p4lang/p4-hlir
-[submodule "quagga"]
-	path = src/sonic-quagga
-	url = https://github.com/Azure/sonic-quagga
-	branch = debian/0.99.24.1
 [submodule "sonic-dbsyncd"]
 	path = src/sonic-dbsyncd
 	url = https://github.com/Azure/sonic-dbsyncd
@@ -35,12 +31,14 @@
 [submodule "src/sonic-utilities"]
 	path = src/sonic-utilities
 	url = https://github.com/Azure/sonic-utilities
+	branch = 202012
 [submodule "platform/broadcom/sonic-platform-modules-arista"]
 	path = platform/broadcom/sonic-platform-modules-arista
 	url = https://github.com/aristanetworks/sonic
 [submodule "src/sonic-platform-common"]
 	path = src/sonic-platform-common
 	url = https://github.com/Azure/sonic-platform-common
+	branch = 202012
 [submodule "src/sonic-platform-daemons"]
 	path = src/sonic-platform-daemons
 	url = https://github.com/Azure/sonic-platform-daemons
@@ -63,6 +61,9 @@
 [submodule "src/redis-dump-load"]
 	path = src/redis-dump-load
 	url = https://github.com/p/redis-dump-load.git
+[submodule "src/scapy"]
+	path = src/scapy
+	url = https://github.com/secdev/scapy.git
 [submodule "platform/mellanox/mlnx-sai/SAI-Implementation"]
 	path = platform/mellanox/mlnx-sai/SAI-Implementation
 	url = https://github.com/Mellanox/SAI-Implementation
@@ -85,3 +86,7 @@
 [submodule "src/sonic-mgmt-common"]
 	path = src/sonic-mgmt-common
 	url = https://github.com/Azure/sonic-mgmt-common.git
+[submodule "src/linkmgrd"]
+	path = src/linkmgrd
+	url = https://github.com/Azure/sonic-linkmgrd.git
+	branch = 202012

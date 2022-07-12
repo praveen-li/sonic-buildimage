@@ -1,11 +1,12 @@
-{%- if CONFIGURED_ARCH == "armhf" %}
-FROM multiarch/qemu-user-static:x86_64-arm-5.0.0-2 as qemu
-FROM multiarch/debian-debootstrap:armhf-buster
+{% set prefix = DEFAULT_CONTAINER_REGISTRY %}
+{%- if CONFIGURED_ARCH == "armhf" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/qemu-user-static:x86_64-arm-5.0.0-2 as qemu
+FROM {{ prefix }}multiarch/debian-debootstrap:armhf-buster
 COPY --from=qemu /usr/bin/qemu-arm-static /usr/bin
-{%- elif CONFIGURED_ARCH == "arm64" %}
-FROM multiarch/debian-debootstrap:arm64-buster
+{%- elif CONFIGURED_ARCH == "arm64" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/debian-debootstrap:arm64-buster
 {%- else -%}
-FROM debian:buster
+FROM {{ prefix }}debian:buster
 {%- endif %}
 
 MAINTAINER gulv@microsoft.com
@@ -109,6 +110,13 @@ RUN apt-get update && apt-get install -y \
         libxml-simple-perl \
         graphviz \
         aspell \
+# For SAI meta rpc build - make rpc
+        libgetopt-long-descriptive-perl \
+        libconst-fast-perl \
+        libtemplate-perl \
+        libnamespace-autoclean-perl \
+        libmoose-perl \
+        libmoosex-aliases-perl \
 # For linux build
         bc \
         fakeroot \
@@ -145,6 +153,7 @@ RUN apt-get update && apt-get install -y \
         bison \
         expat \
         libexpat1-dev \
+        aspell-en \
         dpatch \
         libdb-dev \
         iptables-dev \
@@ -324,6 +333,8 @@ RUN apt-get update && apt-get install -y \
         libgtest-dev \
         libgcc-8-dev
 
+RUN apt-get -y build-dep openssh
+
 # Build fix for ARMHF buster libsairedis
 {%- if CONFIGURED_ARCH == "armhf" %}
        # Install doxygen build dependency packages
@@ -342,6 +353,9 @@ RUN apt-get update && apt-get install -y \
        # Aspell is unable to locate the language dictionaries.
        # Re-installing aspell-en dictionary to fix it.
        RUN apt-get install --reinstall -y aspell-en
+
+       # workaround because of https://bugs.launchpad.net/qemu/+bug/1805913, just disable aspell
+       RUN cp /bin/true /usr/bin/aspell
 {%- endif %}
 
 ## Config dpkg
@@ -416,11 +430,11 @@ RUN pip2 install j2cli==0.3.10
 # For sonic-mgmt-framework
 RUN pip2 install "PyYAML==5.4.1"
 RUN pip3 install "PyYAML==5.4.1"
-RUN pip2 install "lxml==4.6.2"
-RUN pip3 install "lxml==4.6.2"
+RUN pip2 install "lxml==4.6.5"
+RUN pip3 install "lxml==4.6.5"
 
 # For sonic-platform-common testing
-RUN pip3 install redis
+RUN pip3 install redis==3.5.3
 
 # For vs image build
 RUN pip2 install pexpect==4.6.0
@@ -431,8 +445,7 @@ RUN pip2 install Pympler==0.8
 RUN pip3 install Pympler==0.8
 
 # For sonic_yang_model build
-RUN pip2 install pyang==2.1.1
-RUN pip3 install pyang==2.1.1
+RUN pip3 install pyang==2.4.0
 
 # For mgmt-framework build
 RUN pip2 install mmh3==2.5.1

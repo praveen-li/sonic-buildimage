@@ -1,3 +1,9 @@
+# disables bcmALPMDH (ALPM distributed hitbit) thread.  This thread is purely for debug purpose
+l3_alpm_hit_skip=1
+
+# Disable Counting ACL Drop towards interface RX_DRP counter
+sai_adjust_acl_drop_in_rx_drop=1
+
 os=unix 
 l2xmsg_mode=1 
 parity_enable=0 
@@ -646,3 +652,4 @@ serdes_preemphasis_lane1_5=0x244a02
 serdes_preemphasis_lane2_5=0x244a02
 serdes_preemphasis_lane3_5=0x254902
 
+phy_an_lt_msft=1

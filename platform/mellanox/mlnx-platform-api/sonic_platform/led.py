@@ -44,6 +44,17 @@ class Led(object):
                 with open(led_path, 'w') as led:
                     led.write(Led.LED_ON)
                     status = True
+            elif color == Led.STATUS_LED_COLOR_ORANGE:
+                if Led.STATUS_LED_COLOR_ORANGE in led_cap_list:
+                    led_path = self.get_orange_led_path()
+                elif Led.STATUS_LED_COLOR_RED in led_cap_list:
+                    led_path = self.get_red_led_path()
+                else:
+                    return False
+
+                with open(led_path, 'w') as led:
+                    led.write(Led.LED_ON)
+                    status = True
             elif color == Led.STATUS_LED_COLOR_OFF:
                 if Led.STATUS_LED_COLOR_GREEN in led_cap_list:
                     with open(self.get_green_led_path(), 'w') as led:
@@ -158,7 +169,7 @@ class Led(object):
                 cap_list = set(caps.split())
         except (ValueError, IOError):
             pass
-        
+
         return cap_list
 
     def get_green_led_path(self):
@@ -191,7 +202,7 @@ class Led(object):
     def get_led_cap_path(self):
         pass
 
- 
+
 class FanLed(Led):
     LED_PATH = "/var/run/hw-management/led/"
 
@@ -206,8 +217,6 @@ class FanLed(Led):
             self._red_led_path = os.path.join(Led.LED_PATH, "led_fan_red")
             self._orange_led_path = os.path.join(Led.LED_PATH, "led_fan_orange")
             self._led_cap_path = os.path.join(Led.LED_PATH, "led_fan_capability")
-
-        self.set_status(Led.STATUS_LED_COLOR_GREEN)
 
     def get_green_led_path(self):
         return self._green_led_path
@@ -234,8 +243,6 @@ class PsuLed(Led):
             self._red_led_path = os.path.join(Led.LED_PATH, "led_psu_red")
             self._orange_led_path = os.path.join(Led.LED_PATH, "led_psu_orange")
             self._led_cap_path = os.path.join(Led.LED_PATH, "led_psu_capability")
-            
-        self.set_status(Led.STATUS_LED_COLOR_GREEN)
 
     def get_green_led_path(self):
         return self._green_led_path

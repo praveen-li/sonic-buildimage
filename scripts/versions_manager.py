@@ -22,7 +22,7 @@ class Component:
     ctype -- Component Type, such as deb, py2, etc
     dist  -- Distribution, such as stretch, buster, etc
     arch  -- Architectrue, such as amd64, arm64, etc
-    
+
     '''
     def __init__(self, versions, ctype, dist=ALL_DIST, arch=ALL_ARCH):
         self.versions = versions
@@ -44,6 +44,8 @@ class Component:
                 offset = line.rfind('==')
                 if offset > 0:
                     package = line[:offset].strip()
+                    if 'py2' in version_file.lower() or 'py3' in version_file.lower():
+                        package = package.lower()
                     version = line[offset+2:].strip()
                     result[package] = version
         return result
@@ -86,7 +88,7 @@ class Component:
         if config and self.ctype == 'deb':
             none_config_file_path = os.path.join(file_path, filename)
             self.dump_to_file(none_config_file_path, False, priority)
-            filename = VERSION_DEB_PREFERENCE 
+            filename = VERSION_DEB_PREFERENCE
         file_path = os.path.join(file_path, filename)
         self.dump_to_file(file_path, config, priority)
 
@@ -172,11 +174,20 @@ class VersionModule:
                 self.components.append(tmp_component)
         self.adjust()
 
-    def get_config_module(self, default_module, dist, arch):
+    def get_config_module(self, source_path, dist, arch):
         if self.is_individule_version():
             return self
+        default_module_path = VersionModule.get_module_path_by_name(source_path, DEFAULT_MODULE)
+        default_module = VersionModule()
+        default_module.load(default_module_path, filter_dist=dist, filter_arch=arch)
         module = default_module
-        if not self.is_aggregatable_module(self.name):
+        if self.name == 'host-image':
+            base_module_path = VersionModule.get_module_path_by_name(source_path, 'host-base-image')
+            base_module = VersionModule()
+            base_module.load(base_module_path, filter_dist=dist, filter_arch=arch)
+            module = default_module.clone(exclude_ctypes=DEFAULT_OVERWRITE_COMPONENTS)
+            module.overwrite(base_module, True, True)
+        elif not self.is_aggregatable_module(self.name):
             module = default_module.clone(exclude_ctypes=DEFAULT_OVERWRITE_COMPONENTS)
         return self._get_config_module(module, dist, arch)
 
@@ -278,11 +289,11 @@ class VersionModule:
             arch = ''
             if len(items) > 2:
                 dist = items[2]
-            if filter_dist and dist and filter_dist != dist:
+            if filter_dist and dist and filter_dist != dist and dist != ALL_DIST:
                 continue
             if len(items) > 3:
                 arch = items[3]
-            if filter_arch and arch and filter_arch != arch:
+            if filter_arch and arch and filter_arch != arch and arch != ALL_ARCH:
                 continue
             versions = Component.get_versions(file_path)
             component = Component(versions, ctype, dist, arch)
@@ -372,10 +383,12 @@ class VersionBuild:
     def load_from_target(self):
         dockers_path = os.path.join(self.target_path, 'versions/dockers')
         build_path = os.path.join(self.target_path, 'versions/build')
+        default_path = os.path.join(self.target_path, 'versions/default')
         modules = {}
         self.modules = modules
         file_paths = glob.glob(dockers_path + '/*')
         file_paths += glob.glob(build_path + '/build-*')
+        file_paths += glob.glob(default_path)
         file_paths.append(os.path.join(self.target_path, 'versions/host-image'))
         file_paths.append(os.path.join(self.target_path, 'versions/host-base-image'))
         for file_path in file_paths:
@@ -657,10 +670,7 @@ class VersionManagerCommands:
             os.makedirs(args.target_path)
         module = VersionModule()
         module.load(module_path, filter_dist=args.distribution, filter_arch=args.architecture)
-        default_module_path = VersionModule.get_module_path_by_name(args.source_path, DEFAULT_MODULE)
-        default_module = VersionModule()
-        default_module.load(default_module_path, filter_dist=args.distribution, filter_arch=args.architecture)
-        config = module.get_config_module(default_module, args.distribution, args.architecture)
+        config = module.get_config_module(args.source_path, args.distribution, args.architecture)
         config.clean_info(force=True)
         config.dump(args.target_path, config=True, priority=args.priority)
 

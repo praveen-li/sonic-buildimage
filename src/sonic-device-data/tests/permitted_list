@@ -91,6 +91,7 @@ phy_an_allow_pll_change_hg
 phy_an_c37
 phy_an_c73
 phy_an_fec
+phy_an_lt_msft
 phy_automedium
 phy_aux_voltage_enable
 phy_chain_rx_lane_map_physical
@@ -222,6 +223,7 @@ sai_preinit_cmd_file
 sai_preinit_warmboot_cmd_file
 sai_postinit_cmd_file
 sai_postinit_warmboot_cmd_file
+sai_tunnel_global_sip_mask_enable
 help_cli_enable
 memlist_enable
 serdes_lane_config_dfe
@@ -230,3 +232,12 @@ pbmp_gport_stack
 reglist_enable
 scache_filename
 host_as_route_disable
+sai_optimized_mmu
+buf.map.egress_pool0.ingress_pool
+buf.map.egress_pool1.ingress_pool
+buf.map.egress_pool2.ingress_pool
+sai_adjust_acl_drop_in_rx_drop
+sai_verify_incoming_chksum
+l3_alpm_hit_skip
+l2xmsg_shadow_hit_bits
+l2xmsg_no_cb_during_table_rebuild

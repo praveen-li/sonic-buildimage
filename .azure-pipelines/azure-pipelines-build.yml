@@ -1,3 +1,5 @@
+# The azure pipeline template for Official build, and upgrade version build
+
 parameters:
 - name: 'jobFilters'
   type: object
@@ -5,68 +7,127 @@ parameters:
 - name: 'buildOptions'
   type: string
   default: 'SONIC_CONFIG_BUILD_JOBS=1'
-- name: 'buildSlave'
-  type: string
-  default: 'n'
+- name: 'preSteps'
+  type: stepList
+  default: []
 - name: 'postSteps'
   type: stepList
   default: []
+- name: 'jobGroups'
+  type: object
+  default: ''
 
 jobs:
-- template: azure-pipelines-job-groups.yml
+- template: azure-pipelines-image-template.yml
   parameters:
     jobFilters: ${{ parameters.jobFilters }}
-    preSteps:
-      - script: |
-          containers=$(docker container ls | grep "sonic-slave" | awk '{ print $1 }')
-          if [ ! -z "$containers" ]; then
-            docker container kill $containers || true
-            sleep 5
+    preSteps: ${{ parameters.preSteps }}
+    postSteps: ${{ parameters.postSteps }}
+    jobVariables:
+      PLATFORM_AZP: $(GROUP_NAME)
+      PLATFORM_ARCH: amd64
+      BUILD_NUMBER: $(Build.BuildId)
+      BUILD_OPTIONS: ${{ parameters.buildOptions }}
+      DOCKER_DATA_ROOT_FOR_MULTIARCH: /data/march/docker
+      dbg_image: no
+      swi_image: no
+      raw_image: no
+      docker_syncd_rpc_image: no
+      syncd_rpc_image: no
+      platform_rpc: no
+    ${{ if ne(parameters.jobGroups, '') }}:
+      jobGroups: ${{ parameters.jobGroups }}
+    ${{ if eq(parameters.jobGroups, '') }}:
+      jobGroups:
+        - name: vs
+          variables:
+            dbg_image: yes
+
+        - name: barefoot
+          variables:
+            docker_syncd_rpc_image: yes
+            platform_rpc: bfn
+            swi_image: yes
+
+        - name: broadcom
+          variables:
+            dbg_image: yes
+            swi_image: yes
+            raw_image: yes
+            docker_syncd_rpc_image: yes
+            platform_rpc: brcm
+
+        - name: centec
+          variables:
+            dbg_image: yes
+            docker_syncd_rpc_image: yes
+            platform_rpc: centec
+
+        - name: centec-arm64
+          pool: sonicbld-arm64
+          timeoutInMinutes: 2880
+          variables:
+            PLATFORM_ARCH: arm64
+            BUILD_OPTIONS: ${{ parameters.buildOptions }} SONIC_VERSION_CONTROL_COMPONENTS=
+        - name: generic
+          variables:
+            dbg_image: yes
+
+        - name: innovium
+          variables:
+            dbg_image: yes
+
+        - name: marvell-armhf
+          pool: sonicbld-armhf
+          timeoutInMinutes: 2880
+          variables:
+            PLATFORM_ARCH: armhf
+            BUILD_OPTIONS: ${{ parameters.buildOptions }} SONIC_VERSION_CONTROL_COMPONENTS=
+        - name: mellanox
+          variables:
+            dbg_image: yes
+            docker_syncd_rpc_image: yes
+            syncd_rpc_image: yes
+            platform_rpc: mlnx
+
+        - name: nephos
+          variables:
+            dbg_image: yes
+            docker_syncd_rpc_image: no
+            platform_rpc: nephos
+
+    buildSteps:
+      - bash: |
+          set -ex
+          if [ $(GROUP_NAME) == vs ]; then
+            if [ $(dbg_image) == yes ]; then
+              make $BUILD_OPTIONS INSTALL_DEBUG_TOOLS=y target/sonic-vs.img.gz
+              mv target/sonic-vs.img.gz target/sonic-vs-dbg.img.gz
+            fi
+            make $BUILD_OPTIONS target/docker-sonic-vs.gz target/sonic-vs.img.gz target/docker-ptf.gz
+            if [ $(Build.Reason) != 'PullRequest' ];then
+              gzip -kd target/sonic-vs.img.gz
+              SONIC_RUN_CMDS="qemu-img convert target/sonic-vs.img -O vhdx -o subformat=dynamic target/sonic-vs.vhdx" make sonic-slave-run
+              rm target/sonic-vs.img
+            fi
+          else
+            if [ $(dbg_image) == yes ]; then
+              make  $BUILD_OPTIONS INSTALL_DEBUG_TOOLS=y target/sonic-$(GROUP_NAME).bin
+              mv target/sonic-$(GROUP_NAME).bin target/sonic-$(GROUP_NAME)-dbg.bin
+            fi
+            if [ $(swi_image) == yes ]; then
+              make $BUILD_OPTIONS ENABLE_IMAGE_SIGNATURE=y target/sonic-aboot-$(GROUP_NAME).swi
+            fi
+            if [ $(raw_image) == yes ]; then
+              make $BUILD_OPTIONS target/sonic-$(GROUP_NAME).raw
+            fi
+            if [ $(docker_syncd_rpc_image) == yes ]; then
+              make $BUILD_OPTIONS ENABLE_SYNCD_RPC=y target/docker-syncd-$(platform_rpc)-rpc.gz
+            fi
+            if [ $(syncd_rpc_image) == yes ]; then
+              make $BUILD_OPTIONS ENABLE_SYNCD_RPC=y target/sonic-$(GROUP_NAME).bin
+              mv target/sonic-mellanox.bin target/sonic-$(GROUP_NAME)-rpc.bin
+            fi
+            make $BUILD_OPTIONS target/sonic-$(GROUP_NAME).bin
           fi
-          if [ "${{ parameters.buildSlave }}" == "y" ]; then
-            images=$(docker images 'sonic-slave-*' -a -q)
-            [ ! -z "$images" ] && docker rmi -f $images
-          fi
-          sudo rm -rf $(ls -A1)
-        displayName: 'Init'
-      - checkout: self
-        submodules: recursive
-        displayName: 'Checkout code'
-      - script: |
-          make ${{ parameters.buildOptions }} PLATFORM=$GROUP_NAME configure
-        displayName: 'Make configure'
-    postSteps:
-      - ${{ parameters.postSteps }}
-      - publish: $(System.DefaultWorkingDirectory)/target
-        artifact: 'sonic-buildimage.$(GROUP_NAME)$(GROUP_EXTNAME)'
-        displayName: "Archive sonic image"
-    jobGroups:
-      - name: vs
-        script: |
-          sudo bash -c "echo 1 > /proc/sys/vm/compact_memory"
-          make ${{ parameters.buildOptions }} target/sonic-vs.img.gz
-      - name: broadcom
-        script: |
-          make ${{ parameters.buildOptions }} target/sonic-broadcom.bin target/sonic-aboot-broadcom.swi
-      - name: barefoot
-        script: |
-          make ${{ parameters.buildOptions }} target/sonic-barefoot.bin target/sonic-aboot-barefoot.swi
-      - name: centec
-        script: |
-          make ${{ parameters.buildOptions }} INSTALL_DEBUG_TOOLS=y target/sonic-centec.bin
-          mv target/sonic-centec.bin target/sonic-centec-dbg.bin
-          make ${{ parameters.buildOptions }} target/sonic-centec.bin
-          make ${{ parameters.buildOptions }} ENABLE_SYNCD_RPC=y target/docker-syncd-centec-rpc.gz
-      - name: innovium
-        script: |
-          make ${{ parameters.buildOptions }} SONIC_CONFIG_BUILD_JOBS=1 target/sonic-innovium.bin
-      - name: mellanox
-        script: |
-          make ${{ parameters.buildOptions }} target/sonic-mellanox.bin
-      - name: mellanox
-        extName: _rpc
-        script: |
-          make ${{ parameters.buildOptions }} ENABLE_SYNCD_RPC=y all
-      - name: nephos
-        script: |
-          make ${{ parameters.buildOptions }} target/sonic-nephos.bin
+        displayName: "Build sonic image"

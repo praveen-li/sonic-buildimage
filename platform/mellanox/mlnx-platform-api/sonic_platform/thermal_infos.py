@@ -24,27 +24,28 @@ class FanInfo(ThermalPolicyInfoBase):
         :return:
         """
         self._status_changed = False
-        for fan in chassis.get_all_fans():
-            presence = fan.get_presence()
-            status = fan.get_status()
-            if presence and fan not in self._presence_fans:
-                self._presence_fans.add(fan)
-                self._status_changed = True
-                if fan in self._absence_fans:
-                    self._absence_fans.remove(fan)
-            elif not presence and fan not in self._absence_fans:
-                self._absence_fans.add(fan)
-                self._status_changed = True
-                if fan in self._presence_fans:
-                    self._presence_fans.remove(fan)
+        for fan_drawer in chassis.get_all_fan_drawers():
+            for fan in fan_drawer.get_all_fans():
+                presence = fan.get_presence()
+                status = fan.get_status()
+                if presence and fan not in self._presence_fans:
+                    self._presence_fans.add(fan)
+                    self._status_changed = True
+                    if fan in self._absence_fans:
+                        self._absence_fans.remove(fan)
+                elif not presence and fan not in self._absence_fans:
+                    self._absence_fans.add(fan)
+                    self._status_changed = True
+                    if fan in self._presence_fans:
+                        self._presence_fans.remove(fan)
 
-            if not status and fan not in self._fault_fans:
-                self._fault_fans.add(fan)
-                self._status_changed = True
-            elif status and fan in self._fault_fans:
-                self._fault_fans.remove(fan)
-                self._status_changed = True
-                    
+                if not status and fan not in self._fault_fans:
+                    self._fault_fans.add(fan)
+                    self._status_changed = True
+                elif status and fan in self._fault_fans:
+                    self._fault_fans.remove(fan)
+                    self._status_changed = True
+
 
     def get_absence_fans(self):
         """
@@ -95,12 +96,12 @@ class PsuInfo(ThermalPolicyInfoBase):
         """
         self._status_changed = False
         for psu in chassis.get_all_psus():
-            if psu.get_presence() and psu.get_powergood_status() and psu not in self._presence_psus:
+            if psu.get_presence() and psu not in self._presence_psus:
                 self._presence_psus.add(psu)
                 self._status_changed = True
                 if psu in self._absence_psus:
                     self._absence_psus.remove(psu)
-            elif (not psu.get_presence() or not psu.get_powergood_status()) and psu not in self._absence_psus:
+            elif (not psu.get_presence()) and psu not in self._absence_psus:
                 self._absence_psus.add(psu)
                 self._status_changed = True
                 if psu in self._presence_psus:

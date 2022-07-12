@@ -29,33 +29,55 @@ resources:
     type: github
     name: Azure/sonic-mgmt
     endpoint: build
+  - repository: buildimage
+    type: github
+    name: Azure/sonic-buildimage
+    endpoint: build
+    ref: master
+
+variables:
+- template: .azure-pipelines/azure-pipelines-repd-build-variables.yml
+- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+  - template: .azure-pipelines/template-variables.yml
+- ${{ else }}:
+  - template: .azure-pipelines/template-variables.yml@buildimage
+- name: CACHE_MODE
+  value: rcache 
 
 stages:
+- stage: BuildVS
+  pool: sonicbld
+  variables:
+    CACHE_MODE: rcache
+    VERSION_CONTROL_OPTIONS: 'SONIC_VERSION_CONTROL_COMPONENTS=deb,py2,py3,web,git,docker'
+  jobs:
+  - template: .azure-pipelines/azure-pipelines-build.yml
+    parameters:
+      buildOptions: 'USERNAME=admin SONIC_BUILD_JOBS=$(nproc) ${{ variables.VERSION_CONTROL_OPTIONS }}'
+      jobGroups:
+      - name: vs
+
 - stage: Build
   pool: sonicbld
-
+  dependsOn: []
+  variables:
+    CACHE_MODE: rcache
+    VERSION_CONTROL_OPTIONS: 'SONIC_VERSION_CONTROL_COMPONENTS=deb,py2,py3,web,git,docker'
   jobs:
-  - template: .azure-pipelines/build-template.yml
+  - template: .azure-pipelines/azure-pipelines-build.yml
     parameters:
-      platform: broadcom
-      platform_short: brcm
-      cache_mode: rcache
-      sync_rpc_image: true
-
-  - template: .azure-pipelines/build-template.yml
-    parameters:
-      platform: mellanox
-      platform_short: mlnx
-      cache_mode: rcache
-      sync_rpc_image: true
-
-  - template: .azure-pipelines/build-template.yml
-    parameters:
-      platform: vs
-      platform_short: vs
-      cache_mode: rcache
+      buildOptions: 'USERNAME=admin SONIC_BUILD_JOBS=$(nproc) ${{ variables.VERSION_CONTROL_OPTIONS }}'
+      jobGroups:
+      - name: broadcom
+      - name: mellanox
+      - name: marvell-armhf
+        pool: sonicbld-armhf
+        timeoutInMinutes: 1200
+        variables:
+          PLATFORM_ARCH: armhf
 
 - stage: Test
+  dependsOn: BuildVS
   variables:
   - name: inventory
     value: veos_vtb
@@ -78,7 +100,7 @@ stages:
         source: specific
         project: build
         pipeline: 9
-        artifacts: sonic-swss-common.amd64.ubuntu20_04
+        artifact: sonic-swss-common.amd64.ubuntu20_04
         runVersion: 'latestFromBranch'
         runBranch: 'refs/heads/master'
       displayName: "Download sonic swss common deb packages"
@@ -90,8 +112,8 @@ stages:
 
     - script: |
         set -x
-        sudo dpkg -i --force-confask,confnew ../sonic-swss-common.amd64.ubuntu20_04/libswsscommon_1.0.0_amd64.deb
-        sudo dpkg -i ../sonic-swss-common.amd64.ubuntu20_04/python3-swsscommon_1.0.0_amd64.deb
+        sudo dpkg -i --force-confask,confnew ../libswsscommon_1.0.0_amd64.deb
+        sudo dpkg -i ../python3-swsscommon_1.0.0_amd64.deb
         sudo docker load -i ../target/docker-sonic-vs.gz
         docker tag docker-sonic-vs:latest docker-sonic-vs:$(Build.BuildNumber)
         username=$(id -un)
@@ -113,7 +135,7 @@ stages:
   - job:
     pool: sonictest
     displayName: "kvmtest-t0"
-    timeoutInMinutes: 240
+    timeoutInMinutes: 300
 
     steps:
     - template: .azure-pipelines/run-test-template.yml

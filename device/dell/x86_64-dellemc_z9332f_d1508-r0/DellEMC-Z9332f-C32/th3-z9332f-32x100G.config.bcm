@@ -1,7 +1,18 @@
+# The following 2 SOC properties are needed to prevent FDB Events during Warmboot due to TH3 is SW Managed MACs
+l2xmsg_shadow_hit_bits=0
+l2xmsg_no_cb_during_table_rebuild=1
+
+sai_tunnel_global_sip_mask_enable=1
 core_clock_frequency=1325
 dpr_clock_frequency=1000
 device_clock_frequency=1325
 port_flex_enable=1
+
+# disables bcmALPMDH (ALPM distributed hitbit) thread.  This thread is purely for debug purpose
+l3_alpm_hit_skip=1
+
+# Disable Counting ACL Drop towards interface RX_DRP counter
+sai_adjust_acl_drop_in_rx_drop=1
 
 #firmware load method, use fast load
 load_firmware=0x2
@@ -514,6 +525,6 @@ serdes_lane_config_media_type_27=copper
 serdes_lane_config_media_type_28=copper
 serdes_lane_config_media_type_24=copper
 
-#sai_preinit_cmd_file=/usr/share/sonic/hwsku/sai_preinit_cmd.soc
+sai_preinit_cmd_file=/usr/share/sonic/hwsku/sai_preinit_cmd.soc
 sai_postinit_cmd_file=/usr/share/sonic/hwsku/sai_postinit_cmd.soc
-
+led_fw_path=/usr/share/sonic/hwsku/

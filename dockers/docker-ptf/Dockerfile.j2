@@ -1,9 +1,10 @@
-{% if CONFIGURED_ARCH == "armhf" %}
-FROM multiarch/debian-debootstrap:armhf-stretch
-{% elif CONFIGURED_ARCH == "arm64" %}
-FROM multiarch/debian-debootstrap:arm64-stretch
+{% set prefix = DEFAULT_CONTAINER_REGISTRY %}
+{% if CONFIGURED_ARCH == "armhf" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/debian-debootstrap:armhf-stretch
+{% elif CONFIGURED_ARCH == "arm64" and MULTIARCH_QEMU_ENVIRON == "y" %}
+FROM {{ prefix }}multiarch/debian-debootstrap:arm64-stretch
 {% else %}
-FROM debian:stretch
+FROM {{ prefix }}debian:stretch
 {% endif %}
 
 MAINTAINER Pavel Shirshov
@@ -97,6 +98,14 @@ RUN rm -rf /debs \
     && make install \
     && cd  .. \
     && rm -fr sflowtool \
+    && git clone https://github.com/dyninc/OpenBFDD.git \
+    && cd OpenBFDD \
+    && ./autogen.sh \
+    && ./configure \
+    && make \
+    && make install \
+    && cd  .. \
+    && rm -fr OpenBFDD \
     && wget https://github.com/nanomsg/nanomsg/archive/1.0.0.tar.gz \
     && tar xvfz 1.0.0.tar.gz \
     && cd nanomsg-1.0.0    \
@@ -118,6 +127,7 @@ RUN rm -rf /debs \
     && pip install exabgp==3.4.17\
     && pip install pyaml   \
     && pip install pybrctl pyro4 rpyc yabgp \
+    && pip install unittest-xml-reporting \
     && mkdir -p /opt       \
     && cd /opt             \
     && wget https://raw.githubusercontent.com/p4lang/ptf/master/ptf_nn/ptf_nn_agent.py
