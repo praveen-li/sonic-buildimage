@@ -66,7 +66,17 @@ RUN apt-get update &&        \
 # for processing/handling json files in bash environment
         jq                   \
 # for sairedis zmq rpc channel
-        libzmq5
+        libzmq5              \
+# for troubleshooting
+        socat                \
+        gdb                  \
+        gdbserver            \
+        patch                \
+        htop                 \
+        strace               \
+        openssh-client       \
+        sshpass              \
+        valgrind
 
 # Install redis-tools
 {% if CONFIGURED_ARCH == "armhf" %}

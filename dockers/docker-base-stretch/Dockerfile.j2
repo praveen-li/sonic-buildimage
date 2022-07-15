@@ -61,7 +61,17 @@ RUN apt-get update &&        \
 # for processing json files in bash environment
         jq                   \
 # for sairedis zmq rpc channel
-        libzmq5
+        libzmq5              \
+# for troubleshooting
+        socat                \
+        gdb                  \
+        gdbserver            \
+        patch                \
+        htop                 \
+        strace               \
+        openssh-client       \
+        sshpass              \
+        valgrind
 
 # Install a newer version of rsyslog from stretch-backports to support -iNONE
 RUN apt-get -y -t stretch-backports install rsyslog
