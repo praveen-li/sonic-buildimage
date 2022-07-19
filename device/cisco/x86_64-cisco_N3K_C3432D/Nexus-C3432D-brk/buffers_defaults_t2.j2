@@ -50,17 +50,17 @@
 
 {%- macro generate_pg_profils(port_names_active) %}
     "BUFFER_PG": {
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
                 "{{ port }}|3-4": {
                      "profile" : "[BUFFER_PROFILE|ingress_lossless_profile]"
                 },
 {% endfor %}
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
                 "{{ port }}|0-2": {
                     "profile" : "[BUFFER_PROFILE|ingress_lossy_profile]"
                 },
 {% endfor %}
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
                 "{{ port }}|5-7": {
                     "profile" : "[BUFFER_PROFILE|ingress_lossy_profile]"
                 }{% if not loop.last %},{% endif %}
@@ -71,17 +71,17 @@
 
 {%- macro generate_queue_buffers(port_names_active) %}
     "BUFFER_QUEUE": {
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
         "{{ port }}|3-4": {
              "profile" : "[BUFFER_PROFILE|egress_lossless_profile]"
         },
 {% endfor %}
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
         "{{ port }}|0-2": {
             "profile" : "[BUFFER_PROFILE|egress_lossy_profile]"
         },
 {% endfor %}
-{% for port in port_names_active %}
+{% for port in port_names_active.split(',') %}
         "{{ port }}|5-7": {
             "profile" : "[BUFFER_PROFILE|egress_lossy_profile]"
         }{% if not loop.last %},{% endif %}
