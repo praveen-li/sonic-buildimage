@@ -10,7 +10,7 @@
 
 try:
     import sys
-    import os.path
+    import os
     from sonic_platform_base.chassis_base import ChassisBase
     import sonic_platform.utils as pltm_utils
     from sonic_py_common.logger import Logger
@@ -38,27 +38,32 @@ class Chassis(ChassisBase):
     DICT_PLATFORM_KEY_SFPS = 'sfps'
     DEFAULT_AMBIENT_TEMP_THRESHOLD = 35.0
     DEFAULT_TEMP_THRESHOLD_HYSTERESIS = 5.0
+    DEFAULT_LOW_TEMP_THRESHOLD = 0.0
 
     def __init__(self):
         super(Chassis, self).__init__()
 
         self.name = "Undefined"
         self.model = "Undefined"
-
+        self.serial = "Undefined"
+        self.product_name = "Undefined"
+        self.board_eeprom_map = None
+        self.board_eeprom_code_map = None
         # Initialize Platform name
         self.platform_name = device_info.get_platform()
+        self.name = self.platform_name
         self.sfp_init_done = False
         self._watchdog = None
         self._eeprom = None
 
         self.initialize_globals()
         self.initialize_reboot_shutdown_handlers()
+        self.initialize_psu()
         self.initialize_components()
         self.initialize_fan()
         self.initialize_eeprom()
         self.initialize_thermals()
-        #ledd daemon uses ledControl from plugins
-        #self.initialize_port_leds()
+        self.initialize_port_leds()
         self.initialize_sfps()
         self.initizalize_system_led()
 
@@ -106,9 +111,12 @@ class Chassis(ChassisBase):
         from sonic_platform.eeprom import Eeprom
         # Initialize EEPROM
         self._eeprom = Eeprom()
-        # Get chassis name and model from eeprom
-        self.name = self._eeprom.get_product_name()
-        self.model = self._eeprom.get_part_number()
+        if self._eeprom is not None:
+            # Get chassis name and model from eeprom
+            self.model = self._eeprom.get_part_number()
+            self.serial = self._eeprom.get_serial_number()
+            self.base_mac = self._eeprom.get_base_mac()
+            self.board_eeprom_map, self.board_eeprom_code_map =  self._eeprom.read_eeprom_map()
 
     def initialize_thermals(self):
         from sonic_platform.thermal import Thermal
@@ -116,11 +124,10 @@ class Chassis(ChassisBase):
         thermal_data = DEVICE_DATA[self.platform_name][Chassis.DICT_PLATFORM_KEY_THERMALS]
         thermal_num = thermal_data['thermal_num']
 
-        if self.platform_name == 'x86_64-cisco_N3K_C3432D':
-            for thl_index in range (thermal_num):
-                temp_data = thermal_data['temp'][thl_index]
-                thl = Thermal(thl_index, self.global_parameters, temp_data)
-                self._thermal_list.append(thl)
+        for thl_index in range (thermal_num):
+            temp_data = thermal_data['temp'][thl_index]
+            thl = Thermal(thl_index, self.global_parameters, temp_data)
+            self._thermal_list.append(thl)
 
     def initialize_sfps(self):
         from sonic_platform.sfp import Sfp 
@@ -149,17 +156,16 @@ class Chassis(ChassisBase):
 
         self.platform_sfputil=SfpUtil(self.fp_index_start, self.num_fp, self.global_parameters, sfps_data)
 
-        for qsfp_port_index in self.platform_sfputil.qsfp_ports:
-            qsfp_port = Sfp(qsfp_port_index,SfpUtil.SUPPORTED_QSFP_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(qsfp_port)
+        for port_index in range(self.fp_index_start-1, self.num_fp):
+            if port_index in self.platform_sfputil.qsfp_ports:
+                sfp_type = SfpUtil.SUPPORTED_QSFP_PORT_TYPES[0]
+            elif port_index in self.platform_sfputil.sfp_ports:
+                sfp_type = SfpUtil.SUPPORTED_SFP_PORT_TYPES[0]
+            else:
+                sfp_type = SfpUtil.SUPPORTED_OSFP_QSFPDD_PORT_TYPES[0]
 
-        for sfp_port_index in self.platform_sfputil.sfp_ports:
-            sfp_port = Sfp(sfp_port_index,SfpUtil.SUPPORTED_SFP_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(sfp_port)
-
-        for qsfpdd_port_index in self.platform_sfputil.osfp_ports:
-            qsfpdd_port = Sfp(qsfpdd_port_index,SfpUtil.SUPPORTED_OSFP_QSFPDD_PORT_TYPES[0], self.global_parameters, self.platform_sfputil)
-            self._sfp_list.append(qsfpdd_port)
+            port_data = Sfp(port_index,sfp_type, self.global_parameters, self.platform_sfputil)
+            self._sfp_list.append(port_data)
 
         self.sfp_init_done = True
 
@@ -198,6 +204,8 @@ class Chassis(ChassisBase):
 
         status, p_pres_dict = self.platform_sfputil.get_transceiver_change_event(timeout)
         if status is True and  len(p_pres_dict) != 0 :
+            for port_index in p_pres_dict :
+                self._sfp_list[int(port_index)].sfp_reinit(p_pres_dict[port_index])
             p_dict['sfp'] = p_pres_dict
         return status, p_dict
 
@@ -229,6 +237,31 @@ class Chassis(ChassisBase):
 
     def get_model(self):
         return self.model
+
+    def get_presence(self):
+        #currently supporting only TORs and so return TRUE always
+        return True
+
+    def get_status(self):
+        #currently supporting only TORs and so return TRUE always
+        return True
+
+    def get_serial(self):
+        return self.serial
+
+    def get_base_mac(self):
+        return self.base_mac
+
+    def get_system_eeprom_info(self):
+        return self.board_eeprom_code_map
+
+    def get_position_in_parent(self):
+        #currently supporting only TORs and so return -1 always
+        return -1
+
+    def is_replaceable(self):
+        #currently supporting only TORs and so return False always
+        return False
 
     def get_bootstatus(self):
         bootstatus = 0
@@ -274,7 +307,7 @@ class Chassis(ChassisBase):
         Returns:
             bool: True if system LED state is set successfully, False if not
         """
-        return False if not self._status_led else self._status_led.set_status(color)
+        return False if self._status_led is None else self._status_led.set_status(color)
 
     def get_status_led(self):
         """
@@ -283,7 +316,7 @@ class Chassis(ChassisBase):
             A string, one of the valid LED color strings which could be vendor
             specified.
         """
-        return None if not self._status_led else self._status_led.get_status()
+        return None if self._status_led is None else self._status_led.get_status()
 
     def initialize_reboot_shutdown_handlers(self):
         _reboot_gpio_path = "/sys/class/gpio/gpio{}/value"

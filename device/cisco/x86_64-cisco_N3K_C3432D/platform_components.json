@@ -1,6 +1,6 @@
 {
 	"chassis":{
-		"N3K-C3432D-S":{
+		"x86_64-cisco_N3K_C3432D":{
 			"component":{
 				"IOFPGA":{
 				},

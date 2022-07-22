@@ -44,15 +44,17 @@ class Thermal(ThermalBase):
         self._temp_max_path = "temp{}_max"
         self._temp_input_path = "temp{}_input"
         self.platform_data = platform_data
+        self.min_recorded = 200.0
+        self.max_recorded = -64.0
         self._temp_input_path = self._temp_input_path.format(temp_data['index'])
         self._temp_max_path = self._temp_max_path.format(temp_data['index'])
         if 'minor' in temp_data:
-            self.high_threshold = temp_data['minor']
+            self.high_threshold = float(temp_data['minor'])
         else:
             self.high_threshold = None
 
         if 'major' in temp_data:
-            self.critical_high_threshold = temp_data['major']
+            self.critical_high_threshold = float(temp_data['major'])
         else:
             self.critical_high_threshold = None
         self._temp_name = temp_data['name']
@@ -61,13 +63,62 @@ class Thermal(ThermalBase):
         if temp_data['location'] in Thermal.sensor_location_list:
             self.location = temp_data['location']
         else:
-            self.location = SENSOR_GENERIC
+            self.location = self.SENSOR_GENERIC
 
     def get_name(self):
         return self._temp_name
 
     def get_location(self):
         return self.location
+
+    def get_presence(self):
+        #Currently TORs are supported and so return True always
+        return True
+
+    def get_model(self):
+        if not os.path.exists(self._temp_path):
+            return 'N/A'
+        for dirname in os.listdir(self._temp_path):
+            if fnmatch.fnmatch(dirname, 'hwmon?'):
+                filename = self._temp_path + dirname + '/' + 'name'
+                break
+        if filename is None:
+            return 'N/A'
+        temp_val = read_str_from_file(filename)
+        return temp_val
+
+    def get_serial(self):
+        return 'N/A'
+
+    def get_status(self):
+        if not os.path.exists(self._temp_path):
+            return False
+        for dirname in os.listdir(self._temp_path):
+            if fnmatch.fnmatch(dirname, 'hwmon?'):
+                filename = self._temp_path + dirname + '/' + self._temp_input_path
+                break
+        if filename is None:
+            return False
+        temp_val = read_int_from_file(filename)
+
+        if temp_val and temp_val != -64000:
+            return True
+
+        return False
+
+    def get_position_in_parent(self):
+        return -1
+
+    def is_replaceable(self):
+        return False
+
+    def set_high_threshold(self, temperature):
+        #can only be set after stopping pmon and changing device_data.py entries
+        return False
+
+    def set_low_threshold(self, temperature):
+        #can only be set after stopping pmon and changing device_data.py entries
+        return False
 
     def get_temperature(self):
         if not os.path.exists(self._temp_path):
@@ -79,7 +130,18 @@ class Thermal(ThermalBase):
         if filename is None:
             return -64.0
         temp_val = read_int_from_file(filename)
-        return float(temp_val)/1000
+        temp = float(temp_val) / 1000
+
+        self.min_recorded = min(temp, self.min_recorded)
+        self.max_recorded = max(temp, self.max_recorded)
+
+        return temp
+
+    def get_minimum_recorded(self):
+        return self.min_recorded
+
+    def get_maximum_recorded(self):
+        return self.max_recorded
 
     def get_temp_max(self):
         if not os.path.exists(self._temp_path):
@@ -103,7 +165,7 @@ class Thermal(ThermalBase):
             return float(max_val*60)/100
 
     def get_low_threshold(self):
-        return 0.0
+        return Chassis.DEFAULT_LOW_TEMP_THRESHOLD
 
     def get_high_critical_threshold(self):
         if self.critical_high_threshold is not None:

@@ -32,6 +32,7 @@ class Fan(FanBase):
 
         self.max_speed = 255
         self.min_speed = 0
+        self._target_speed = None
         self.is_psu_fan = psu_fan
         self.psu = psu
         self.platform_data = platform_data
@@ -49,7 +50,6 @@ class Fan(FanBase):
         self.drawer_index = fan_drawer_index + 1
         self.fan_speed_tolerance = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_SPEED_TOLERANCE, 10)
         self.fan_pwm_path_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_PWM_PATH_FORMAT, 1)
-        self.fan_direction_format = self.platform_data.get_param(PlatformGlobalData.KEY_FAN_DIRECTION_FORMAT, 0)
 
         if self.is_psu_fan:
             self.fan_path = self._fan_path.format(psu['bus'], psu['addr'])
@@ -91,19 +91,16 @@ class Fan(FanBase):
             return FanBase.FAN_DIRECTION_NOT_APPLICABLE
         else:
             if not os.path.exists(self.dir_path):
-                return FanBase.FAN_DIRECTION_NOT_APPLICABLE
+                return False
 
             direction = read_int_from_file(self.dir_path)
-            if self.fan_direction_format:
-                #fan direction 0 - b2f ; 1 - f2b
-                return FanBase.FAN_DIRECTION_INTAKE if (direction) else FanBase.FAN_DIRECTION_EXHAUST
-            else:
-                #fan direction 0 - f2b ; 1 - b2f
-                return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
+            return FanBase.FAN_DIRECTION_EXHAUST if (direction) else FanBase.FAN_DIRECTION_INTAKE
 
     def get_status(self):
         status = 0
         if self.get_presence() :
+            if self.is_psu_fan and self.psu is not None and self.psu['is_fan_sw_controllable'] == False:
+                    return True
             for dirname in os.listdir(self.fan_path):
                 if fnmatch.fnmatch(dirname, 'hwmon?'):
                     filename = self.fan_path + dirname + '/' + self.status_path
@@ -118,6 +115,8 @@ class Fan(FanBase):
     def get_speed_rpm(self):
         speed = 0
         if self.get_presence() :
+            if self.is_psu_fan and self.psu is not None and self.psu['is_fan_sw_controllable'] == False:
+                    return "N/A"
             for dirname in os.listdir(self.fan_path):
                 if fnmatch.fnmatch(dirname, 'hwmon?'):
                     filename = self.fan_path + dirname + '/' + self.speed_path
@@ -131,7 +130,7 @@ class Fan(FanBase):
     #Platform specific code
     def rpm2pwm(self, rpm):
         pwm = 0                                                                                  
-        if self.index == 1:
+        if (self.index%2) == 1:
             f_fan_curve_slope = self.platform_data.get_param(PlatformGlobalData.KEY_FORWARD_FAN_CURVE_SLOPE,1)
             pwm = int(rpm / f_fan_curve_slope)
         else:
@@ -148,47 +147,93 @@ class Fan(FanBase):
         speed = 0
         pwm = 0
         if self.get_presence() :
-            #Get speed/rpm
-            for dirname in os.listdir(self.fan_path):
-                if fnmatch.fnmatch(dirname, 'hwmon?'):
-                    filename = self.fan_path + dirname + '/' + self.speed_path
-                    break
-            if filename is None:
-                return False
-            speed = read_int_from_file(filename)
+            if self.is_psu_fan:
+                if self.psu is None:
+                    return "N/A"
+                if self.psu['is_fan_sw_controllable'] == False:
+                    return "N/A"
+                try:
+                    cmd = '/usr/sbin/i2cget -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' w'
+                    ph = subprocess.Popen([cmd],
+                                  stdout=subprocess.PIPE,
+                                  shell=True, stderr=subprocess.STDOUT)
+                    cmdout = ph.communicate()[0]
+                    ph.wait()
+                except OSError as e:
+                    raise OSError("Unable to get PSU fan speed ")
+                    return "N/A"
 
-        pwm = self.rpm2pwm(speed)
-            
+                speed = cmdout.decode("utf-8", errors="ignore")
+                pwm = int(speed,16)
+                if (pwm > 100):
+                    pwm = 100
+            else :
+                #Get speed/rpm
+                for dirname in os.listdir(self.fan_path):
+                    if fnmatch.fnmatch(dirname, 'hwmon?'):
+                        filename = self.fan_path + dirname + '/' + self.speed_path
+                        break
+                if filename is None:
+                    return False
+                speed = read_int_from_file(filename)
+                pwm = self.rpm2pwm(speed)
+
         return pwm
 
     def get_target_speed(self):
-        if self.is_psu_fan:
-            return None
         if self.get_presence() :
-            for dirname in os.listdir(self.fan_path):
-                if fnmatch.fnmatch(dirname, 'hwmon?'):
-                    filename = self.fan_path + dirname + '/' + self.pwm_path
-                    break
-            if filename is None:
-                return self.max_speed
-            if not os.path.exists(filename):
-                return self.max_speed
-            pwm = read_int_from_file(filename)
-            pwm = int(int(pwm) * 100 / PWM_MAX)
-            return pwm
+            if self._target_speed is not None:
+                return self._target_speed
+
+            if self.is_psu_fan:
+                if self.psu is None:
+                    return "N/A"
+                if self.psu['is_fan_sw_controllable'] == False:
+                    return "N/A"
+                try:
+                    cmd = '/usr/sbin/i2cget -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' w'
+                    ph = subprocess.Popen([cmd],
+                                  stdout=subprocess.PIPE,
+                                  shell=True, stderr=subprocess.STDOUT)
+                    cmdout = ph.communicate()[0]
+                    ph.wait()
+                except OSError as e:
+                    raise OSError("Unable to get PSU fan speed ")
+                    return "N/A"
+
+                speed = cmdout.decode("utf-8", errors="ignore")
+                pwm = int(speed, 16)
+                if (pwm > 100):
+                    pwm = 100
+                return pwm
+            else:
+                for dirname in os.listdir(self.fan_path):
+                    if fnmatch.fnmatch(dirname, 'hwmon?'):
+                        filename = self.fan_path + dirname + '/' + self.pwm_path
+                        break
+                if filename is None:
+                    return None
+                if not os.path.exists(filename):
+                    return None
+                pwm = read_int_from_file(filename)
+                pwm = int(int(pwm) * 100 / PWM_MAX)
+                return pwm
         else :
-            return 0
+            return None
 
 
     def set_speed(self, speed):
-        if self.is_psu_fan:
-            if self.is_fan_sw_controllable != True:
-                return False
         status = True
         if self.get_presence() :
             if self.is_psu_fan:
+                if self.psu is None:
+                    return False
+                if self.psu['is_fan_sw_controllable'] == False:
+                    return False
                 run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' ' + str(hex(speed)) + ' w'
                 os.system(run_cmd)
+                self._target_speed = int(speed)
+                return status
             else:
                 for dirname in os.listdir(self.fan_path):
                     if fnmatch.fnmatch(dirname, 'hwmon?'):
@@ -198,6 +243,7 @@ class Fan(FanBase):
                     return False
                 if not os.path.exists(filename):
                     return False
+                self._target_speed = int(speed)
                 pwm = int(PWM_MAX * int(speed) / 100)
                 status = write_file(filename, pwm)
                 return status
@@ -212,7 +258,7 @@ class Fan(FanBase):
             An integer, the percentage of variance from target speed which is
                  considered tolerable
         """
-        if self.is_psu_fan :
+        if self.is_psu_fan and self.psu is not None and self.psu['is_fan_sw_controllable'] == False:
             return None
         return self.fan_speed_tolerance
 
@@ -234,9 +280,12 @@ class Fan(FanBase):
 
     def set_status_led(self,color):
         if self.is_psu_fan:
-            #Silently fail
+            return True #silently fail
+
+        if not self.get_presence():
             return True
-        if color == "red" :
+
+        if color == "red":
            if  os.path.exists(self.r_led_path):
                write_file(self.r_led_path,255)
            if  os.path.exists(self.g_led_path):
@@ -246,13 +295,31 @@ class Fan(FanBase):
                write_file(self.r_led_path,0)
            if  os.path.exists(self.g_led_path):
                write_file(self.g_led_path,255)
+        elif color == "amber":
+           if  os.path.exists(self.r_led_path):
+               write_file(self.r_led_path,255)
+           if  os.path.exists(self.g_led_path):
+               write_file(self.g_led_path,255)
+        elif color == "off":
+           if  os.path.exists(self.r_led_path):
+               write_file(self.r_led_path,0)
+           if  os.path.exists(self.g_led_path):
+               write_file(self.g_led_path,0)
+        else:
+            return False
 
         return True
 
     def get_status_led(self):
         if self.is_psu_fan:
-            #Silently fail                                                                                                 
-            return 'green'
+            if self.get_presence():
+                return 'green'
+            else:
+                return 'off'
+
+        if not self.get_presence():
+            return 'off'
+
         red_color_val = 0
         green_color_val = 0
         if os.path.exists(self.g_led_path):

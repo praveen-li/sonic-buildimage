@@ -1,0 +1,340 @@
+{
+	"chassis":{
+		"name": "x86_64-cisco_N3K_C3432D",
+        "status_led": {
+            "controllable": true,
+            "colors": ["red", "green", "amber", "off"]
+        },
+        "components": [
+            {
+                "name" : "IOFPGA"
+            },
+            {
+                "name" : "MIFPGA-1"
+            },
+            {
+                "name" : "Primary BIOS"
+            },
+            {
+                "name" : "Golden BIOS"
+            }
+        ],
+        "fans": [
+            {
+                    "name": "FAN 1-1"
+            },
+            {
+                    "name": "FAN 1-2"
+            },
+            {
+                    "name": "FAN 2-1"
+            },
+            {
+                    "name": "FAN 2-2"
+            },
+            {
+                    "name": "FAN 3-1"
+            },
+            {
+                    "name": "FAN 3-2"
+            },
+            {
+                    "name": "FAN 4-1"
+            },
+            {
+                    "name": "FAN 4-2"
+            },
+            {
+                    "name": "FAN 5-1"
+            },
+            {
+                    "name": "FAN 5-2"
+            },
+            {
+                    "name": "FAN 6-1"
+            },
+            {
+                    "name": "FAN 6-2"
+            }
+        ],
+        "fan_drawers": [
+            {
+                "name": "Fantray-1",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 1-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 1-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Fantray-2",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 2-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 2-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Fantray-3",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 3-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 3-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Fantray-4",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 4-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 4-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Fantray-5",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 5-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 5-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Fantray-6",
+                "max_consumed_power": 24.0,
+                "fans": [
+                    {
+                        "name": "FAN 6-1",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    },
+                    {
+                        "name": "FAN 6-2",
+                        "speed": {
+                            "minimum": 45,
+                            "maximum": 90
+                        }
+                    }
+                ]
+            }
+        ],
+        "psus": [
+            {
+                "name": "PSU1",
+                "status_led": {
+                    "controllable": false
+                },
+                "voltage_low_threshold": false,
+                "voltage_high_threshold": false,
+                "fans": [
+                    {
+                        "name": "PSU1-FAN1",
+                        "speed": {
+                            "controllable": true,
+                            "minimum": 45,
+                            "maximum": 90
+                        },
+                        "status_led": {
+                            "controllable": false
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "PSU2",
+                "status_led": {
+                    "controllable": false
+                },
+                "voltage_low_threshold": false,
+                "voltage_high_threshold": false,
+                "fans": [
+                    {
+                        "name": "PSU2-FAN1",
+                        "speed": {
+                            "controllable": true,
+                            "minimum": 45,
+                            "maximum": 90
+                        },
+                        "status_led": {
+                            "controllable": false
+                        }
+                    }
+                ]
+            }
+        ],
+        "thermals": [
+            {
+                "name": "BACK (D1)",
+                "controllable": false
+            },
+            {
+                "name": "FRONT (D1)",
+                "controllable": false
+            },
+            {
+                "name": "ASIC",
+                "controllable": false
+            }
+        ],
+        "sfps": [
+            {
+                "name": "FrontPort-1"
+            },
+            {
+                "name": "FrontPort-2"
+            },
+            {
+                "name": "FrontPort-3"
+            },
+            {
+                "name": "FrontPort-4"
+            },
+            {
+                "name": "FrontPort-5"
+            },
+            {
+                "name": "FrontPort-6"
+            },
+            {
+                "name": "FrontPort-7"
+            },
+            {
+                "name": "FrontPort-8"
+            },
+            {
+                "name": "FrontPort-9"
+            },
+            {
+                "name": "FrontPort-10"
+            },
+            {
+                "name": "FrontPort-11"
+            },
+            {
+                "name": "FrontPort-12"
+            },
+            {
+                "name": "FrontPort-13"
+            },
+            {
+                "name": "FrontPort-14"
+            },
+            {
+                "name": "FrontPort-15"
+            },
+            {
+                "name": "FrontPort-16"
+            },
+            {
+                "name": "FrontPort-17"
+            },
+            {
+                "name": "FrontPort-18"
+            },
+            {
+                "name": "FrontPort-19"
+            },
+            {
+                "name": "FrontPort-20"
+            },
+            {
+                "name": "FrontPort-21"
+            },
+            {
+                "name": "FrontPort-22"
+            },
+            {
+                "name": "FrontPort-23"
+            },
+            {
+                "name": "FrontPort-24"
+            },
+            {
+                "name": "FrontPort-25"
+            },
+            {
+                "name": "FrontPort-26"
+            },
+            {
+                "name": "FrontPort-27"
+            },
+            {
+                "name": "FrontPort-28"
+            },
+            {
+                "name": "FrontPort-29"
+            },
+            {
+                "name": "FrontPort-30"
+            },
+            {
+                "name": "FrontPort-31"
+            },
+            {
+                "name": "FrontPort-32"
+            }
+        ]
+    },
+    "interfaces": {}
+}
