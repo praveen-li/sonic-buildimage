@@ -839,8 +839,6 @@ class qsfpddDom(qsfp_dd_Dom):
         self.dom_data = super(qsfpddDom, self).parse(self.dom_map,
                               eeprom_raw_data, start_pos)
 
-        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.PORT_START))
-
         sfp_log(self.dom_data)
 
     def dump_pretty(self):
