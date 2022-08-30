@@ -1,0 +1,34 @@
+diff --git a/ifupdown2/addons/dhcp.py b/ifupdown2/addons/dhcp.py
+index 30886b4..6421a4f 100644
+--- a/ifupdown2/addons/dhcp.py
++++ b/ifupdown2/addons/dhcp.py
+@@ -117,6 +117,7 @@ class dhcp(moduleBase):
+                     except:
+                         pass
+                     self.dhclientcmd.start(ifaceobj.name, wait=wait,
++                                           metric=ifaceobj.get_attr_value_first('metric'),
+                                            cmd_prefix=dhclient_cmd_prefix)
+             if 'inet6' in ifaceobj.addr_family:
+                 if dhclient6_running:
+diff --git a/ifupdown2/ifupdownaddons/dhclient.py b/ifupdown2/ifupdownaddons/dhclient.py
+index 4d907f5..d50de3d 100644
+--- a/ifupdown2/ifupdownaddons/dhclient.py
++++ b/ifupdown2/ifupdownaddons/dhclient.py
+@@ -57,7 +57,7 @@ class dhclient(utilsBase):
+                    '%s' %ifacename]
+         self._run_dhclient_cmd(cmd, cmd_prefix)
+
+-    def start(self, ifacename, wait=True, cmd_prefix=None):
++    def start(self, ifacename, wait=True, metric=None, cmd_prefix=None):
+         if os.path.exists('/sbin/dhclient3'):
+             cmd = ['/sbin/dhclient3', '-pf',
+                    '/run/dhclient.%s.pid' %ifacename,
+@@ -68,6 +68,8 @@ class dhclient(utilsBase):
+                    '/run/dhclient.%s.pid' %ifacename, '-lf',
+                    '/var/lib/dhcp/dhclient.%s.leases' %ifacename,
+                    '%s' %ifacename]
++        if metric:
++            cmd.extend(['-e', 'IF_METRIC=%s' %metric])
+         if not wait:
+             cmd.append('-nw')
+         self._run_dhclient_cmd(cmd, cmd_prefix)
