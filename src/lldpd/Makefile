@@ -35,6 +35,8 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	stg import -s ../patch/series
 
 	# Build source and Debian packages
+	# Set SO_RCVBUF size to 8MB
+	# Note: also need to ensure net.core.rmem_max in files/image_config/sysctl/sysctl-net.conf is set to at least 4MB (before kernel doubles it)
 	env "with_netlink_receive_bufsize=8*1024*1024" dpkg-buildpackage -rfakeroot -b -us -uc -j$(SONIC_CONFIG_MAKE_JOBS) --admindir $(SONIC_DPKG_ADMINDIR)
 	popd
 
