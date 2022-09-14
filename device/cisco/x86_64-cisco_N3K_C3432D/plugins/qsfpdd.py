@@ -15,6 +15,8 @@ try:
     from collections import OrderedDict
     import re
     from sonic_sfp.sffbase import sffbase
+    from sonic_platform.utils import xcvr_eeprom_rw_unlock
+    from sonic_platform.utils import xcvr_eeprom_rw_lock
 except ImportError as e:
     raise ImportError (str(e) + "- required module not found")
 
@@ -698,7 +700,7 @@ class qsfpddDom(sffbase):
              'decode': dom_monitor}}
 
 
-    PORT_START = 50
+    EEPROM_OFFSET = 50
     def read_bytes(self, sysfs_eeprom_path, offset, num_bytes):
         #offset=128
         #num_bytes=128
@@ -730,9 +732,9 @@ class qsfpddDom(sffbase):
 
     def get_qsfpdd_page_data(self, eeprom_ele, start_pos):
 
-        sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
+        sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.EEPROM_OFFSET)
 
-        page = None
+        page = 0
         offset=128
         num_bytes=128
 
@@ -746,8 +748,6 @@ class qsfpddDom(sffbase):
             
             sfp_log("Upper page %d not cached" % (page)) 
 
-            #set upper page        
-            os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
         else:
             #Lower page should be already cached 
             if 'lpage' in self.page_data:
@@ -758,7 +758,14 @@ class qsfpddDom(sffbase):
                 sfp_log("Lower page not cached")
                 return None
 
+        fd=xcvr_eeprom_rw_lock(self.port)
+        if fd is None:
+            print("Unable to acquire lock to read qsfpdd page data for port %d" % self.port)
+            return None
+        #set upper page
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.EEPROM_OFFSET, page))
         eeprom_raw = self.read_bytes(sysfs_eeprom_path, offset, num_bytes)
+        xcvr_eeprom_rw_unlock(fd)
         if page is not None and eeprom_raw is not None:
             self.page_data[page] = eeprom_raw
             #cache lower page
@@ -783,8 +790,16 @@ class qsfpddDom(sffbase):
         return None
 
     def get_lower_page(self):
-        sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
-        return self.read_bytes(sysfs_eeprom_path, 0, 128)
+        fd=xcvr_eeprom_rw_lock(self.port)
+        if fd is None:
+            print("Unable to acquire lock to get qsfpdd lower page data for port %d" % self.port)
+            return None
+        # Set page 0 for port self.port
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.EEPROM_OFFSET))
+        sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.EEPROM_OFFSET)
+        eeprom_raw = self.read_bytes(sysfs_eeprom_path, 0, 128)
+        xcvr_eeprom_rw_unlock(fd)
+        return eeprom_raw
 
     def __init__(self, port, sfp_data=None, eeprom_raw_data=None, calibration_type=1):
         self._calibration_type = calibration_type
@@ -816,8 +831,6 @@ class qsfpddDom(sffbase):
         self.dom_data = sffbase.parse(self, self.dom_map,
                               eeprom_raw_data, start_pos)
                 
-        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 0x0 b" % (self.port + self.PORT_START))
-        
         #print(self.dom_data)
 
     def parse(self, eeprom_raw_data, start_pos):

@@ -862,6 +862,7 @@ class SfpUtil(SfpUtilBase):
                 if fd is None:
                     logger.log_error("Unable to acquire lock in set_power_override for port {}".format(port_num))
                     return status
+                self.reset_page(port_num, 0)
                 run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.EEPROM_OFFSET + port_num) + ' 0x' + str(self.EEPROM_OFFSET) + ' ' + str(QSFP_DD_GLOBAL_CONTROL_BYTES_OFFSET ) + ' ' + str(hex(data))
                 os.system(run_cmd)
                 status = True

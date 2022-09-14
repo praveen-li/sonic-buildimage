@@ -8,6 +8,8 @@ try:
     import time
     from sonic_sfp.sfputilbase import SfpUtilBase
     from sonic_eeprom import eeprom_dts
+    from sonic_platform.utils import xcvr_eeprom_rw_unlock
+    from sonic_platform.utils import xcvr_eeprom_rw_lock
     import sys
 
 #    import syslog
@@ -205,11 +207,17 @@ class SfpUtilCisco(SfpUtilBase):
 
     def get_eeprom_dict(self, port_num):
 
-        # Ensure page zero is set
+        # Acquire lock and ensure page zero is set
         if port_num in self.osfp_ports:
+            fd=xcvr_eeprom_rw_lock(port_num)
+            if fd is None:
+                print("Unable to acquire lock to get eeprom data for port %d" % port_num)
+                return None
             self.reset_page(port_num, 0)
-
-        sfp_data = super(SfpUtilCisco, self).get_eeprom_dict(port_num)
+            sfp_data = super(SfpUtilCisco, self).get_eeprom_dict(port_num)
+            xcvr_eeprom_rw_unlock(fd)
+        else:
+            sfp_data = super(SfpUtilCisco, self).get_eeprom_dict(port_num)
 
         if sfp_data is None:
             return sfp_data
@@ -342,7 +350,15 @@ class SfpUtil(SfpUtilCisco):
             sfp_log("Port:%d not present" % p) 
             return
 
+        # Acquire lock and ensure page zero is set
+        fd=xcvr_eeprom_rw_lock(p)
+        if fd is None:
+            sfp_log("Unable to acquire lock to get port type for port %d" % p)
+            return None
+        # set page 0 for port p
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (p + self.EEPROM_OFFSET, 0))
         eeprom_ifraw = self.get_eeprom_raw(p)
+        xcvr_eeprom_rw_unlock(fd)
         #sfp_log(eeprom_ifraw)
         if eeprom_ifraw is None:
             return
