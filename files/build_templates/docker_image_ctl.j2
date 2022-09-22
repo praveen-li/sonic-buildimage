@@ -355,6 +355,7 @@ start() {
 {%- endif %}
 {%- if docker_container_name == "telemetry" %}
         --cpus="0.3" --memory="400m" --oom-kill-disable \
+        -v /:/host:ro,rslave --pid="host" \
 {%- endif %}
 {%- if sonic_asic_platform == "mellanox" %}
 {%- if docker_container_name == "syncd" %}
