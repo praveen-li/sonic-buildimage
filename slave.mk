@@ -134,6 +134,14 @@ ifeq ($(SONIC_INCLUDE_SYSTEM_TELEMETRY),y)
 INCLUDE_SYSTEM_TELEMETRY = y
 endif
 
+ifeq ($(CONFIGURED_ARCH),armhf)
+        override INCLUDE_SYSTEM_TELEMETRY = n
+else
+ifeq ($(CONFIGURED_ARCH),arm64)
+        override INCLUDE_SYSTEM_TELEMETRY = n
+endif
+endif
+
 ifeq ($(SONIC_INCLUDE_RESTAPI),y)
 INCLUDE_RESTAPI = y
 endif
