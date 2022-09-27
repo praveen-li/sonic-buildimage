@@ -113,7 +113,6 @@
             "7": "7"
         }
     },
-## only for Linkedin template
 {% elif generate_dscp_to_pg_map is defined %}
     {{- generate_dscp_to_pg_map() }}
 {% elif (generate_dscp_to_tc_map is defined) and tunnel_qos_remap_enable %}
@@ -188,11 +187,9 @@
         }
     },
 {% endif %}
-
 {% if (generate_tc_to_dscp_map is defined) and tunnel_qos_remap_enable %}
     {{- generate_tc_to_dscp_map() }}
 {% endif %}
-
 {% if generate_scheduler_list is defined %}
 {{- generate_scheduler_list() }}
 {% else %}
@@ -269,10 +266,11 @@
 {% else %}
             "pfc_to_pg_map"   : "[PFC_PRIORITY_TO_PRIORITY_GROUP_MAP|AZURE]",
 {% endif %}
+{% endif %}
 {% if port in port_names_list_extra_queues %}
             "pfc_enable"      : "2,3,4,6",
 {% else %}
-            "pfc_enable"      : "{{ PFC_QUEUES|join(',') }}"
+            "pfc_enable"      : "{{ PFC_QUEUES|join(',') }}",
 {% endif %}
             "pfcwd_sw_enable" : "{{ PFC_QUEUES|join(',') }}"
         }{% if not loop.last %},{% endif %}
