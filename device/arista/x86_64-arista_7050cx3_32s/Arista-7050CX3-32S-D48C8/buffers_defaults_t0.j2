@@ -11,7 +11,7 @@
 {%- macro generate_buffer_pool_and_profiles() %}
     "BUFFER_POOL": {
         "ingress_lossless_pool": {
-            "size": "32669440",
+            "size": "32689152",
             "type": "ingress",
             "mode": "dynamic",
             "xoff": "2058240"
@@ -31,7 +31,7 @@
         "ingress_lossy_profile": {
             "pool":"[BUFFER_POOL|ingress_lossless_pool]",
             "size":"0",
-            "dynamic_th":"3"
+            "static_th":"32689152"
         },
         "egress_lossless_profile": {
             "pool":"[BUFFER_POOL|egress_lossless_pool]",
@@ -41,7 +41,13 @@
         "egress_lossy_profile": {
             "pool":"[BUFFER_POOL|egress_lossy_pool]",
             "size":"1792",
-            "dynamic_th":"-1"
+            "dynamic_th":"3"
         }
     },
+{%- endmacro %}
+
+{% import 'buffers_extra_queues.j2' as defs with context %}
+
+{%- macro generate_queue_buffers_with_extra_lossless_queues(port_names, port_names_require_extra_buffer) %}
+{{ defs.generate_queue_buffers_with_extra_lossless_queues(port_names, port_names_require_extra_buffer) }}
 {%- endmacro %}

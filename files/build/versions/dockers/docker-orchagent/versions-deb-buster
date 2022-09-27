@@ -22,12 +22,12 @@ libbsd0==0.9.1-2+deb10u1
 libc-dev-bin==2.28-10+deb10u1
 libc6-dev==2.28-10+deb10u1
 libcc1-0==8.3.0-6
-libdpkg-perl==1.19.7
+libdpkg-perl==1.19.8
 libdw1==0.176-1.1
 libedit2==3.1-20181209-1
-libexpat1-dev==2.2.6-2+deb10u4
+libexpat1-dev==2.2.6-2+deb10u5
 libgcc-8-dev==8.3.0-6
-libglib2.0-0==2.58.3-2+deb10u3
+libglib2.0-0==2.58.3-2+deb10u4
 libgomp1==8.3.0-6
 libgpm2==1.20.7-5
 libipt2==2.0-2
@@ -51,7 +51,7 @@ libswsscommon-dbg==1.0.0
 libtsan0==8.3.0-6
 libubsan1==8.3.0-6
 libunwind8==1.2.1-10~deb10u1
-linux-libc-dev==4.19.235-1
+linux-libc-dev==4.19.249-2
 make==4.2.1-1.2
 ndisc6==1.0.4-1
 ndppd==0.2.5-4+deb10u1

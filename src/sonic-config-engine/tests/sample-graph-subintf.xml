@@ -14,25 +14,6 @@
       <BGPSession>
         <MacSec>false</MacSec>
         <StartRouter>switch-t0</StartRouter>
-        <StartPeer>10.0.0.56</StartPeer>
-        <EndRouter>ARISTA01T1</EndRouter>
-        <EndPeer>10.0.0.57</EndPeer>
-        <Multihop>1</Multihop>
-        <HoldTime>180</HoldTime>
-        <KeepAliveTime>60</KeepAliveTime>
-      </BGPSession>
-      <BGPSession>
-        <StartRouter>switch-t0</StartRouter>
-        <StartPeer>FC00::71</StartPeer>
-        <EndRouter>ARISTA01T1</EndRouter>
-        <EndPeer>FC00::72</EndPeer>
-        <Multihop>1</Multihop>
-        <HoldTime>180</HoldTime>
-        <KeepAliveTime>60</KeepAliveTime>
-      </BGPSession>
-      <BGPSession>
-        <MacSec>false</MacSec>
-        <StartRouter>switch-t0</StartRouter>
         <StartPeer>10.0.0.58</StartPeer>
         <EndRouter>ARISTA02T1</EndRouter>
         <EndPeer>10.0.0.59</EndPeer>
@@ -70,12 +51,6 @@
         <a:ASN>65100</a:ASN>
         <a:Hostname>switch-t0</a:Hostname>
         <a:Peers>
-          <BGPPeer>
-            <Address>10.0.0.57</Address>
-            <RouteMapIn i:nil="true"/>
-            <RouteMapOut i:nil="true"/>
-            <Vrf i:nil="true"/>
-          </BGPPeer>
           <BGPPeer>
             <Address>10.0.0.59</Address>
             <RouteMapIn i:nil="true"/>
@@ -149,11 +124,6 @@
           <AttachTo>fortyGigE0/4</AttachTo>
           <SubInterface/>
         </PortChannel>
-        <PortChannel>
-          <Name>PortChannel1001</Name>
-          <AttachTo>fortyGigE0/1;fortyGigE0/2</AttachTo>
-          <SubInterface/>
-        </PortChannel>
       </PortChannelInterfaces>
       <VlanInterfaces>
         <VlanInterface>
@@ -163,6 +133,14 @@
           <VlanID>1000</VlanID>
           <Tag>1000</Tag>
           <Subnets>192.168.0.0/27</Subnets>
+        </VlanInterface>
+        <VlanInterface>
+          <Name>ab4</Name>
+          <AttachTo>fortyGigE0/8</AttachTo>
+          <DhcpRelays>192.0.0.1;192.0.0.2</DhcpRelays>
+          <VlanID>1001</VlanID>
+          <Tag>1001</Tag>
+          <Subnets>192.168.0.32/27</Subnets>
         </VlanInterface>
         <VlanInterface>
           <Name>kk1</Name>
@@ -221,16 +199,6 @@
         </IPInterface>
         <IPInterface>
           <Name i:nil="true"/>
-          <AttachTo>PortChannel1001</AttachTo>
-          <Prefix>10.0.0.57/31</Prefix>
-        </IPInterface>
-        <IPInterface>
-          <Name i:Name="true"/>
-          <AttachTo>PortChannel1001</AttachTo>
-          <Prefix>FC00::72/126</Prefix>
-        </IPInterface>
-        <IPInterface>
-          <Name i:nil="true"/>
           <AttachTo>ab1</AttachTo>
           <Prefix>192.168.0.1/27</Prefix>
         </IPInterface>
@@ -264,26 +232,6 @@
         <StartPort>fortyGigE0/8</StartPort>
         <Validate>true</Validate>
       </DeviceLinkBase>
-      <DeviceLinkBase i:type="DeviceInterfaceLink">
-        <ElementType>DeviceInterfaceLink</ElementType>
-        <Bandwidth>10000</Bandwidth>
-        <EndDevice>switch-t0</EndDevice>
-        <EndPort>fortyGigE0/1</EndPort>
-        <FlowControl>true</FlowControl>
-        <StartDevice>ARISTA05T1</StartDevice>
-        <StartPort>Ethernet1/32</StartPort>
-        <Validate>true</Validate>
-      </DeviceLinkBase>
-      <DeviceLinkBase i:type="DeviceInterfaceLink">
-        <ElementType>DeviceInterfaceLink</ElementType>
-        <Bandwidth>10000</Bandwidth>
-        <EndDevice>switch-t0</EndDevice>
-        <EndPort>fortyGigE0/2</EndPort>
-        <FlowControl>true</FlowControl>
-        <StartDevice>ARISTA06T1</StartDevice>
-        <StartPort>Ethernet1/33</StartPort>
-        <Validate>true</Validate>
-      </DeviceLinkBase>
       <DeviceLinkBase i:type="DeviceMgmtLink">
         <ElementType>DeviceMgmtLink</ElementType>
         <Bandwidth>1000</Bandwidth>
@@ -293,15 +241,6 @@
         <StartDevice>ChassisMTS1</StartDevice>
         <StartPort>mgmt0</StartPort>
         <Validate>true</Validate>
-      </DeviceLinkBase>
-      <DeviceLinkBase i:type="DeviceMgmtLink">
-      <ElementType>DeviceMgmtLink</ElementType>
-      <Bandwidth>1000</Bandwidth>
-      <EndDevice>switch-t0</EndDevice>
-      <EndPort>Management1</EndPort>
-      <StartDevice>switch-m0</StartDevice>
-      <StartPort>Management1</StartPort>
-      <Validate>true</Validate>
       </DeviceLinkBase>
     </DeviceInterfaceLinks>
     <Devices>

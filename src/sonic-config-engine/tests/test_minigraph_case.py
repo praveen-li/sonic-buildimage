@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import ipaddress
 
 import tests.common_utils as utils
 import minigraph
@@ -20,6 +21,8 @@ class TestCfgGenCaseInsensitive(TestCase):
         self.sample_graph = os.path.join(self.test_dir, 'simple-sample-graph-case.xml')
         self.sample_resource_graph = os.path.join(self.test_dir, 'sample-graph-resource-type.xml')
         self.sample_subintf_graph = os.path.join(self.test_dir, 'sample-graph-subintf.xml')
+        self.sample_simple_device_desc = os.path.join(self.test_dir, 'simple-sample-device-desc.xml')
+        self.sample_simple_device_desc_ipv6_only = os.path.join(self.test_dir, 'simple-sample-device-desc-ipv6-only.xml')
         self.port_config = os.path.join(self.test_dir, 't0-sample-port-config.ini')
 
     def run_script(self, argument, check_stderr=False):
@@ -350,6 +353,50 @@ class TestCfgGenCaseInsensitive(TestCase):
             utils.to_dict(output.strip()),
             expected_tunnel
         )
+        
+        # Validate tunnel config is as before when tunnel_qos_remap = disabled
+        sample_graph_disabled_remap = os.path.join(self.test_dir, 'simple-sample-graph-case-remap-disabled.xml')
+        argument = '-m "' + sample_graph_disabled_remap + '" -p "' + self.port_config + '" -v "TUNNEL"'
+
+        output = self.run_script(argument)
+        self.assertEqual(
+            utils.to_dict(output.strip()),
+            expected_tunnel
+        )
+
+        # Validate extra config is generated when tunnel_qos_remap = enabled
+        sample_graph_enabled_remap = os.path.join(self.test_dir, 'simple-sample-graph-case-remap-enabled.xml')
+        argument = '-m "' + sample_graph_enabled_remap + '" -p "' + self.port_config + '" -v "TUNNEL"'
+        expected_tunnel = {
+            "MuxTunnel0": {
+                "tunnel_type": "IPINIP",
+                "src_ip": "25.1.1.10",
+                "dst_ip": "10.1.0.32",
+                "dscp_mode": "pipe",
+                "encap_ecn_mode": "standard",
+                "ecn_mode": "copy_from_outer",
+                "ttl_mode": "pipe",
+                "decap_dscp_to_tc_map": "[DSCP_TO_TC_MAP|AZURE_TUNNEL]",
+                "decap_tc_to_pg_map": "[TC_TO_PRIORITY_GROUP_MAP|AZURE_TUNNEL]",
+                "encap_tc_to_dscp_map": "[TC_TO_DSCP_MAP|AZURE_TUNNEL]",
+                "encap_tc_to_queue_map": "[TC_TO_QUEUE_MAP|AZURE_TUNNEL]"
+            }
+        }
+
+        output = self.run_script(argument)
+        self.assertEqual(
+            utils.to_dict(output.strip()),
+            expected_tunnel
+        )
+
+        # Validate extra config for mux tunnel is generated automatically when tunnel_qos_remap = enabled
+        sample_graph_enabled_remap = os.path.join(self.test_dir, 'simple-sample-graph-case-remap-enabled-no-tunnel-attributes.xml')
+        argument = '-m "' + sample_graph_enabled_remap + '" -p "' + self.port_config + '" -v "TUNNEL"'
+        output = self.run_script(argument)
+        self.assertEqual(
+            utils.to_dict(output.strip()),
+            expected_tunnel
+        )
 
     def test_minigraph_mux_cable_table(self):
         argument = '-m "' + self.sample_graph + '" -p "' + self.port_config + '" -v "MUX_CABLE"'
@@ -407,5 +454,19 @@ class TestCfgGenCaseInsensitive(TestCase):
             expected_ports.sort()
         )
 
+    def test_parse_device_desc_xml_mgmt_interface(self):
+        # Regular device_desc.xml with both IPv4 and IPv6 mgmt address
+        result = minigraph.parse_device_desc_xml(self.sample_simple_device_desc)
+        mgmt_intf = result['MGMT_INTERFACE']
+        self.assertEqual(len(mgmt_intf.keys()), 2)
+        self.assertTrue(('eth0', '10.0.0.100/24') in mgmt_intf.keys())
+        self.assertTrue(('eth0', 'FC00:1::32/64') in mgmt_intf.keys())
+        self.assertTrue(ipaddress.ip_address(u'10.0.0.1') == mgmt_intf[('eth0', '10.0.0.100/24')]['gwaddr'])
+        self.assertTrue(ipaddress.ip_address(u'fc00:1::1') == mgmt_intf[('eth0', 'FC00:1::32/64')]['gwaddr'])
 
-    
+        # Special device_desc.xml with IPv6 mgmt address only
+        result = minigraph.parse_device_desc_xml(self.sample_simple_device_desc_ipv6_only)
+        mgmt_intf = result['MGMT_INTERFACE']
+        self.assertEqual(len(mgmt_intf.keys()), 1)
+        self.assertTrue(('eth0', 'FC00:1::32/64') in mgmt_intf.keys())
+        self.assertTrue(ipaddress.ip_address(u'fc00:1::1') == mgmt_intf[('eth0', 'FC00:1::32/64')]['gwaddr'])

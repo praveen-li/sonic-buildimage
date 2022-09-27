@@ -183,7 +183,7 @@ define GET_MOD_DEP_SHA
 	$(if $($(1)_DEP_FILES_MISSING), $(warning "[ DPKG ] Dependecy file(s) are not found for $(1) : $($(1)_DEP_FILES_MISSING)))
 
 	# Include package dependencies hash values into package hash calculation
-	$(eval $(1)_DEP_PKGS_SHA := $(foreach dfile,$(1)_MOD_DEP_PKGS,$(dfile)_DEP_MOD_SHA $(dfile)_MOD_HASH))
+	$(eval $(1)_DEP_PKGS_SHA := $(foreach dfile,$($(1)_MOD_DEP_PKGS),$($(dfile)_DEP_MOD_SHA) $($(dfile)_MOD_HASH)))
 
 	$(eval $(1)_DEP_MOD_SHA := $(shell bash -c "git hash-object  $($(1)_DEP_MOD_SHA_FILES) && echo $($(1)_DEP_PKGS_SHA)" \
                             | sha1sum | awk '{print substr($$1,0,23);}'))
@@ -558,6 +558,12 @@ define SHA_DEP_RULES
 ALL_DEP_FILES_LIST += $(foreach pkg,$(2), $($(filter none,$($(1)_CACHE_MODE)), \
                       $(addsuffix .$(3),$(addprefix $(pkg)/, $(1))) \
                       $(addsuffix .$(3).sha,$(addprefix $(pkg)/, $(1)))))
+$(foreach docker, $(filter $(SONIC_DOCKER_IMAGES), $(1)), \
+	$(eval $(docker)_DEP_FILES+=$(wildcard files/build/versions/default/*) \
+	$(wildcard files/build/versions/dockers/$(basename $(docker))/*)))
+$(foreach docker, $(filter $(SONIC_DOCKER_DBG_IMAGES), $(1)), \
+	$(eval $(docker)_DEP_FILES+=$(wildcard files/build/versions/default/*) \
+	$(wildcard files/build/versions/dockers/$(patsubst %-$(DBG_IMAGE_MARK).gz,%,$(docker))/*)))
 $(addsuffix .$(3),$(addprefix $(2)/, $(1))) : $(2)/%.$(3) : \
 	$(2)/%.flags $$$$($$$$*_DEP_FILES) $$$$(if $$$$($$$$*_SMDEP_FILES), $(2)/%.smdep)
 	@$$(eval $$*_DEP_FILES_MODIFIED := $$? )
