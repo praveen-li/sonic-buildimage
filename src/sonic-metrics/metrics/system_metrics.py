@@ -14,15 +14,15 @@
 """
 
 try:
-    import subprocess
-    import shlex
-    import threading
     import os
+    import shlex
+    import subprocess
+    import threading
     import time
 
-    from swsssdk import SonicV2Connector, ConfigDBConnector
     from metrics import util
     from metrics.logger import Logger
+    from swsssdk import ConfigDBConnector, SonicV2Connector
 
 except ImportError as e:
     raise ImportError(str(e) + " - required module not found")
@@ -58,8 +58,7 @@ class SystemInfoUpdateTask(object):
         self.task_stopping_event = threading.Event()
         self._db = None
 
-
-    def get_localhost_info(self,field):
+    def get_localhost_info(self, field):
         try:
             config_db = ConfigDBConnector()
             config_db.connect()
@@ -73,20 +72,17 @@ class SystemInfoUpdateTask(object):
 
         return None
 
-
     def get_hostname(self):
         '''
         Get system Name
         '''
         return self.get_localhost_info('hostname')
 
-
     def get_hwsku(self):
         '''
         Get system HWSKU
         '''
         return self.get_localhost_info('hwsku')
-
 
     def get_sys_uptime(self):
         '''
@@ -107,7 +103,6 @@ class SystemInfoUpdateTask(object):
             log.error("Cannot get Uptime with error {}".format(e))
             return
 
-
     def get_build_info(self):
         '''
         Get sonic info using sonic_version.yml file
@@ -115,6 +110,46 @@ class SystemInfoUpdateTask(object):
         sys_build_info = util.get_sonic_version_info()
         return sys_build_info
 
+    def get_all_docker_version(self):
+        '''
+        Get All docker version info
+        return: name_var_map <dict()>
+        '''
+        try:
+            output = [
+                [i.strip() for i in line.split('  ') if i.strip()]
+                for line in subprocess.check_output(
+                    ['docker', 'images', '--format',
+                        'table {{.Repository}}\\t{{.Tag}}\\t{{.ID}}']
+                ).splitlines()
+            ]
+
+            dock_nameIdx_var, name_var_map = {}, {}
+
+            # Remove the header [REPOSITORY | TAG | IMAGE ID]
+            for dock in output[1:]:
+                name, tag, idx = dock
+
+                # ID with docker name to filter the latest tag later
+                name_idx = str(name) + "|" + str(idx)
+                if name_idx in dock_nameIdx_var.keys():
+                    dock_nameIdx_var[name_idx].append(tag)
+                else:
+                    dock_nameIdx_var[name_idx] = [tag]
+
+            # Remove 'latest' tag to filter actual docker tag.
+            for name_idx, tag in dock_nameIdx_var.items():
+                if len(tag) == 2 and 'latest' in tag:
+                    name = name_idx.split("|")[0]
+                    tag.remove('latest')
+                    name_var_map[name] = ''.join(tag)
+
+        except Exception as e:
+            log.error(
+                "Error occurred while parsing docker version info, Error:{}".format(e))
+            return
+
+        return name_var_map
 
     def get_sys_desc(self):
         '''
@@ -138,10 +173,10 @@ class SystemInfoUpdateTask(object):
 
         # Get Description of the system and sw running
         sys_Desc_info = "SONiC Software Version: SONiC.{} - HwSku: {} - Distribution: Debian {}". \
-                        format(build_version, hwsku, debian_version, kernel_version)
+                        format(build_version, hwsku,
+                               debian_version, kernel_version)
 
         return sys_Desc_info
-
 
     def get_run_config_modify_time(self):
         '''
@@ -154,12 +189,11 @@ class SystemInfoUpdateTask(object):
             log.error("{} file not Exist".format(RUN_CFG_FILE))
         return last_modified_time
 
-
     def update_system_info(self):
         '''
         Update system information and uptime to state DB under SYSTEM_INFO_TABLE table
         '''
-        stat_key =  SYSTEM_INFO_TABLE + "|{}".format(STAT_KEY)
+        stat_key = SYSTEM_INFO_TABLE + "|{}".format(STAT_KEY)
 
         # Get system uptime
         output = self.get_sys_uptime()
@@ -183,14 +217,15 @@ class SystemInfoUpdateTask(object):
 
         # Create fv_map with help of `sonic_version.yml` data file
         fv_map = dict()
-        field_list = [ 'build_version', 'debian_version', 'kernel_version', 'asic_type']
+        field_list = ['build_version', 'debian_version',
+                      'kernel_version', 'asic_type']
 
         sys_desc_info = self.get_sys_desc()
         if not sys_desc_info:
             log.error("Unable to get system description info")
             return
-        self._db.set(self._db.STATE_DB, stat_key, SYS_DESC_FIELD, sys_desc_info)
-
+        self._db.set(self._db.STATE_DB, stat_key,
+                     SYS_DESC_FIELD, sys_desc_info)
 
         sys_build_info = self.get_build_info()
         # Get System info about build_version, debian_version, kernel_version, asic_type
@@ -198,8 +233,17 @@ class SystemInfoUpdateTask(object):
             fv_map[field] = sys_build_info[field]
 
         if len(fv_map.keys()) == 0:
-            log.error("Key Value is missing. Available keys:{}".format(fv_map.keys()))
+            log.error(
+                "Key Value is missing. Available keys:{}".format(fv_map.keys()))
             return
+
+        # Get All Docker info
+        dock_ver_info = self.get_all_docker_version()
+
+        # Store docker version info to 'SYSTEM_INFO' table.
+        if dock_ver_info:
+            for name, ver in dock_ver_info.items():
+                self._db.set(self._db.STATE_DB, stat_key, name, ver)
 
         # Store system build info to 'SYSTEM_INFO' table.
         for field, value in fv_map.items():
@@ -207,7 +251,7 @@ class SystemInfoUpdateTask(object):
 
         changed_time = ''
         cur_time = time.time()
-        modified_time =  self.get_run_config_modify_time()
+        modified_time = self.get_run_config_modify_time()
         if modified_time:
             changed_time = cur_time - modified_time
         else:
@@ -215,8 +259,8 @@ class SystemInfoUpdateTask(object):
             return
 
         # Store the value of sysUpTime when the running configuration was last changed
-        self._db.set(self._db.STATE_DB, stat_key, RUN_CONF_CHANGED_FIELD, changed_time)
-
+        self._db.set(self._db.STATE_DB, stat_key,
+                     RUN_CONF_CHANGED_FIELD, changed_time)
 
     def task_worker(self):
         # Start loop to update system info in DB periodically
@@ -227,7 +271,6 @@ class SystemInfoUpdateTask(object):
 
         log.info("Stop system info update loop")
 
-
     def task_run(self, db):
         if self.task_stopping_event.is_set():
             return
@@ -235,7 +278,6 @@ class SystemInfoUpdateTask(object):
         self._db = db
         self.task_thread = threading.Thread(target=self.task_worker)
         self.task_thread.start()
-
 
     def task_stop(self):
         self.task_stopping_event.set()
