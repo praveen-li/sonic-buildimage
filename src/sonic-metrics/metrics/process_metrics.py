@@ -16,6 +16,7 @@
 try:
     import psutil
     import json
+    import yaml
     import ast
     import subprocess
     import shlex
@@ -23,6 +24,7 @@ try:
     import os
     import re
     import threading
+    import operator
     from datetime import datetime
 
     from swsssdk import SonicV2Connector
@@ -42,10 +44,17 @@ log = Logger(SYSLOG_IDENTIFIER)
 log.set_priority_info()
 
 CRITICAL_PROCESSES_FILE = os.path.join(os.path.dirname(__file__), 'data/critical_process_file.json')
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'data/config.yml')
 
 PROCESS_INFO_TABLE = 'PROCESS_INFO'
+TOP_PROC_SORTBY_CPU_TABLE = 'TOP_PROCESS_SORTBY_CPU'
+TOP_PROC_SORTBY_MEMORY_TABLE = 'TOP_PROCESS_SORTBY_MEMORY'
 PROCESS_INFO_UPDATE_PERIOD_SECS = 30
 DEFAULT_REL_VERSION = '3'
+PROC_NAME_MAX_SLICE = 4
+PROC_NAME_MAX_CHAR = 30
+DEFAULT_PROCESS_LOOP = 10
+TABLE_NAME_SEPARATOR = '|'
 
 # Process State definition
 STATE_RUNNING = 1
@@ -79,6 +88,23 @@ class ProcessInfoUpdateTask(object):
             log.error("Json file {} does not exist".format(filename))
             return
 
+    def load_config_file(self):
+        try:
+            with open(CONFIG_FILE) as conf_file:
+                confInfo = yaml.load(conf_file, Loader=yaml.FullLoader)
+            return confInfo
+        except IOError as e:
+            log.error("Error: {}".format(str(e)))
+            log.error("Not found config file, please add a config file manually")
+            return
+
+    def get_full_procName(self, proc):
+        cmdline = proc.cmdline()
+        if proc.name().startswith('python'):
+            # Get full process name within the list slice and char limitation
+            proc_name_full = ' '.join(cmdline[:PROC_NAME_MAX_SLICE])
+            return proc_name_full[:PROC_NAME_MAX_CHAR]
+        return proc.name()
 
     def checkIfProcessRunning(self, processName):
         '''
@@ -161,13 +187,105 @@ class ProcessInfoUpdateTask(object):
                 if pid is None:
                     log.error("Unable to get PID info")
                     return
-                p = psutil.Process(pid)
-                elapsedTime = time.time() - p.create_time()
+                try:
+                    p = psutil.Process(pid)
+                    elapsedTime = time.time() - p.create_time()
+                except:
+                    log.info("Process {} not found".format(process))
+                    pass
             else:
                 elapsedTime = "N/A"
 
             # Store uptime info to each process table.
             self._db.set(self._db.STATE_DB, proc_key, "up_time", elapsedTime)
+
+    def get_process_list_sorted_by_cpu(self, allProcList):
+        '''
+        Get list of running process sorted by CPU Usage
+        '''
+        sorted_by_cpu_procs = []
+
+        # Sort list of dict by key cpu_percent i.e. cpu usage
+        sorted_by_cpu_procs = sorted(allProcList, key=lambda procObj: procObj['cpu_percent'], reverse=True)
+        return sorted_by_cpu_procs
+
+    def get_process_list_sorted_by_memory(self, allProcList):
+        '''
+        Get list of running process sorted by Memory Usage
+        '''
+        sorted_by_memory_procs = []
+
+        # Sort list of dict by key vms i.e. memory usage
+        sorted_by_memory_procs = sorted(allProcList, key=lambda procObj: procObj['vms'], reverse=True)
+        return  sorted_by_memory_procs
+
+
+    def update_top_process(self):
+        '''
+        Top Talker: Update top n process to state DB
+        -.-.-.-.-.-
+        1. Update top n process sort by CPU under TOP_PROCESS_SORTBY_MEMORY table
+        2. Update top n process sort by Memory under TOP_PROCESS_SORTBY_CPU table
+        '''
+        confInfo = self.load_config_file()
+        if not confInfo:
+            log.error("Error occurred while parsing config file {}".format(CONFIG_FILE))
+            log.info("Taking deafult value instead: {}".format(DEFAULT_PROCESS_LOOP))
+            process_loop = int(DEFAULT_PROCESS_LOOP)
+        else:
+            # Configurable Process Loop; otherwise take default value
+            process_loop = int(confInfo.get('process_loop', DEFAULT_PROCESS_LOOP))
+
+        # Return an iterator yielding a Process class for all running processes
+        psutil.cpu_percent(interval=None)
+        procs = psutil.process_iter()
+        allProcList = []
+        for proc in procs:
+            try:
+                procInfo = proc.as_dict(attrs=['name', 'memory_percent', 'memory_info', 'cpu_percent'])
+                procInfo['name'] =  self.get_full_procName(proc)
+                procInfo['vms'] = proc.memory_info().vms / (1024 * 1024)
+                procInfo['cpu_percent'] = proc.cpu_percent(0.5)
+                allProcList.append(procInfo)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+
+        listOfProcPerCPU = self.get_process_list_sorted_by_cpu(allProcList)
+        listOfProcPerMemory = self.get_process_list_sorted_by_memory(allProcList)
+
+        # Wipe out 'TOP_PROCESS_SORTBY_MEMORY' table from state_db before updating
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "TOP_PROCESS_SORTBY_MEMORY|*")
+
+        mem_proc_loop = 1
+        for elem in  listOfProcPerMemory[:process_loop]:
+            # Create 'TOP_PROCESS_SORTBY_MEMORY' table with process name.
+
+            proc_name, memory_percent = elem['name'], elem['memory_percent']
+            mem_pos_key = TABLE_NAME_SEPARATOR + "memory_top{}".format(str(mem_proc_loop))
+            mem_procname_key = TABLE_NAME_SEPARATOR + str(proc_name)
+            proc_key =  TOP_PROC_SORTBY_MEMORY_TABLE + mem_pos_key + mem_procname_key
+
+            # Connect to STATE_DB, Add process key with Name and Store memory percent info.
+            self._db.set(self._db.STATE_DB, proc_key, "memory_percent", memory_percent)
+
+            mem_proc_loop += 1
+
+        # Wipe out 'TOP_PROCESS_SORTBY_CPU' table from state_db before updating
+        self._db.delete_all_by_pattern(self._db.STATE_DB, "TOP_PROCESS_SORTBY_CPU|*")
+
+        cpu_proc_loop = 1
+        for elem in  listOfProcPerCPU[:process_loop]:
+
+            # Create 'TOP_PROCESS_SORTBY_CPU' table with process name.
+            proc_name, cpu_percent =   elem['name'], elem['cpu_percent']
+            cpu_pos_key = TABLE_NAME_SEPARATOR + "cpu_top{}".format(str(cpu_proc_loop))
+            cpuproc_name_key = TABLE_NAME_SEPARATOR + str(proc_name)
+            proc_key =  TOP_PROC_SORTBY_CPU_TABLE + cpu_pos_key + cpuproc_name_key
+
+            # Connect to STATE_DB, Add process key with Name and Store CPU percent info.
+            self._db.set(self._db.STATE_DB, proc_key, "cpu_percent", cpu_percent)
+
+            cpu_proc_loop += 1
 
 
     def task_worker(self):
@@ -176,6 +294,7 @@ class ProcessInfoUpdateTask(object):
 
         while not self.task_stopping_event.wait(PROCESS_INFO_UPDATE_PERIOD_SECS):
             self.update_process_info()
+            self.update_top_process()
 
         log.info("Stop process info update loop")
 

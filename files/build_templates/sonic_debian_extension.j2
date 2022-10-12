@@ -873,8 +873,14 @@ sudo LANG=C chroot $FILESYSTEM_ROOT /tmp/mask_disabled_services.py
 sudo rm -rf $FILESYSTEM_ROOT/tmp/mask_disabled_services.py
 
 # Install ssd tool for Intel SSD
-sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/intelmas_1.6.122-0_amd64.deb
+# Ignore ssd package if platform arch is armhf or arm64
+if ! [[ $CONFIGURED_ARCH == armhf || $CONFIGURED_ARCH == arm64 ]]; then
+    sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/intelmas_1.6.122-0_amd64.deb
+fi
 
 # LinkedIn Specific PKGs
 sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip2 install docker-py==1.10.6
-sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install cryptography==2.6.1
+# Ignore cryptography package if platform arch is armhf or arm64 needed for TELEMETRY setup in NASA
+if ! [[ $CONFIGURED_ARCH == armhf || $CONFIGURED_ARCH == arm64 ]]; then
+    sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install cryptography==2.6.1
+fi

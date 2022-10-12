@@ -7,5 +7,5 @@ NODE_EXPORTER_TEXT_COLL_DIR="/var/lib/node_exporter/textfile_collector"
 mkdir -p $NODE_EXPORTER_TEXT_COLL_DIR
 
 # Start with default config
-NODE_EXPORTER_OPTS="--collector.textfile.directory $NODE_EXPORTER_TEXT_COLL_DIR"
+NODE_EXPORTER_OPTS="--collector.textfile.directory $NODE_EXPORTER_TEXT_COLL_DIR --path.rootfs=/host"
 exec /usr/sbin/node_exporter $NODE_EXPORTER_OPTS
