@@ -4,7 +4,7 @@ ifcs:
 nodes:
 - node_id: "0"
   options:
-    sku: "innovium.77700_B"
+    sku: "innovium.77700_A"
     buffer_management_mode: "api_driven"
     pt01: "768"
     wred_cr_ip_proto_list: "17"
