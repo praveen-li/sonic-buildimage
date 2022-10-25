@@ -230,7 +230,7 @@ class Fan(FanBase):
                     return False
                 if self.psu['is_fan_sw_controllable'] == False:
                     return False
-                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' ' + str(hex(speed)) + ' w'
+                run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' ' + str(hex(int(speed))) + ' w'
                 os.system(run_cmd)
                 self._target_speed = int(speed)
                 return status

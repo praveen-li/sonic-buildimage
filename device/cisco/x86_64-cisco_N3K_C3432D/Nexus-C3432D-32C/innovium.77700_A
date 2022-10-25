@@ -1,4 +1,4 @@
-sku:               innovium.77700_B
+sku:               innovium.77700_A
 
 device_id:         0x1b58
 
@@ -14,7 +14,7 @@ hardware:
         mgmt_port_num:     33
         mgmt_port_ibs:     1,2
 
-        pics_per_ib:       6, 7, 7, 6, 5, 5
+        pics_per_ib:       6, 7, 6, 5, 5, 5
         pic_ports_per_pic: 8
         max_serdes_speed:  50
 
@@ -45,13 +45,13 @@ hardware:
             pic_id: [0-4]
 
         isg 15:
-            mode: 4:4
-            ib: 1, 3
+            mode: 8:0
+            ib: 1
             pic_id: 5
 
         isg 31:
-            mode: 4:4
-            ib: 0, 2
+            mode: 8:0
+            ib: 0
             pic_id: 5
 
         isg 32:
