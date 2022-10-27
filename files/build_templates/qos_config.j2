@@ -55,7 +55,9 @@
 {%- set require_global_dscp_to_tc_map = true -%}
 
 {
-{% if (generate_tc_to_pg_map is defined) and tunnel_qos_remap_enable %}
+{% if generate_tc_to_pg_map_li is defined %}
+    {{- generate_tc_to_pg_map_li() }}
+{% elif (generate_tc_to_pg_map is defined) and tunnel_qos_remap_enable %}
     {{- generate_tc_to_pg_map() }}
 {% else %}
     "TC_TO_PRIORITY_GROUP_MAP": {
@@ -246,6 +248,7 @@
             "dscp_to_tc_map"  : "[DSCP_TO_TC_MAP|AZURE]"
         }{% if PORT_ACTIVE %},{% endif %}
 {% endif %}
+
 {% for port in PORT_ACTIVE %}
         "{{ port }}": {
 {% if 'type' in DEVICE_METADATA['localhost'] and DEVICE_METADATA['localhost']['type'] in backend_device_types and 'storage_device' in DEVICE_METADATA['localhost'] and DEVICE_METADATA['localhost']['storage_device'] == 'true' %}
