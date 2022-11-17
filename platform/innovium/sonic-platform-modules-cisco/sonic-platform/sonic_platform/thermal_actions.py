@@ -122,12 +122,12 @@ class ThermalControlActiveAction(ThermalPolicyActionBase):
                     ThermalControlActiveAction.THERMAL_DEFAULT_MIN_TEMP)
             max_temperature_threshold = platform_globals.get_param(PlatformGlobalData.KEY_MAX_TEMP, 
                     ThermalControlActiveAction.THERMAL_DEFAULT_MAX_TEMP)
-            if fan_direction == FanBase.FAN_DIRECTION_INTAKE:
+            if fan_direction == FanBase.FAN_DIRECTION_EXHAUST:
                 min_fan_speed = platform_globals.get_param(PlatformGlobalData.KEY_MIN_BLUE_FANS_SPEED,
                         ThermalControlActiveAction.THERMAL_DEFAULT_MIN_SPEED)
                 max_fan_speed = platform_globals.get_param(PlatformGlobalData.KEY_MAX_BLUE_FANS_SPEED, 
                         ThermalControlActiveAction.THERMAL_DEFAULT_MAX_SPEED)
-            elif fan_direction == FanBase.FAN_DIRECTION_EXHAUST:
+            elif fan_direction == FanBase.FAN_DIRECTION_INTAKE:
                 min_fan_speed = platform_globals.get_param(PlatformGlobalData.KEY_MIN_RED_FANS_SPEED,
                         ThermalControlActiveAction.THERMAL_DEFAULT_MIN_SPEED)
                 max_fan_speed = platform_globals.get_param(PlatformGlobalData.KEY_MAX_RED_FANS_SPEED, 

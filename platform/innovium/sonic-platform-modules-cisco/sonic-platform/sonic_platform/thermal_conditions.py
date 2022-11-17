@@ -90,7 +90,7 @@ class AnyFanFaultCondition(FanCondition):
         return len(fan_info_obj.get_fault_fans()) > 0 if fan_info_obj else False
 
 @thermal_json_object('fan.all.fault')
-class AnyFanFaultCondition(FanCondition):
+class AllFanFaultCondition(FanCondition):
     def is_match(self, thermal_info_dict):
         fan_info_obj = self.get_fan_info(thermal_info_dict)
         if fan_info_obj and len(fan_info_obj.get_absence_fans()) == 0:
@@ -99,7 +99,7 @@ class AnyFanFaultCondition(FanCondition):
         return False
 
 @thermal_json_object('fan.all.good')
-class AnyFanFaultCondition(FanCondition):
+class AllFanGoodCondition(FanCondition):
     def is_match(self, thermal_info_dict):
         fan_info_obj = self.get_fan_info(thermal_info_dict)
         if fan_info_obj and len(fan_info_obj.get_absence_fans()) == 0:

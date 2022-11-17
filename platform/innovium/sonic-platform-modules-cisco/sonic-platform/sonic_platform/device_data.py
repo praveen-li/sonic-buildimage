@@ -8,7 +8,7 @@ DEVICE_DATA = {
             #Thermal thresholds
             'min_temperature' : 55.0,
             'max_temperature' : 85.0,
-            'min_blue_fans_speed' : 80,
+            'min_blue_fans_speed' : 60,
             'min_red_fans_speed' : 60,
             'max_blue_fans_speed' : 100,
             'max_red_fans_speed' : 100,
@@ -22,7 +22,7 @@ DEVICE_DATA = {
             'thermal_high_thresh_hysteresis' : 5.0,
             'thermal_crit_thresh_hysteresis' : 10.0,
             'blue_fans_inlet_temp_low_threshold' : 25.0,
-            'red_fans_inlet_temp_low_threshold' : 25.0,
+            'red_fans_inlet_temp_low_threshold' : 35.0,
             'blue_fans_inlet_temp_high_threshold' : 35.0,
             'red_fans_inlet_temp_high_threshold' : 35.0,
             'reboot_gpio' : 133,
