@@ -145,10 +145,9 @@ class ThermalControlActiveAction(ThermalPolicyActionBase):
         else:
             new_fan_speed = min_fan_speed + ((temperature - min_temperature_threshold) * (max_fan_speed - min_fan_speed) / (max_temperature_threshold - min_temperature_threshold))
 
-        for fan_drawer in chassis_info_obj.get_chassis().get_all_fan_drawers():
-            for fan in fan_drawer.get_all_fans():
-                presence = fan.get_presence()
-                if presence:
-                    fan.set_speed(new_fan_speed)
+        for fan in fan_info_obj.get_presence_fans():
+            fan.set_speed(new_fan_speed)
 
+        for psu_fan_num in fan_info_obj.get_updated_psu_fans():
+            psu_fan_num.set_speed(new_fan_speed)
 

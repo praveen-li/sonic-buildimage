@@ -39,6 +39,7 @@ class Fan(FanBase):
         self._fan_path = "/sys/bus/i2c/devices/{}-{}/hwmon/"
         self._status_path = "fan{}_alarm"
         self._speed_path = "fan{}_input"
+        self._power_path = "in{}_input"
         self._pwm_path = "pwm{}"
         self._led_path = "/sys/class/leds/{}"
         self._g_led_path = "/sys/class/leds/fan{}:green/brightness"
@@ -56,6 +57,7 @@ class Fan(FanBase):
             self.fan_path = self._fan_path.format(psu['bus'], psu['addr'])
             self.status_path = self._status_path.format(1)
             self.speed_path  = self._speed_path.format(1)
+            self.power_path = self._power_path.format(1)
             self._name = "PSU{}-FAN{}".format(self.index, 1)
             self.pwm_path = None
             self.pre_path = self._gpio_path.format(psu['gpio'])
@@ -70,6 +72,7 @@ class Fan(FanBase):
             self.fan_path = self._fan_path.format(fan_data['bus'], fan_data['addr'])
             self.status_path = self._status_path.format(fan_data['input_index'])
             self.speed_path  = self._speed_path.format(fan_data['input_index'])
+            self.power_path = None
             self.pwm_path = None
             self.pre_path = self._gpio_path.format(fan_data['gpio_presence'])
             self.dir_path = self._gpio_path.format(fan_data['gpio_direction'])
@@ -118,6 +121,28 @@ class Fan(FanBase):
         else :
             return False
 
+    def get_power_status(self):
+        status = 0
+        if self.is_psu_fan:
+            if not os.path.exists(self.fan_path):
+                return False
+
+            for dirname in os.listdir(self.fan_path):
+                if fnmatch.fnmatch(dirname, 'hwmon?'):
+                    filename = self.fan_path + dirname + '/' + self.power_path
+                    break
+            if filename is None:
+                return False
+            if not os.path.exists(filename):
+                return False
+
+            status = read_int_from_file(filename)
+            if status == 0:
+                return False
+            else:
+                status = 1
+        return status == 1
+
     def get_speed_rpm(self):
         speed = 0
         if self.get_presence() :
@@ -158,6 +183,8 @@ class Fan(FanBase):
                     return "N/A"
                 if self.psu['is_fan_sw_controllable'] == False:
                     return "N/A"
+                if self.get_power_status() == False:
+                    return "N/A"
                 try:
                     cmd = '/usr/sbin/i2cget -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' w'
                     ph = subprocess.Popen([cmd],
@@ -195,6 +222,8 @@ class Fan(FanBase):
                 if self.psu is None:
                     return "N/A"
                 if self.psu['is_fan_sw_controllable'] == False:
+                    return "N/A"
+                if self.get_power_status() == False:
                     return "N/A"
                 try:
                     cmd = '/usr/sbin/i2cget -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' w'
@@ -235,6 +264,8 @@ class Fan(FanBase):
                 if self.psu is None:
                     return False
                 if self.psu['is_fan_sw_controllable'] == False:
+                    return False
+                if self.get_power_status() == False:
                     return False
                 run_cmd = '/usr/sbin/i2cset -y -f ' + str(self.psu_bus) + ' 0x' + str(self.psu_addr) + ' 0x' + self.fan_cmd + ' ' + str(hex(int(speed))) + ' w'
                 os.system(run_cmd)
