@@ -369,6 +369,7 @@ class qsfpddDom(qsfp_dd_Dom):
             'cisco': { 'upage': 0x3, 'offset': 154, 'bit' : 0 , 'type': 'bitvalue' }
             }
 
+    vendor_name = {'offset': 129, 'size': 16, 'type': 'str'}
     mod_media_type_field = { 'offset': 85, 'type': 'int' }
     appl_adv_apsel1_mid_field = { 'offset': 87, 'type': 'int' }
 
@@ -731,10 +732,10 @@ class qsfpddDom(qsfp_dd_Dom):
             # TODO: Remove this check once we no longer support Python 2
             if type(raw) == bytes:
                 for n in range(0, num_bytes):
-                    eeprom_raw[n] = hex(raw[n])[2:].zfill(2)
+                    eeprom_raw[offset+n] = hex(raw[n])[2:].zfill(2)
             else:
                 for n in range(0, num_bytes):
-                    eeprom_raw[n] = hex(ord(raw[n]))[2:].zfill(2)
+                    eeprom_raw[offset+n] = hex(ord(raw[n]))[2:].zfill(2)
         except Exception:
             return None
 
@@ -745,8 +746,8 @@ class qsfpddDom(qsfp_dd_Dom):
         sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
 
         page = None
-        offset=0
-        num_bytes=256
+        offset=128
+        num_bytes=128
         if 'upage' in eeprom_ele:
 
             page = eeprom_ele.get('upage')
@@ -766,7 +767,8 @@ class qsfpddDom(qsfp_dd_Dom):
             else:
                 #Error no lower page?
                 sfp_log("Lower page not cached")
-                return None
+                self.page_data['lpage'] = self.get_lower_page()
+                return self.page_data['lpage']
 
         fd=xcvr_eeprom_rw_lock(self.port)
         if fd is None:
@@ -782,6 +784,31 @@ class qsfpddDom(qsfp_dd_Dom):
             #self.page_data['lpage'] = eeprom_raw
         return eeprom_raw
 
+    # Read only specific bytes in page and fill remaining with 0x0 to optimimze eeprom access
+    def get_qsfpdd_page_data_v2(self, eeprom_ele, start_pos):
+
+        sysfs_eeprom_path="/sys/bus/i2c/devices/%d-0050/eeprom" % (self.port + self.PORT_START)
+
+        page = 0
+        offset = start_pos
+        num_bytes = 1
+
+        if 'upage' in eeprom_ele:
+            page = eeprom_ele.get('upage')
+        if 'offset' in eeprom_ele:
+            offset = eeprom_ele.get('offset') + start_pos
+        if 'size' in eeprom_ele:
+            num_bytes = eeprom_ele.get('size')
+
+        fd=xcvr_eeprom_rw_lock(self.port)
+        if fd is None:
+            logger.log_error("Unable to acquire lock to get qsfpdd page data for port {} page {}".format(self.port, page))
+            return None
+        #set page
+        os.system("/usr/sbin/i2cset -y -f %d 0x50 127 %d b" % (self.port + self.PORT_START, page))
+        eeprom_raw = self.read_bytes(sysfs_eeprom_path, offset, num_bytes)
+        xcvr_eeprom_rw_unlock(fd)
+        return eeprom_raw
 
     def parse_sff_element(self, eeprom_data, eeprom_ele, start_pos):
 
@@ -794,7 +821,7 @@ class qsfpddDom(qsfp_dd_Dom):
                 return 'N/A'
 
 
-        eeprom_data = self.get_qsfpdd_page_data(eeprom_ele, start_pos)
+        eeprom_data = self.get_qsfpdd_page_data_v2(eeprom_ele, start_pos)
         if eeprom_data is not None:
             return super(qsfpddDom, self).parse_sff_element(eeprom_data, eeprom_ele, start_pos)
         return None
@@ -816,19 +843,20 @@ class qsfpddDom(qsfp_dd_Dom):
         self.page_data = {}
         self.sfp_data = sfp_data
         self.type_use = 'cmis'
+        self.port = port
 
         try:
             if self.sfp_data is not None:
                 vendor = self.sfp_data['interface']['data']['Vendor Name'];
+            else:
+                vendor = self.parse_sff_element(None, self.vendor_name, start_pos)
+            if vendor is not None:
                 if re.match("^CISCO-", vendor) is not None:
                     self.type_use = 'cisco'
         except KeyError:
             pass
 
         sfp_log("Use type:%s" % self.type_use)
-
-        self.port = port
-        self.page_data['lpage'] = self.get_lower_page()
 
         media_type = self.parse_sff_element(None, self.mod_media_type_field , start_pos)
         if  media_type != 0x1 and media_type != 0x2:

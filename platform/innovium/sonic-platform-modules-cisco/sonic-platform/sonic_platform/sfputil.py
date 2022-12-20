@@ -1277,11 +1277,7 @@ class SfpUtil(SfpUtilBase):
                                   'tx7power',       'tx8power'
                                  ]
             transceiver_dom_info_dict = dict.fromkeys(dom_info_dict_keys, 'N/A')
-            offset = 0
-            sfp_data = self.get_eeprom_dict(port_num)
-            if sfp_data is None:
-                return transceiver_dom_info_dict
-            sfpd_obj = qsfpddDom(port_num, sfp_data)
+            sfpd_obj = qsfpddDom(port_num)
             if sfpd_obj is None:
                 return transceiver_dom_info_dict
 
@@ -1378,11 +1374,7 @@ class SfpUtil(SfpUtilBase):
                                   'txbiaslowalarm',   'txbiaslowwarning'
                                  ]
             transceiver_dom_threshold_info_dict = dict.fromkeys(dom_info_dict_keys, 'N/A')
-            offset = 0
-            sfp_data = self.get_eeprom_dict(port_num)
-            if sfp_data is None:
-                return transceiver_dom_threshold_info_dict
-            sfpd_obj = qsfpddDom(port_num, sfp_data)
+            sfpd_obj = qsfpddDom(port_num)
             if sfpd_obj is None:
                 return transceiver_dom_threshold_info_dict
 
