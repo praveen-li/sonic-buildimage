@@ -33,9 +33,9 @@ module sonic-portchannel {
 
 			list PORTCHANNEL_LIST {
 
-				key "portchannel_name";
+				key "name";
 
-				leaf portchannel_name {
+				leaf name {
 					type string {
 						length 1..128;
 						pattern 'PortChannel[0-9]{1,4}';
@@ -46,7 +46,7 @@ module sonic-portchannel {
 					/* leaf-list members are unique by default */
 					type union {
 						type leafref {
-							path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+							path /port:sonic-port/port:PORT/port:PORT_LIST/port:name;
 						}
 						type string {
 							pattern "";

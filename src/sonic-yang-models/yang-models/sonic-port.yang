@@ -29,9 +29,9 @@ module sonic-port{
 
 			list PORT_LIST {
 
-				key "port_name";
+				key "name";
 
-				leaf port_name {
+				leaf name {
 					type string {
 						length 1..128;
 					}

@@ -36,52 +36,5 @@
                 ]
             }
         }
-    },
-    "PORT_VALID_AUTONEG_TEST_1": {
-        "sonic-port:sonic-port": {
-            "sonic-port:PORT": {
-                "PORT_LIST": [
-                    {
-                        "name": "Ethernet8",
-                        "alias": "eth8",
-                        "lanes": "65",
-                        "speed": 25000,
-                        "autoneg": "on"
-                    }
-                ]
-            }
-        }
-    },
-
-    "PORT_VALID_AUTONEG_TEST_2": {
-        "sonic-port:sonic-port": {
-            "sonic-port:PORT": {
-                "PORT_LIST": [
-                    {
-                        "name": "Ethernet8",
-                        "alias": "eth8",
-                        "lanes": "65",
-                        "speed": 25000,
-                        "autoneg": "off"
-                    }
-                ]
-            }
-        }
-    },
-
-    "PORT_INVALID_AUTONEG_TEST": {
-        "sonic-port:sonic-port": {
-            "sonic-port:PORT": {
-                "PORT_LIST": [
-                    {
-                        "name": "Ethernet8",
-                        "alias": "eth8",
-                        "lanes": "65",
-                        "speed": 25000,
-                        "autoneg": 0
-                    }
-                ]
-            }
-        }
     }
 }

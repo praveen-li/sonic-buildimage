@@ -36,12 +36,12 @@ module sonic-interface {
 
 				description "INTERFACE part of config_db.json with vrf";
 
-				key "port_name";
+				key "name";
 
 
-				leaf port_name {
+				leaf name {
 					type leafref {
-						path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+						path /port:sonic-port/port:PORT/port:PORT_LIST/port:name;
 					}
 				}
 
@@ -58,17 +58,17 @@ module sonic-interface {
 
 				description "INTERFACE part of config_db.json with ip-prefix";
 
-				key "port_name ip-prefix";
+				key "name ip-prefix";
 
-				leaf port_name {
+				leaf name {
 					/* This node must be present in INTERFACE_LIST */
-					must "(current() = ../../INTERFACE_LIST[port_name=current()]/port_name)"
+					must "(current() = ../../INTERFACE_LIST[name=current()]/name)"
 					{
 						error-message "Must condition not satisfied, Try adding PORT: {}, Example: 'Ethernet0': {}";
 					}
 
 					type leafref {
-						path /port:sonic-port/port:PORT/port:PORT_LIST/port:port_name;
+						path /port:sonic-port/port:PORT/port:PORT_LIST/port:name;
 					}
 				}
 

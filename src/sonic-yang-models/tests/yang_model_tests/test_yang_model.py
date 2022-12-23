@@ -234,7 +234,7 @@ class Test_yang_models:
             for i in range(4095):
                 vlan = 'Vlan'+str(i)
                 jInput["sonic-vlan:sonic-vlan"]["sonic-vlan:VLAN"]["VLAN_LIST"]\
-                      [0]["vlan_name"] = vlan
+                      [0]["name"] = vlan
                 log.debug(jInput)
                 s = self.loadConfigData(json.dumps(jInput))
                 if s!="":
